@@ -1,0 +1,40 @@
+{
+  "name": "octus-bridge-core",
+  "version": "1.0.0",
+  "description": "Bridge between Everscale and Tezos",
+  "dependencies": {
+    "@taquito/signer": "^11.0.1",
+    "@taquito/taquito": "^11.0.1",
+    "@taquito/tzip16": "^11.0.1",
+    "dotenv": "^10.0.0",
+    "fs": "0.0.2",
+    "mocha": "^9.0.0",
+    "yargs": "^17.0.1"
+  },
+  "engines": {
+    "yarn": "^1.22.10"
+  },
+  "scripts": {
+    "clean": "rm -rf ./builds",
+    "compile": "yarn clean && node scripts/cli.js compile && node scripts/cli.js compileTest",
+    "migrate": "yarn compile && node scripts/cli.js migrate",
+    "test": "mocha --bail",
+    "start-sandbox": "docker run --rm --name dev-sandbox -e flextesa_node_cors_origin='*' -e block_time=1 --detach -p 8732:20000 oxheadalpha/flextesa:latest ithacabox start",
+    "stop-sandbox": "docker kill dev-sandbox"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/madfish-solutions/octus-bridge-core"
+  },
+  "author": "MadFish.Solutions",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/madfish-solutions/octus-bridge-core/issues"
+  },
+  "homepage": "https://github.com/madfish-solutions/octus-bridge-core#readme",
+  "keywords": [
+    "tezos",
+    "ligo",
+    "blockchain"
+  ]
+}
