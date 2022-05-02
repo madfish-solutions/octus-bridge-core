@@ -4,6 +4,7 @@ const { alice } = require("../../scripts/sandbox/accounts");
 
 module.exports = {
   owner: alice.pkh,
+  pending_owner: null,
   round_submitter: alice.pkh,
   rounds: MichelsonMap.fromLiteral({}),
   round_count: 0,

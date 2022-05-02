@@ -1,12 +1,3 @@
-function set_owner(
-  const new_address     : address;
-  var s                 : storage_t)
-                        : return_t is
-  block {
-    require(Tezos.sender = s.owner, Errors.not_owner);
-    s.owner := new_address;
-  } with (Constants.no_operations, s)
-
 function set_round_submitter(
   const new_submitter   : address;
   var s                 : storage_t)
