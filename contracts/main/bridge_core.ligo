@@ -17,18 +17,23 @@ type parameter_t        is
 | Force_round_relay       of force_new_round_t
 | Update_metadata         of metadata_t
 
+
 function main(
-  const action             : parameter_t;
-  const s                  : storage_t)
-                           : return_t is
-  case action of [
-  (* Admin methods *)
-  | Set_owner(params)            -> set_owner(params, s)
-  | Confirm_owner(_)             -> confirm_owner(s)
-  | Set_round_submitter(params)  -> set_round_submitter(params, s)
-  | Set_round_ttl(params)        -> set_round_ttl(params, s)
-  | Toggle_pause_bridge(_)       -> toggle_pause_bridge(s)
-  | Toggle_ban_relay(params)     -> toggle_ban_relay(params, s)
-  | Force_round_relay(params)    -> force_round_relay(params, s)
-  | Update_metadata(params)      -> update_metadata(params, s)
+  const action          : parameter_t;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    s := case action of [
+      | Set_owner(params)            -> set_owner(params, s)
+      | Confirm_owner(_)             -> confirm_owner(s)
+      | Set_round_submitter(params)  -> set_round_submitter(params, s)
+      | Set_round_ttl(params)        -> set_round_ttl(params, s)
+      | Toggle_pause_bridge(_)       -> toggle_pause_bridge(s)
+      | Toggle_ban_relay(params)     -> toggle_ban_relay(params, s)
+      | Force_round_relay(params)    -> force_round_relay(params, s)
+      | Update_metadata(params)      -> update_metadata(params, s)
+      | _                            -> s
+    ];
+  } with case action of [
+    | _                         -> (Constants.no_operations, s)
   ]
