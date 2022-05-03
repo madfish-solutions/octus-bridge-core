@@ -25,3 +25,12 @@ type force_new_round_t  is [@layout:comb]record[
 	validate_quorum  				: nat;
 ]
 
+type parameter_t        is
+| Set_owner               of address
+| Confirm_owner           of unit
+| Set_round_submitter     of address
+| Set_round_ttl           of nat
+| Toggle_pause_bridge     of unit
+| Toggle_ban_relay        of key
+| Update_metadata         of metadata_t
+| Force_round_relay       of force_new_round_t
