@@ -6,13 +6,13 @@
 
 function confirm_owner(
   var s                 : storage_t)
-                        : return_t is
+                        : storage_t is
   block {
     const pending = unwrap(s.pending_owner, Errors.not_pending_owner);
     require(Tezos.sender = pending, Errors.not_pending_owner);
     s.owner := pending;
     s.pending_owner := (None : option(address));
-  } with (Constants.no_operations, s)
+  } with s
 
 [@inline] function update_metadata(
   const params          : metadata_t;

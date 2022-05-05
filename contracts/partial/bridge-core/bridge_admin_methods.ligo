@@ -28,7 +28,7 @@
 [@inline] function force_round_relay(
   const params          : force_new_round_t;
   var s                 : storage_t)
-                        : return_t is
+                        : storage_t is
   block {
     require(Tezos.sender = s.round_submitter, Errors.not_submitter);
     require(not(s.paused), Errors.bridge_paused);
@@ -41,5 +41,5 @@
     ];
     s.rounds[s.round_count] := new_round;
     s.round_count := s.round_count + 1n;
-  } with (Constants.no_operations, s)
+  } with s
 

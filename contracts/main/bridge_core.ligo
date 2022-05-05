@@ -8,14 +8,18 @@
 #include "../partial/bridge-core/bridge_router.ligo"
 #include "../partial/bridge-core/bridge_views.ligo"
 
+type full_action_t is
+| Use_owner             of owner_parameter_t
+| Common                of common_parameter_t
+
 function main(
-  const action          : parameter_t;
+  const action          : full_action_t;
   var s                 : storage_t)
                         : return_t is
   block {
-    s := call_owner(action, s)
-  } with case action of [
-    | Confirm_owner(_)          -> confirm_owner(s)
-    | Force_round_relay(params) -> force_round_relay(params, s)
-    | _                         -> (Constants.no_operations, s)
-  ]
+    s := case action of [
+      | Use_owner(params) -> call_owner(params, s)
+      | Common(params) -> call_common(params, s)
+      | _ -> s
+    ]
+  } with (Constants.no_operations, s)

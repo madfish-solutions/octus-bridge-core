@@ -33,12 +33,14 @@ type validate_t         is [@layout:comb]record[
 	round                   : nat;
 ]
 
-type parameter_t        is
+type owner_parameter_t        is
 | Set_owner               of address
-| Confirm_owner           of unit
 | Set_round_submitter     of address
 | Set_round_ttl           of nat
 | Toggle_pause_bridge     of unit
 | Toggle_ban_relay        of key
 | Update_metadata         of metadata_t
+
+type common_parameter_t        is
+| Confirm_owner           of unit
 | Force_round_relay       of force_new_round_t
