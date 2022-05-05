@@ -25,6 +25,14 @@ type force_new_round_t  is [@layout:comb]record[
 	validate_quorum  				: nat;
 ]
 
+type signatures_t       is map(key, signature)
+
+type validate_t         is [@layout:comb]record[
+	payload         				: bytes;
+	signatures              : signatures_t;
+	round                   : nat;
+]
+
 type parameter_t        is
 | Set_owner               of address
 | Confirm_owner           of unit

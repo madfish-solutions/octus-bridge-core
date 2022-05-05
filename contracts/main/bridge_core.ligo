@@ -6,6 +6,7 @@
 #include "../partial/common_methods.ligo"
 #include "../partial/bridge-core/bridge_admin_methods.ligo"
 #include "../partial/bridge-core/bridge_router.ligo"
+#include "../partial/bridge-core/bridge_views.ligo"
 
 function main(
   const action          : parameter_t;
