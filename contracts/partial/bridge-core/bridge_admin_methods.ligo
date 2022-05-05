@@ -2,29 +2,37 @@
   const new_submitter   : address;
   var s                 : storage_t)
                         : return_t is
-  (Constants.no_operations, s with record[round_submitter = new_submitter])
+  block {
+    require(Tezos.sender = s.owner, Errors.not_owner)
+  } with (Constants.no_operations, s with record[round_submitter = new_submitter])
 
 [@inline] function set_round_ttl(
   const new_ttl         : nat;
   var s                 : storage_t)
                         : return_t is
-  (Constants.no_operations, s with record[ttl_round = new_ttl])
+  block {
+    require(Tezos.sender = s.owner, Errors.not_owner)
+   } with (Constants.no_operations, s with record[ttl_round = new_ttl])
 
 [@inline] function toggle_pause_bridge(
   var s                 : storage_t)
                         : return_t is
-  (Constants.no_operations, s with record[paused = not(s.paused)])
+  block {
+    require(Tezos.sender = s.owner, Errors.not_owner)
+  } with (Constants.no_operations, s with record[paused = not(s.paused)])
 
 [@inline] function toggle_ban_relay(
   const relay_pk        : key;
   var s                 : storage_t)
                         : return_t is
-  (Constants.no_operations,
-  s with record[banned_relays = Big_map.update(
-    relay_pk,
-    Some(not(unwrap_or(s.banned_relays[relay_pk], False))),
-    s.banned_relays
-  )])
+  block {
+    require(Tezos.sender = s.owner, Errors.not_owner)
+  } with (Constants.no_operations,
+      s with record[banned_relays = Big_map.update(
+        relay_pk,
+        Some(not(unwrap_or(s.banned_relays[relay_pk], False))),
+        s.banned_relays
+      )])
 
 [@inline] function force_round_relay(
   const params          : force_new_round_t;

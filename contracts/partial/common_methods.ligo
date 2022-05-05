@@ -2,7 +2,9 @@
   const new_address     : address;
   var s                 : storage_t)
                         : return_t is
-  (Constants.no_operations, s with record[pending_owner = Some(new_address)])
+  block {
+    require(Tezos.sender = s.owner, Errors.not_owner)
+  } with (Constants.no_operations, s with record[pending_owner = Some(new_address)])
 
 function confirm_owner(
   var s                 : storage_t)
@@ -18,4 +20,6 @@ function confirm_owner(
   const params          : metadata_t;
   var s                 : storage_t)
                         : return_t is
-  (Constants.no_operations, s with record[metadata = params])
+  block {
+    require(Tezos.sender = s.owner, Errors.not_owner)
+  } with (Constants.no_operations, s with record[metadata = params])
