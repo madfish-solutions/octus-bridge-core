@@ -1,8 +1,8 @@
 [@inline] function set_owner(
   const new_address     : address;
   var s                 : storage_t)
-                        : storage_t is
-  s with record[pending_owner = Some(new_address)]
+                        : return_t is
+  (Constants.no_operations, s with record[pending_owner = Some(new_address)])
 
 function confirm_owner(
   var s                 : storage_t)
@@ -17,5 +17,5 @@ function confirm_owner(
 [@inline] function update_metadata(
   const params          : metadata_t;
   var s                 : storage_t)
-                        : storage_t is
-  s with record[metadata = params]
+                        : return_t is
+  (Constants.no_operations, s with record[metadata = params])
