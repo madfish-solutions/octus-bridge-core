@@ -16,27 +16,27 @@ describe("Bridge-core validate message test", async function () {
       bridgeStorage.rounds = MichelsonMap.fromLiteral({
         0: {
           end_time: String(Date.now() + 1000),
-          ttl_round: String(Date.now() + 2000),
-          relays_keys: [alice.pk],
-          validate_quorum: "1",
+          ttl: String(Date.now() + 2000),
+          relays: [alice.pk],
+          required_signatures: "1",
         },
         1: {
           end_time: String(0),
-          ttl_round: String(2000),
-          relays_keys: [alice.pk],
-          validate_quorum: 1,
+          ttl: String(2000),
+          relays: [alice.pk],
+          required_signatures: 1,
         },
         2: {
           end_time: String(Date.now() + 1000),
-          ttl_round: String(Date.now() + 2000),
-          relays_keys: [alice.pk],
-          validate_quorum: 2,
+          ttl: String(Date.now() + 2000),
+          relays: [alice.pk],
+          required_signatures: 2,
         },
         3: {
           end_time: String(Date.now() + 1000),
-          ttl_round: String(Date.now() + 2000),
-          relays_keys: [alice.pk, bob.pk],
-          validate_quorum: 1,
+          ttl: String(Date.now() + 2000),
+          relays: [alice.pk, bob.pk],
+          required_signatures: 1,
         },
       });
       bridge = await new BridgeCore().init(bridgeStorage, "bridge_core");

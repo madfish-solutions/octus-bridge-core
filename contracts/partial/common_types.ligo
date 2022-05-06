@@ -12,7 +12,7 @@ type wrapped_token_t    is [@layout:comb] record[
   native_token_address    : native_address_t;
 ]
 
-type asset_standard_t is
+type asset_standard_t   is
 | Fa12                    of address
 | Fa2                     of token_t
 | Tez

@@ -78,7 +78,7 @@ describe("Bridge-core Admin tests", async function () {
 
       await bridge.call("set_round_ttl", 1000);
 
-      strictEqual(bridge.storage.ttl_round.toNumber(), 1000);
+      strictEqual(bridge.storage.ttl.toNumber(), 1000);
     });
   });
   describe("Testing entrypoint: Toggle_pause_bridge", async function () {
