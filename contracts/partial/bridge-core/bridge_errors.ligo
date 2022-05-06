@@ -7,4 +7,5 @@ module Errors is {
   const round_undefined         : string = "Bridge-core/round-undefined";
   const signatures_outdated     : string = "Bridge-core/signatures-outdated";
   const not_enough_signatures   : string = "Bridge-core/not-enough-signatures";
+  const invalid_payload         : string = "Bridge-core/invalid-payload";
   }

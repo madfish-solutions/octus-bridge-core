@@ -4,7 +4,7 @@ const { rejects, strictEqual, notStrictEqual } = require("assert");
 const BridgeCore = require("./helpers/bridgeInterface");
 const bridgeStorage = require("./storage/bridgeCore");
 const { alice, bob } = require("../scripts/sandbox/accounts");
-//const toBytes = require("../scripts/toBytesForSign");
+const toBytes = require("../scripts/packPayload");
 const { MichelsonMap } = require("@taquito/taquito");
 
 describe("Bridge-core validate message test", async function () {
@@ -46,13 +46,38 @@ describe("Bridge-core validate message test", async function () {
   });
 
   describe("Testing view method: Validate_message", async function () {
-    it("Shouldn't validate a message if round undefined", async function () {
-      const signature = await signerAlice.sign("0011");
+    const payload_1 = {
+      eventTrxLt: 1,
+      eventTimestamp: 2,
+      eventData: "0011",
+      confWid: 2,
+      confAddr: "0011",
+      eventContractWid: 2,
+      eventContractAddr: "0011",
+      proxy: "0011",
+      round: 2,
+    };
+    it("Shouldn't validate signature if invalid payload", async function () {
+      const signature = await signerAlice.sign("0021");
       await rejects(
         bridge.callView("validate_message", {
-          payload: "0011",
+          payload: "0021",
           signatures: MichelsonMap.fromLiteral({ [alice.pk]: signature.sig }),
-          round: 10,
+        }),
+        err => {
+          strictEqual(err.failWith.string, "Bridge-core/invalid-payload");
+          return true;
+        },
+      );
+    });
+    it("Shouldn't validate a message if round undefined", async function () {
+      payload_1.round = 10;
+      const payload = toBytes(payload_1);
+      const signature = await signerAlice.sign(payload);
+      await rejects(
+        bridge.callView("validate_message", {
+          payload: payload,
+          signatures: MichelsonMap.fromLiteral({ [alice.pk]: signature.sig }),
         }),
         err => {
           strictEqual(err.failWith.string, "Bridge-core/round-undefined");
@@ -61,13 +86,14 @@ describe("Bridge-core validate message test", async function () {
       );
     });
     it("Shouldn't validate a message if the signature's expiration date is out of date", async function () {
-      const signature = await signerAlice.sign("0011");
+      payload_1.round = 1;
+      const payload = toBytes(payload_1);
+      const signature = await signerAlice.sign(payload);
 
       await rejects(
         bridge.callView("validate_message", {
-          payload: "0011",
+          payload: payload,
           signatures: MichelsonMap.fromLiteral({ [alice.pk]: signature.sig }),
-          round: 1,
         }),
         err => {
           strictEqual(err.failWith.string, "Bridge-core/signatures-outdated");
@@ -76,12 +102,13 @@ describe("Bridge-core validate message test", async function () {
       );
     });
     it("Shouldn't validate a message if not enough signatures", async function () {
-      const signature = await signerAlice.sign("0011");
+      payload_1.round = 2;
+      const payload = toBytes(payload_1);
+      const signature = await signerAlice.sign(payload);
       await rejects(
         bridge.callView("validate_message", {
-          payload: "0011",
+          payload: payload,
           signatures: MichelsonMap.fromLiteral({ [alice.pk]: signature.sig }),
-          round: 2,
         }),
         err => {
           strictEqual(err.failWith.string, "Bridge-core/not-enough-signatures");
@@ -90,56 +117,52 @@ describe("Bridge-core validate message test", async function () {
       );
     });
     it("Shouldn't validate signature if relay is unknown", async function () {
-      const signature = await signerBob.sign("0011");
+      payload_1.round = 0;
+      const payload = toBytes(payload_1);
+      const signature = await signerBob.sign(payload);
       const result = await bridge.callView("validate_message", {
-        payload: "0011",
+        payload: payload,
         signatures: MichelsonMap.fromLiteral({ [bob.pk]: signature.sig }),
-        round: 0,
       });
 
       notStrictEqual(result, true);
     });
-    it("Shouldn't validate signature if invalid payload", async function () {
-      const signature = await signerAlice.sign("0021");
-      const result = await bridge.callView("validate_message", {
-        payload: "0011",
-        signatures: MichelsonMap.fromLiteral({ [alice.pk]: signature.sig }),
-        round: 0,
-      });
 
-      notStrictEqual(result, true);
-    });
     it("Shouldn't validate message if public key does not match signature", async function () {
-      const signature = await signerAlice.sign("0011");
+      payload_1.round = 0;
+      const payload = toBytes(payload_1);
+      const signature = await signerAlice.sign(payload);
       const result = await bridge.callView("validate_message", {
-        payload: "0011",
+        payload: payload,
         signatures: MichelsonMap.fromLiteral({ [bob.pk]: signature.sig }),
-        round: 0,
       });
 
       notStrictEqual(result, true);
     });
     it("Should validate message if 1/1 signatures validated", async function () {
-      const signature = await signerAlice.sign("0011");
+      payload_1.round = 0;
+      const payload = toBytes(payload_1);
+      const signature = await signerAlice.sign(payload);
 
       const result = await bridge.callView("validate_message", {
-        payload: "0011",
+        payload: payload,
         signatures: MichelsonMap.fromLiteral({ [alice.pk]: signature.sig }),
-        round: 0,
       });
 
       strictEqual(result, true);
     });
     it("Should validate message if 1/2 signatures validated", async function () {
-      const signature_1 = await signerAlice.sign("0011");
-      const signature_2 = await signerBob.sign("0021");
+      payload_1.round = 3;
+      const signature_1 = await signerAlice.sign(toBytes(payload_1));
+      let wrongPayload = payload_1;
+      wrongPayload.eventData = "2211";
+      const signature_2 = await signerBob.sign(toBytes(wrongPayload));
       const result = await bridge.callView("validate_message", {
-        payload: "0011",
+        payload: toBytes(payload_1),
         signatures: MichelsonMap.fromLiteral({
           [alice.pk]: signature_1.sig,
           [bob.pk]: signature_2.sig,
         }),
-        round: 3,
       });
 
       strictEqual(result, true);

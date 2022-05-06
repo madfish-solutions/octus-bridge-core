@@ -30,5 +30,4 @@ type signatures_t       is map(key, signature)
 type validate_t         is [@layout:comb] record[
 	payload         				: bytes;
 	signatures              : signatures_t;
-	round                   : nat;
 ]

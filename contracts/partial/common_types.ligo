@@ -38,3 +38,15 @@ type burn_params_t      is [@layout:comb] record [
   account                 : address;
   amount                  : nat;
 ]
+
+type payload_t          is [@layout:comb] record [
+  event_transaction_lt    : nat;
+  event_timestamp         : nat;
+  event_data              : bytes;
+  configuration_wid       : int;
+  configuration_address   : bytes;
+  event_contract_wid      : int;
+  event_contract_address  : bytes;
+  proxy                   : bytes;
+  round                   : nat;
+]
