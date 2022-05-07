@@ -7,6 +7,7 @@
 #include "../partial/bridge-core/bridge_helpers.ligo"
 #include "../partial/bridge-core/bridge_admin_methods.ligo"
 #include "../partial/bridge-core/bridge_views.ligo"
+#include "../partial/bridge-core/bridge_methods.ligo"
 
 type parameter_t        is
 | Set_owner               of address
@@ -17,6 +18,7 @@ type parameter_t        is
 | Update_metadata         of metadata_t
 | Confirm_owner           of unit
 | Force_round_relay       of force_new_round_t
+| Set_round_relays        of message_t
 
 function main(
   const action             : parameter_t;
@@ -30,6 +32,9 @@ function main(
   | Toggle_pause_bridge(_)       -> toggle_pause_bridge(s)
   | Toggle_ban_relay(params)     -> toggle_ban_relay(params, s)
   | Update_metadata(params)      -> update_metadata(params, s)
+
   | Confirm_owner(_)             -> confirm_owner(s)
   | Force_round_relay(params)    -> force_round_relay(params, s)
+
+  | Set_round_relays(params)     -> set_round_relays(params, s)
   ]

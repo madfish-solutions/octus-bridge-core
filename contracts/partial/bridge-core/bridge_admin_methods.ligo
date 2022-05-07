@@ -43,9 +43,9 @@ function force_round_relay(
     require(not(s.paused), Errors.bridge_paused);
 
     const new_round = record[
-        end_time        = params.end_time;
-	      ttl       = params.end_time + int(s.ttl);
-	      relays     = params.relays;
+        end_time = params.end_time;
+	      ttl      = params.end_time + int(s.ttl);
+	      relays   = params.relays;
         required_signatures = params.required_signatures;
     ];
     s.rounds[s.round_count] := new_round;

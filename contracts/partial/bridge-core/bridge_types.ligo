@@ -26,9 +26,10 @@ type force_new_round_t  is [@layout:comb] record[
 	required_signatures  		: nat;
 ]
 
-type signatures_t       is map(key, signature)
+type validate_t         is message_t
 
-type validate_t         is [@layout:comb] record[
-	payload         				: bytes;
-	signatures              : signatures_t;
+type new_round_t        is [@layout:comb] record[
+	end_time                : timestamp;
+	relays                  : set(key);
+	required_signatures     : nat;
 ]
