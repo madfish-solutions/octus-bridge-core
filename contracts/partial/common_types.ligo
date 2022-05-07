@@ -50,3 +50,12 @@ type payload_t          is [@layout:comb] record [
   proxy                   : bytes;
   round                   : nat;
 ]
+
+type message_status_t  is
+| Round_greater_last_round
+| Round_less_initial_round
+| Not_enough_correct_signatures
+| Round_outdated
+| Bridge_paused
+| Invalid_payload
+| Message_valid

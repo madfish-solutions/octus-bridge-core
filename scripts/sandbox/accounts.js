@@ -14,11 +14,6 @@ module.exports = {
     sk: "edsk3Sb16jcx9KrgMDsbZDmKnuN11v4AbTtPBgBSBTqYftd8Cq3i1e",
     pk: "edpku9qEgcyfNNDK6EpMvu5SqXDqWRLuxdMxdyH12ivTUuB1KXfGP4",
   },
-  secpSigner: {
-    pkh: "tz28YZoayJjVz2bRgGeVjxE8NonMiJ3r2Wdu",
-    sk: "spsk1zkqrmst1yg2c4xi3crWcZPqgdc9KtPtb9SAZWYHAdiQzdHy7j",
-    pk: "sppk7aMNM3xh14haqEyaxNjSt7hXanCDyoWtRcxF8wbtya859ak6yZT",
-  },
   dev: {
     pkh: "tz1gKYy8uwdBHp9iw1PNiH7AJmzsvcVtmpwR",
     sk: "edskSAyTXJtDDU74YihBxukF3hnDQyvcsr2ePjitKYE3GXFuBM9ytvVBkt13GqZhHBsDHQj8egJhjn5kZqECFDdwvxszoBRH5B",

@@ -8,6 +8,7 @@ module.exports = {
   round_submitter: alice.pkh,
   rounds: MichelsonMap.fromLiteral({}),
   round_count: 0,
+  initial_round: 0,
   ttl: 10,
   banned_relays: MichelsonMap.fromLiteral({}),
   paused: false,
