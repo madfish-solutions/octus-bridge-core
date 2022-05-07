@@ -4,6 +4,7 @@
 #include "../partial/bridge-core/bridge_types.ligo"
 #include "../partial/common_helpers.ligo"
 #include "../partial/common_methods.ligo"
+#include "../partial/bridge-core/bridge_helpers.ligo"
 #include "../partial/bridge-core/bridge_admin_methods.ligo"
 #include "../partial/bridge-core/bridge_views.ligo"
 
