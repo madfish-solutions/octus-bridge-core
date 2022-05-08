@@ -63,6 +63,6 @@ type message_status_t  is
 type signatures_t       is map(key, signature)
 
 type message_t          is [@layout:comb] record[
-	payload         				: bytes;
-	signatures              : signatures_t;
+  payload                 : bytes;
+  signatures              : signatures_t;
 ]

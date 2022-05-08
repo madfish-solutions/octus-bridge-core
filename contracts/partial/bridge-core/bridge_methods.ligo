@@ -10,8 +10,8 @@ function set_round_relays(
 
     const new_round = record[
         end_time = new_round.end_time;
-	      ttl      = new_round.end_time + int(s.ttl);
-	      relays   = new_round.relays;
+        ttl      = new_round.end_time + int(s.ttl);
+        relays   = new_round.relays;
         required_signatures = new_round.required_signatures;
     ];
     s.rounds[s.round_count] := new_round;
