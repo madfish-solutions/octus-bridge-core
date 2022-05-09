@@ -22,13 +22,16 @@ function set_required_signatures(
     require(Tezos.sender = s.owner, Errors.not_owner)
    } with (Constants.no_operations, s with record[required_signatures = new_value])
 
-function set_configuration_address(
-  const new_address     : nat;
+function set_configuration(
+  const params          : config_t;
   var s                 : storage_t)
                         : return_t is
   block {
     require(Tezos.sender = s.owner, Errors.not_owner)
-   } with (Constants.no_operations, s with record[configuration_address = new_address])
+   } with (Constants.no_operations, s with record[
+        configuration_address = params.configuration_address;
+        configuration_wid = params.configuration_wid
+      ])
 
 function toggle_pause_bridge(
   var s                 : storage_t)
