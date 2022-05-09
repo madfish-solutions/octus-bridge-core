@@ -7,8 +7,8 @@ function calculate_signatures(
     var valid_signatures := 0n;
     for pk -> sign in map params.signatures {
       if not unwrap_or(banned_relays[pk], False)
-      then if relays contains pk and
-          Crypto.check(pk, sign, params.payload)
+        and relays contains pk
+        and Crypto.check(pk, sign, params.payload)
         then valid_signatures := valid_signatures + 1n
         else skip;
     }

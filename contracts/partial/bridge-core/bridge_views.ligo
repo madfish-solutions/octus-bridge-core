@@ -10,16 +10,13 @@
     | Some(payload) ->
       case s.rounds[payload.round] of [
       | None ->
-        if payload.round > abs(s.round_count - 1n)
+        if payload.round > s.round_count
         then Round_greater_last_round(unit)
         else Round_less_initial_round(unit)
       | Some(round) ->
         if round.ttl < Tezos.now
         then Round_outdated(unit)
         else
-          if Map.size(params.signatures) < round.required_signatures
-          then Not_enough_correct_signatures(unit)
-          else
             if calculate_signatures(params, round.relays, s.banned_relays) < round.required_signatures
             then Not_enough_correct_signatures(unit)
             else Message_valid(unit)
