@@ -3,7 +3,7 @@ function set_round_relays(
   var s                 : storage_t)
                         : return_t is
   block {
-    is_message_valid(params);
+    is_message_valid(params, s.rounds, s.round_count, s.banned_relays, s.paused);
 
     const payload = unwrap((Bytes.unpack(params.payload) : option(payload_t)), Errors.invalid_payload);
     const new_round = unwrap((Bytes.unpack(payload.event_data) : option(round_t)), Errors.invalid_new_round);

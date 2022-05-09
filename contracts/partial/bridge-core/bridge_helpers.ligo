@@ -14,13 +14,42 @@ function calculate_signatures(
     }
   } with valid_signatures
 
+function check_message(
+  const params          : validate_t;
+  const rounds          : rounds_t;
+  const round_count     : nat;
+  const banned_relays   : banned_relays_t;
+  const paused          : bool)
+                        : message_status_t is
+  if paused
+  then Bridge_paused(unit)
+  else
+    case (Bytes.unpack(params.payload) : option(payload_t)) of [
+    | None -> Invalid_payload(unit)
+    | Some(payload) ->
+      case rounds[payload.round] of [
+      | None ->
+        if payload.round > round_count
+        then Round_greater_last_round(unit)
+        else Round_less_initial_round(unit)
+      | Some(round) ->
+        if round.ttl < Tezos.now
+        then Round_outdated(unit)
+        else
+            if calculate_signatures(params, round.relays, banned_relays) < round.required_signatures
+            then Not_enough_correct_signatures(unit)
+            else Message_valid(unit)
+        ]
+    ]
+
 function is_message_valid(
-  const params          : message_t)
+  const params          : message_t;
+  const rounds          : rounds_t;
+  const round_count     : nat;
+  const banned_relays   : banned_relays_t;
+  const paused          : bool)
                         : unit is
-  case unwrap(
-    (Tezos.call_view("validate_message", params, Tezos.self_address) : option(message_status_t)),
-    Errors.validate_message_404
-    ) of [
+  case check_message(params, rounds, round_count, banned_relays, paused) of [
   | Round_greater_last_round      -> failwith(Errors.round_greater_last_round)
   | Round_less_initial_round      -> failwith(Errors.round_less_initial_round)
   | Not_enough_correct_signatures -> failwith(Errors.not_enough_signatures)
