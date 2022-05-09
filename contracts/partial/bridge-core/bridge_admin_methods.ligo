@@ -64,7 +64,7 @@ function force_round_relay(
         relays   = params.relays;
         required_signatures = s.required_signatures;
     ];
-    s.rounds[s.round_count] := new_round;
-    s.round_count := s.round_count + 1n;
+    s.rounds[s.last_round] := new_round;
+    s.last_round := s.last_round + 1n;
   } with (Constants.no_operations, s)
 

@@ -16,7 +16,7 @@ type storage_t          is [@layout:comb] record[
   configuration_wid       : int;
   configuration_address   : nat;
   rounds                  : rounds_t;
-  round_count             : nat;
+  last_round             : nat;
   initial_round           : nat;
   ttl                     : nat;
   required_signatures     : nat;
