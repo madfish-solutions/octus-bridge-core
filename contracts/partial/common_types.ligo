@@ -42,9 +42,9 @@ type payload_t          is [@layout:comb] record [
   event_timestamp         : nat;
   event_data              : bytes;
   configuration_wid       : int;
-  configuration_address   : bytes;
+  configuration_address   : nat;
   event_contract_wid      : int;
-  event_contract_address  : bytes;
+  event_contract_address  : nat;
   proxy                   : bytes;
   round                   : nat;
 ]

@@ -13,6 +13,8 @@ type storage_t          is [@layout:comb] record[
   owner                   : address;
   pending_owner           : option(address);
   round_submitter         : address;
+  configuration_wid       : int;
+  configuration_address   : nat;
   rounds                  : rounds_t;
   round_count             : nat;
   initial_round           : nat;

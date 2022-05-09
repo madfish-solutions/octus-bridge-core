@@ -10,16 +10,17 @@
 #include "../partial/bridge-core/bridge_methods.ligo"
 
 type parameter_t        is
-| Set_owner               of address
-| Set_round_submitter     of address
-| Set_round_ttl           of nat
-| Set_required_signatures of nat
-| Toggle_pause_bridge     of unit
-| Toggle_ban_relay        of key
-| Update_metadata         of metadata_t
-| Confirm_owner           of unit
-| Force_round_relay       of new_round_t
-| Set_round_relays        of message_t
+| Set_owner                 of address
+| Set_round_submitter       of address
+| Set_round_ttl             of nat
+| Set_required_signatures   of nat
+| Set_configuration_address of nat
+| Toggle_pause_bridge       of unit
+| Toggle_ban_relay          of key
+| Update_metadata           of metadata_t
+| Confirm_owner             of unit
+| Force_round_relay         of new_round_t
+| Set_round_relays          of message_t
 
 function main(
   const action             : parameter_t;
@@ -27,16 +28,17 @@ function main(
                            : return_t is
   case action of [
   (* Admin methods *)
-  | Set_owner(params)               -> set_owner(params, s)
-  | Set_round_submitter(params)     -> set_round_submitter(params, s)
-  | Set_round_ttl(params)           -> set_round_ttl(params, s)
-  | Set_required_signatures(params) -> set_required_signatures(params, s)
-  | Toggle_pause_bridge(_)          -> toggle_pause_bridge(s)
-  | Toggle_ban_relay(params)        -> toggle_ban_relay(params, s)
-  | Update_metadata(params)         -> update_metadata(params, s)
+  | Set_owner(params)                 -> set_owner(params, s)
+  | Set_round_submitter(params)       -> set_round_submitter(params, s)
+  | Set_round_ttl(params)             -> set_round_ttl(params, s)
+  | Set_required_signatures(params)   -> set_required_signatures(params, s)
+  | Set_configuration_address(params) -> set_configuration_address(params, s)
+  | Toggle_pause_bridge(_)            -> toggle_pause_bridge(s)
+  | Toggle_ban_relay(params)          -> toggle_ban_relay(params, s)
+  | Update_metadata(params)           -> update_metadata(params, s)
 
-  | Confirm_owner(_)                -> confirm_owner(s)
-  | Force_round_relay(params)       -> force_round_relay(params, s)
+  | Confirm_owner(_)                  -> confirm_owner(s)
+  | Force_round_relay(params)         -> force_round_relay(params, s)
 
-  | Set_round_relays(params)        -> set_round_relays(params, s)
+  | Set_round_relays(params)          -> set_round_relays(params, s)
   ]
