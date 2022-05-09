@@ -4,12 +4,10 @@ const { rejects, strictEqual, notStrictEqual } = require("assert");
 
 const WrappedToken = require("./helpers/wrappedTokenInterface");
 const wrappedStorage = require("./storage/wrappedToken");
+
 describe("Wrapped token methods test", async function () {
   let token;
-  const everscaleAddress = Buffer.from(
-    "efd5a14409a8a129686114fc092525fddd508f1ea56d1b649a3a695d3a5b188c",
-    "ascii",
-  ).toString("hex");
+
   before(async () => {
     Tezos.setSignerProvider(signerAlice);
     try {
@@ -72,7 +70,6 @@ describe("Wrapped token methods test", async function () {
       Tezos.setSignerProvider(signerAlice);
       await rejects(
         token.call("create_token", [
-          everscaleAddress,
           MichelsonMap.fromLiteral({
             symbol: Buffer.from("wEVER").toString("hex"),
             name: Buffer.from("Wrapped EVER").toString("hex"),
@@ -90,7 +87,6 @@ describe("Wrapped token methods test", async function () {
       Tezos.setSignerProvider(signerBob);
 
       await token.call("create_token", [
-        everscaleAddress,
         MichelsonMap.fromLiteral({
           symbol: Buffer.from("wEVER").toString("hex"),
           name: Buffer.from("Wrapped EVER").toString("hex"),
@@ -99,9 +95,7 @@ describe("Wrapped token methods test", async function () {
         }),
       ]);
 
-      const newToken = await token.storage.token_infos.get("0");
       strictEqual(token.storage.token_count.toNumber(), 1);
-      notStrictEqual(newToken, undefined);
     });
   });
   describe("Testing entrypoint: Mint", async function () {
