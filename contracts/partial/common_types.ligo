@@ -1,4 +1,5 @@
 type token_id_t         is nat
+type asset_id_t         is nat
 type native_address_t   is bytes
 type chain_id_t         is bytes
 
