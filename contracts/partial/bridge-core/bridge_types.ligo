@@ -30,6 +30,7 @@ type return_t           is list (operation) * storage_t
 type new_round_t        is [@layout:comb] record[
   end_time                : timestamp;
   relays                  : set(key);
+  round                   : nat;
 ]
 
 type validate_t         is message_t

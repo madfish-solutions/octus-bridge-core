@@ -11,6 +11,7 @@ module Errors is {
   const bridge_paused             : string = "Bridge-core/bridge-paused"
   const invalid_payload           : string = "Bridge-core/invalid-payload";
   const wrong_event_configuration : string = "Bridge-core/wrong-event-configuration";
+  const wrong_round               : string = "Bridge-core/wrong-round";
   const invalid_new_round         : string = "Bridge-core/invalid-new-round";
   const validate_message_404      : string = "Bridge-core/view-validate-methods-not-found"
   }
