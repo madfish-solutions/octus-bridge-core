@@ -3,6 +3,16 @@ type fees_t             is [@layout:comb] record[
   withdraw_f              : nat;
 ]
 
+type vault_fees_t       is [@layout:comb] record[
+  native                  : fees_t;
+  aliens                  : fees_t;
+]
+
+type asset_config_t     is [@layout:comb] record[
+  native                  : config_t;
+  aliens                  : config_t;
+]
+
 type asset_t            is [@layout:comb] record[
   asset_type              : asset_standard_t;
   precision               : nat;
@@ -27,9 +37,10 @@ type storage_t          is [@layout:comb] record[
   guardian                : address;
   baker                   : key_hash;
   deposit_limit           : nat;
-  fees                    : fees_t;
+  fees                    : vault_fees_t;
   assets                  : assets_t;
   asset_ids               : asset_ids_t;
+  asset_config            : asset_config_t;
   banned_assets           : banned_assets_t;
 
   metadata                : metadata_t;

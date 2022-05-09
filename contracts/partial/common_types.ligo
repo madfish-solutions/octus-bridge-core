@@ -64,3 +64,8 @@ type message_t          is [@layout:comb] record[
   payload                 : bytes;
   signatures              : signatures_t;
 ]
+
+type config_t           is [@layout:comb] record[
+  configuration_wid       : int;
+  configuration_address   : nat;
+]

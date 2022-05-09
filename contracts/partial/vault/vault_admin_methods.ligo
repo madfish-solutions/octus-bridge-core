@@ -47,7 +47,7 @@ function set_deposit_limit(
   } with (Constants.no_operations, s with record[deposit_limit = value])
 
 function set_fees(
-  const new_fees        : fees_t;
+  const new_fees        : vault_fees_t;
   const s               : storage_t)
                         : return_t is
   block {
@@ -74,6 +74,24 @@ function set_asset_withdraw_fee(
     var asset := unwrap(s.assets[params.asset_id], Errors.asset_undefined);
     asset.withdraw_fee_f := params.fee_f;
     s.assets[params.asset_id] := asset;
+  } with (Constants.no_operations, s)
+
+function set_native_config(
+  const config          : config_t;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    require(Tezos.sender = s.owner, Errors.not_owner);
+    s.asset_config.native := config;
+  } with (Constants.no_operations, s)
+
+function set_aliens_config(
+  const config          : config_t;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    require(Tezos.sender = s.owner, Errors.not_owner);
+    s.asset_config.aliens := config;
   } with (Constants.no_operations, s)
 
 function toggle_pause_vault(
