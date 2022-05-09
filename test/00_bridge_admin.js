@@ -1,6 +1,7 @@
 const { Tezos, signerAlice, signerBob } = require("./utils/cli");
 const { eve, dev } = require("../scripts/sandbox/accounts");
 const { rejects, strictEqual, notStrictEqual } = require("assert");
+const { MichelsonMap } = require("@taquito/taquito");
 const BridgeCore = require("./helpers/bridgeInterface");
 const bridgeStorage = require("./storage/bridgeCore");
 const { alice, bob } = require("../scripts/sandbox/accounts");
@@ -11,6 +12,14 @@ describe("Bridge-core Admin tests", async function () {
   before(async () => {
     Tezos.setSignerProvider(signerAlice);
     try {
+      bridgeStorage.rounds = MichelsonMap.fromLiteral({
+        0: {
+          end_time: String(Date.now() + 1000),
+          ttl: String(Date.now() + 2000),
+          relays: [alice.pk],
+          required_signatures: 1,
+        },
+      });
       bridge = await new BridgeCore().init(bridgeStorage, "bridge_core");
     } catch (e) {
       console.log(e);

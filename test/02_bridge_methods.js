@@ -16,7 +16,7 @@ describe("Bridge-core methods test", async function () {
     try {
       bridgeStorage.paused = false;
       bridgeStorage.initial_round = 1;
-      bridgeStorage.round_count = 1;
+      bridgeStorage.last_round = 4;
       bridgeStorage.banned_relays = MichelsonMap.fromLiteral({
         [eve.pk]: true,
       });
@@ -62,6 +62,7 @@ describe("Bridge-core methods test", async function () {
       round_1 = {
         endTime: String(Date.now() + 100000),
         relays: [`"${alice.pk}"`],
+        round: 5,
       };
 
       payload_1 = {
@@ -238,33 +239,79 @@ describe("Bridge-core methods test", async function () {
         },
       );
     });
-    it("Should validate message if 1/1 signatures validated", async function () {
+    it("Shouldn't set new round if new round =/= last round + 1", async function () {
       payload_1.round = 1;
+      round_1.round = 8;
+      payload_1.eventData = roundToBytes(round_1);
+      const payload = payloadToBytes(payload_1);
+      const signature = await signerAlice.sign(payload);
+      await rejects(
+        bridge.call("set_round_relays", {
+          payload: payload,
+          signatures: MichelsonMap.fromLiteral({
+            [alice.pk]: signature.sig,
+          }),
+        }),
+        err => {
+          strictEqual(err.message, "Bridge-core/wrong-round");
+          return true;
+        },
+      );
+    });
+    it("Should set round relay if 1/1 signatures validated", async function () {
+      payload_1.round = 1;
+      round_1.round = 5;
+      payload_1.eventData = roundToBytes(round_1);
       const payload = payloadToBytes(payload_1);
       const signature = await signerAlice.sign(payload);
 
-      const response = await bridge.callView("validate_message", {
+      await bridge.call("set_round_relays", {
         payload: payload,
         signatures: MichelsonMap.fromLiteral({ [alice.pk]: signature.sig }),
       });
 
-      notStrictEqual(response.message_valid, undefined);
+      const addedRound = await bridge.storage.rounds.get("5");
+      notStrictEqual(addedRound, undefined);
     });
-    it("Should validate message if 1/2 signatures validated", async function () {
+    it("Should set round relay if 1/2 signatures validated", async function () {
       payload_1.round = 4;
-      const signature_1 = await signerAlice.sign(payloadToBytes(payload_1));
+      round_1.round = 6;
+      payload_1.eventData = roundToBytes(round_1);
+      const payload = payloadToBytes(payload_1);
+      const signature_1 = await signerAlice.sign(payload);
       let wrongPayload = payload_1;
       wrongPayload.eventData = "2211";
       const signature_2 = await signerBob.sign(payloadToBytes(wrongPayload));
-      const response = await bridge.callView("validate_message", {
-        payload: payloadToBytes(payload_1),
+      await bridge.call("set_round_relays", {
+        payload: payload,
         signatures: MichelsonMap.fromLiteral({
           [alice.pk]: signature_1.sig,
           [bob.pk]: signature_2.sig,
         }),
       });
 
-      notStrictEqual(response.message_valid, undefined);
+      const addedRound = await bridge.storage.rounds.get("6");
+      notStrictEqual(addedRound, undefined);
+    });
+    it("Shouldn't set round relay if payload already seen", async function () {
+      payload_1.round = 4;
+      round_1.round = 6;
+      payload_1.eventData = roundToBytes(round_1);
+      const payload = payloadToBytes(payload_1);
+      const signature = await signerAlice.sign(payload);
+
+      await rejects(
+        bridge.call("set_round_relays", {
+          payload: payload,
+          signatures: MichelsonMap.fromLiteral({
+            [alice.pk]: signature.sig,
+          }),
+        }),
+        err => {
+          strictEqual(err.message, "Bridge-core/payload-already-seen");
+          return true;
+        },
+      );
     });
     it("Shouldn't validate signature if the bridge is paused", async function () {
       const signature = await signerAlice.sign("0021");

@@ -14,7 +14,7 @@ describe("Bridge-core validate message test", async function () {
     Tezos.setSignerProvider(signerAlice);
     try {
       bridgeStorage.initial_round = 1;
-      bridgeStorage.round_count = 1;
+      bridgeStorage.last_round = 4;
       bridgeStorage.banned_relays = MichelsonMap.fromLiteral({
         [eve.pk]: true,
       });
