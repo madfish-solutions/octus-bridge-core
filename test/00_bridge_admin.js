@@ -106,6 +106,23 @@ describe("Bridge-core Admin tests", async function () {
       strictEqual(bridge.storage.required_signatures.toNumber(), 10);
     });
   });
+  describe("Testing entrypoint: Set_configuration", async function () {
+    it("Shouldn't set configuration if the user is not an owner", async function () {
+      Tezos.setSignerProvider(signerAlice);
+      await rejects(bridge.call("set_configuration", [0, 101010]), err => {
+        strictEqual(err.message, "Bridge-core/not-owner");
+        return true;
+      });
+    });
+    it("Should allow set configuration", async function () {
+      Tezos.setSignerProvider(signerBob);
+
+      await bridge.call("set_configuration", [120, 101010]);
+
+      strictEqual(bridge.storage.configuration_wid.toNumber(), 120);
+      strictEqual(bridge.storage.configuration_address.toNumber(), 101010);
+    });
+  });
   describe("Testing entrypoint: Toggle_pause_bridge", async function () {
     it("Shouldn't toggle pausing bridge if the user is not an owner", async function () {
       Tezos.setSignerProvider(signerAlice);

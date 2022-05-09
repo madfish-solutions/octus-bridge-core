@@ -1,10 +1,11 @@
-const { Tezos, signerAlice, signerBob } = require("./utils/cli");
+const { Tezos, signerAlice, signerBob, signerEve } = require("./utils/cli");
 const { eve, dev } = require("../scripts/sandbox/accounts");
 const { rejects, strictEqual, notStrictEqual } = require("assert");
 const Vault = require("./helpers/vaultInterface");
 const vaultStorage = require("./storage/vault");
 const { alice, bob } = require("../scripts/sandbox/accounts");
 const { MichelsonMap } = require("@taquito/taquito");
+const { confirmOperation } = require("../scripts/confirmation");
 
 describe("Vault Admin tests", async function () {
   let vault;
@@ -15,13 +16,21 @@ describe("Vault Admin tests", async function () {
       vaultStorage.assets = MichelsonMap.fromLiteral({
         0: {
           asset_type: { fa12: alice.pkh },
+          deposit_fee_f: 0,
+          withdraw_fee_f: 0,
           precision: 6,
           tvl: 0,
           virtual_balance: 0,
           paused: false,
+          banned: false,
         },
       });
       vault = await new Vault().init(vaultStorage, "vault");
+      const operation = await Tezos.contract.transfer({
+        to: eve.pkh,
+        amount: 10,
+      });
+      await confirmOperation(Tezos, operation.hash);
     } catch (e) {
       console.log(e);
     }
@@ -119,9 +128,9 @@ describe("Vault Admin tests", async function () {
     it("Should allow set guardian", async function () {
       Tezos.setSignerProvider(signerAlice);
 
-      await vault.call("set_guardian", bob.pkh);
+      await vault.call("set_guardian", eve.pkh);
 
-      strictEqual(vault.storage.guardian, bob.pkh);
+      strictEqual(vault.storage.guardian, eve.pkh);
     });
   });
   describe("Testing entrypoint: Set_baker", async function () {
@@ -159,7 +168,7 @@ describe("Vault Admin tests", async function () {
   describe("Testing entrypoint: Set_fees", async function () {
     it("Shouldn't set fees if the user is not an owner", async function () {
       Tezos.setSignerProvider(signerAlice);
-      await rejects(vault.call("set_fees", [9, 9]), err => {
+      await rejects(vault.call("set_fees", [1000, 500, 10, 50]), err => {
         strictEqual(err.message, "Vault/not-owner");
         return true;
       });
@@ -167,17 +176,97 @@ describe("Vault Admin tests", async function () {
     it("Should allow set fees", async function () {
       Tezos.setSignerProvider(signerBob);
 
-      await vault.call("set_fees", [100000, 100000]);
+      await vault.call("set_fees", [1000, 500, 10, 50]);
 
-      strictEqual(vault.storage.fees.deposit.toNumber(), 100000);
-      strictEqual(vault.storage.fees.withdraw.toNumber(), 100000);
+      strictEqual(vault.storage.fees.native.deposit_f.toNumber(), 1000);
+      strictEqual(vault.storage.fees.native.withdraw_f.toNumber(), 500);
+      strictEqual(vault.storage.fees.aliens.deposit_f.toNumber(), 10);
+      strictEqual(vault.storage.fees.aliens.withdraw_f.toNumber(), 50);
+    });
+  });
+  describe("Testing entrypoint: Set_asset_deposit_fee", async function () {
+    it("Shouldn't set asset deposit fee if the user is not an owner", async function () {
+      Tezos.setSignerProvider(signerAlice);
+      await rejects(vault.call("set_asset_deposit_fee", [0, 9]), err => {
+        strictEqual(err.message, "Vault/not-owner");
+        return true;
+      });
+    });
+    it("Should allow set asset deposit fee", async function () {
+      Tezos.setSignerProvider(signerBob);
+
+      await vault.call("set_asset_deposit_fee", [0, 1000000]);
+      const asset = await vault.storage.assets.get("0");
+      strictEqual(asset.deposit_fee_f.toNumber(), 1000000);
+    });
+  });
+  describe("Testing entrypoint: Set_asset_withdraw_fee", async function () {
+    it("Shouldn't set asset deposit fee if the user is not an owner", async function () {
+      Tezos.setSignerProvider(signerAlice);
+      await rejects(vault.call("set_asset_withdraw_fee", [0, 9]), err => {
+        strictEqual(err.message, "Vault/not-owner");
+        return true;
+      });
+    });
+    it("Should allow set asset withdraw fee", async function () {
+      Tezos.setSignerProvider(signerBob);
+
+      await vault.call("set_asset_withdraw_fee", [0, 1000000]);
+      const asset = await vault.storage.assets.get("0");
+      strictEqual(asset.withdraw_fee_f.toNumber(), 1000000);
+    });
+  });
+  describe("Testing entrypoint: Set_native_config", async function () {
+    it("Shouldn't set native config fee if the user is not an owner", async function () {
+      Tezos.setSignerProvider(signerAlice);
+      await rejects(vault.call("set_native_config", [0, 9]), err => {
+        strictEqual(err.message, "Vault/not-owner");
+        return true;
+      });
+    });
+    it("Should allow set native config", async function () {
+      Tezos.setSignerProvider(signerBob);
+
+      await vault.call("set_native_config", [0, 9909]);
+
+      strictEqual(
+        vault.storage.asset_config.native.configuration_wid.toNumber(),
+        0,
+      );
+      strictEqual(
+        vault.storage.asset_config.native.configuration_address.toNumber(),
+        9909,
+      );
+    });
+  });
+  describe("Testing entrypoint: Set_aliens_config", async function () {
+    it("Shouldn't set aliens config fee if the user is not an owner", async function () {
+      Tezos.setSignerProvider(signerAlice);
+      await rejects(vault.call("set_aliens_config", [0, 9]), err => {
+        strictEqual(err.message, "Vault/not-owner");
+        return true;
+      });
+    });
+    it("Should allow set aliens config", async function () {
+      Tezos.setSignerProvider(signerBob);
+
+      await vault.call("set_aliens_config", [0, 1909]);
+
+      strictEqual(
+        vault.storage.asset_config.aliens.configuration_wid.toNumber(),
+        0,
+      );
+      strictEqual(
+        vault.storage.asset_config.aliens.configuration_address.toNumber(),
+        1909,
+      );
     });
   });
   describe("Testing entrypoint: Toggle_pause_vault", async function () {
-    it("Shouldn't pausing vault if the user is not an guardian", async function () {
+    it("Shouldn't pausing vault if the user is not an guardian or owner", async function () {
       Tezos.setSignerProvider(signerAlice);
       await rejects(vault.call("toggle_pause_vault"), err => {
-        strictEqual(err.message, "Vault/not-guardian");
+        strictEqual(err.message, "Vault/not-owner-or-guardian");
         return true;
       });
     });
@@ -190,7 +279,7 @@ describe("Vault Admin tests", async function () {
       //TODO::
     });
     it("Shouldn't unpause vault if the user is not an owner", async function () {
-      Tezos.setSignerProvider(signerAlice);
+      Tezos.setSignerProvider(signerEve);
       await rejects(vault.call("toggle_pause_vault"), err => {
         strictEqual(err.message, "Vault/not-owner");
         return true;
@@ -206,10 +295,10 @@ describe("Vault Admin tests", async function () {
     });
   });
   describe("Testing entrypoint: Toggle_pause_asset", async function () {
-    it("Shouldn't pausing asset if the user is not an guardian", async function () {
+    it("Shouldn't pausing asset if the user is not an guardian or owner", async function () {
       Tezos.setSignerProvider(signerAlice);
       await rejects(vault.call("toggle_pause_asset", 0), err => {
-        strictEqual(err.message, "Vault/not-guardian");
+        strictEqual(err.message, "Vault/not-owner-or-guardian");
         return true;
       });
     });
@@ -222,7 +311,7 @@ describe("Vault Admin tests", async function () {
       //TODO::
     });
     it("Shouldn't unpause asset if the user is not an owner", async function () {
-      Tezos.setSignerProvider(signerAlice);
+      Tezos.setSignerProvider(signerEve);
       await rejects(vault.call("toggle_pause_asset", 0), err => {
         strictEqual(err.message, "Vault/not-owner");
         return true;
