@@ -1,40 +1,40 @@
-function set_round_submitter(
+[@inline] function set_round_submitter(
   const new_submitter   : address;
   var s                 : storage_t)
                         : return_t is
   block {
-    require(Tezos.sender = s.owner, Errors.not_owner);
-    s.round_submitter := new_submitter;
-  } with (Constants.no_operations, s)
+    require(Tezos.sender = s.owner, Errors.not_owner)
+  } with (Constants.no_operations, s with record[round_submitter = new_submitter])
 
-function set_round_ttl(
+[@inline] function set_round_ttl(
   const new_ttl         : nat;
   var s                 : storage_t)
                         : return_t is
   block {
-    require(Tezos.sender = s.owner, Errors.not_owner);
-    s.ttl_round := new_ttl;
-  } with (Constants.no_operations, s)
+    require(Tezos.sender = s.owner, Errors.not_owner)
+   } with (Constants.no_operations, s with record[ttl_round = new_ttl])
 
-function toggle_pause_bridge(
+[@inline] function toggle_pause_bridge(
   var s                 : storage_t)
                         : return_t is
   block {
-    require(Tezos.sender = s.owner, Errors.not_owner);
-    s.paused := not(s.paused);
-  } with (Constants.no_operations, s)
+    require(Tezos.sender = s.owner, Errors.not_owner)
+  } with (Constants.no_operations, s with record[paused = not(s.paused)])
 
-function toggle_ban_relay(
+[@inline] function toggle_ban_relay(
   const relay_pk        : key;
   var s                 : storage_t)
                         : return_t is
   block {
-    require(Tezos.sender = s.owner, Errors.not_owner);
+    require(Tezos.sender = s.owner, Errors.not_owner)
+  } with (Constants.no_operations,
+      s with record[banned_relays = Big_map.update(
+        relay_pk,
+        Some(not(unwrap_or(s.banned_relays[relay_pk], False))),
+        s.banned_relays
+      )])
 
-    s.banned_relays[relay_pk] := not(unwrap_or(s.banned_relays[relay_pk], False));
-  } with (Constants.no_operations, s)
-
-function force_round_relay(
+[@inline] function force_round_relay(
   const params          : force_new_round_t;
   var s                 : storage_t)
                         : return_t is

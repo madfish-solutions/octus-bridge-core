@@ -41,4 +41,9 @@ module.exports = class Contract {
     await confirmOperation(Tezos, operation.hash);
     return this.updateStorage();
   }
+  async callView(viewName, params, caller = this.address) {
+    return await this.contract.contractViews[viewName](params).executeView({
+      viewCaller: caller,
+    });
+  }
 };

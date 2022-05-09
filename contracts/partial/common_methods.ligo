@@ -1,11 +1,10 @@
-function set_owner(
+[@inline] function set_owner(
   const new_address     : address;
   var s                 : storage_t)
                         : return_t is
   block {
-    require(Tezos.sender = s.owner, Errors.not_owner);
-    s.pending_owner := Some(new_address);
-  } with (Constants.no_operations, s)
+    require(Tezos.sender = s.owner, Errors.not_owner)
+  } with (Constants.no_operations, s with record[pending_owner = Some(new_address)])
 
 function confirm_owner(
   var s                 : storage_t)
@@ -17,11 +16,10 @@ function confirm_owner(
     s.pending_owner := (None : option(address));
   } with (Constants.no_operations, s)
 
-function update_metadata(
+[@inline] function update_metadata(
   const params          : metadata_t;
   var s                 : storage_t)
                         : return_t is
   block {
-    require(Tezos.sender = s.owner, Errors.not_owner);
-    s.metadata := params;
-  } with (Constants.no_operations, s)
+    require(Tezos.sender = s.owner, Errors.not_owner)
+  } with (Constants.no_operations, s with record[metadata = params])
