@@ -17,6 +17,7 @@ type storage_t          is [@layout:comb] record[
   round_count             : nat;
   initial_round           : nat;
   ttl                     : nat;
+  required_signatures     : nat;
   banned_relays           : banned_relays_t;
   paused                  : bool;
   metadata                : metadata_t;
@@ -24,16 +25,9 @@ type storage_t          is [@layout:comb] record[
 
 type return_t           is list (operation) * storage_t
 
-type force_new_round_t  is [@layout:comb] record[
-  end_time                : timestamp;
-  relays                  : set(key);
-  required_signatures     : nat;
-]
-
-type validate_t         is message_t
-
 type new_round_t        is [@layout:comb] record[
   end_time                : timestamp;
   relays                  : set(key);
-  required_signatures     : nat;
 ]
+
+type validate_t         is message_t

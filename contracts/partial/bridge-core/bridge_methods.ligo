@@ -6,13 +6,13 @@ function set_round_relays(
     is_message_valid(params, s.rounds, s.round_count, s.banned_relays, s.paused);
 
     const payload = unwrap((Bytes.unpack(params.payload) : option(payload_t)), Errors.invalid_payload);
-    const new_round = unwrap((Bytes.unpack(payload.event_data) : option(round_t)), Errors.invalid_new_round);
+    const new_round = unwrap((Bytes.unpack(payload.event_data) : option(new_round_t)), Errors.invalid_new_round);
 
     const new_round = record[
         end_time = new_round.end_time;
         ttl      = new_round.end_time + int(s.ttl);
         relays   = new_round.relays;
-        required_signatures = new_round.required_signatures;
+        required_signatures = s.required_signatures;
     ];
     s.rounds[s.round_count] := new_round;
     s.round_count := s.round_count + 1n;
