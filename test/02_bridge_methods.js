@@ -68,12 +68,12 @@ describe("Bridge-core methods test", async function () {
         eventTrxLt: 1,
         eventTimestamp: 2,
         eventData: roundToBytes(round_1),
-        confWid: 2,
-        confAddr: "0011",
+        confWid: 0,
+        confAddr: 1337,
         eventContractWid: 0,
-        eventContractAddr: 1337,
+        eventContractAddr: 1111,
         proxy: "0011",
-        round: 3,
+        round: 1,
       };
     });
 
@@ -87,6 +87,22 @@ describe("Bridge-core methods test", async function () {
         }),
         err => {
           strictEqual(err.message, "Bridge-core/invalid-payload");
+          return true;
+        },
+      );
+    });
+    it("Shouldn't validate if wrong event configuration", async function () {
+      payload_1.confAddr = 99999;
+      const payload = payloadToBytes(payload_1);
+      const signature = await signerAlice.sign(payload);
+      payload_1.confAddr = 1337;
+      await rejects(
+        bridge.call("set_round_relays", {
+          payload: payload,
+          signatures: MichelsonMap.fromLiteral({ [alice.pk]: signature.sig }),
+        }),
+        err => {
+          strictEqual(err.message, "Bridge-core/wrong-event-configuration");
           return true;
         },
       );

@@ -6,6 +6,10 @@ function set_round_relays(
     is_message_valid(params, s.rounds, s.round_count, s.banned_relays, s.paused);
 
     const payload = unwrap((Bytes.unpack(params.payload) : option(payload_t)), Errors.invalid_payload);
+    require(
+      s.configuration_address = payload.configuration_address and
+      s.configuration_wid = payload.configuration_wid,
+      Errors.wrong_event_configuration);
     const new_round = unwrap((Bytes.unpack(payload.event_data) : option(new_round_t)), Errors.invalid_new_round);
 
     const new_round = record[

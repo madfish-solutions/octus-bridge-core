@@ -10,6 +10,7 @@ module Errors is {
   const not_enough_signatures     : string = "Bridge-core/not-enough-signatures";
   const bridge_paused             : string = "Bridge-core/bridge-paused"
   const invalid_payload           : string = "Bridge-core/invalid-payload";
+  const wrong_event_configuration : string = "Bridge-core/wrong-event-configuration";
   const invalid_new_round         : string = "Bridge-core/invalid-new-round";
   const validate_message_404      : string = "Bridge-core/view-validate-methods-not-found"
   }
