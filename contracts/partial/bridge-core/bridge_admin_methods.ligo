@@ -51,7 +51,7 @@ function toggle_ban_relay(
       )])
 
 function force_round_relay(
-  const params          : new_round_t;
+  const params          : force_round_t;
   var s                 : storage_t)
                         : return_t is
   block {
@@ -64,7 +64,8 @@ function force_round_relay(
         relays   = params.relays;
         required_signatures = s.required_signatures;
     ];
-    s.rounds[s.last_round] := new_round;
     s.last_round := s.last_round + 1n;
+    s.rounds[s.last_round] := new_round;
+
   } with (Constants.no_operations, s)
 

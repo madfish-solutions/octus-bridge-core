@@ -58,3 +58,13 @@ function is_message_valid(
   | Invalid_payload               -> failwith(Errors.invalid_payload)
   | Message_valid                 -> unit
   ]
+
+function cache(
+  const payload        : bytes;
+  var payload_cache    : cache_t)
+                       : cache_t is
+  block {
+    const payload_hash : bytes = Crypto.keccak(payload);
+    require(not(unwrap_or(payload_cache[payload_hash], False)), Errors.payload_already_seen);
+    payload_cache[payload_hash] := True
+  } with payload_cache

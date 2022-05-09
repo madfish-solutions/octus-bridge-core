@@ -19,7 +19,7 @@ type parameter_t        is
 | Toggle_ban_relay          of key
 | Update_metadata           of metadata_t
 | Confirm_owner             of unit
-| Force_round_relay         of new_round_t
+| Force_round_relay         of force_round_t
 | Set_round_relays          of message_t
 
 function main(

@@ -10,6 +10,7 @@ module Errors is {
   const not_enough_signatures     : string = "Bridge-core/not-enough-signatures";
   const bridge_paused             : string = "Bridge-core/bridge-paused"
   const invalid_payload           : string = "Bridge-core/invalid-payload";
+  const payload_already_seen      : string = "Bridge-core/payload-already-seen";
   const wrong_event_configuration : string = "Bridge-core/wrong-event-configuration";
   const wrong_round               : string = "Bridge-core/wrong-round";
   const invalid_new_round         : string = "Bridge-core/invalid-new-round";

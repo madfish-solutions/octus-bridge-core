@@ -4,6 +4,7 @@ function set_round_relays(
                         : return_t is
   block {
     is_message_valid(params, s.rounds, s.last_round, s.banned_relays, s.paused);
+    s.cache := cache(params.payload, s.cache);
 
     const payload = unwrap((Bytes.unpack(params.payload) : option(payload_t)), Errors.invalid_payload);
     require(
@@ -22,6 +23,5 @@ function set_round_relays(
     ];
     s.last_round := s.last_round + 1n;
     s.rounds[s.last_round] := new_round;
-
 
   } with (Constants.no_operations, s)
