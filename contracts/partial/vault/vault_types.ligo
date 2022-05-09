@@ -1,15 +1,17 @@
-
 type fees_t             is [@layout:comb] record[
-  deposit                 : nat;
-  withdraw                : nat;
+  deposit_f               : nat;
+  withdraw_f              : nat;
 ]
 
 type asset_t            is [@layout:comb] record[
   asset_type              : asset_standard_t;
   precision               : nat;
+  deposit_fee_f           : nat;
+  withdraw_fee_f          : nat;
   tvl                     : nat;
   virtual_balance         : nat;
   paused                  : bool;
+  banned                  : bool;
 ]
 
 type assets_t           is big_map(nat, asset_t)
@@ -36,3 +38,7 @@ type storage_t          is [@layout:comb] record[
 
 type return_t           is list (operation) * storage_t
 
+type fee_per_asset_t    is [@layout:comb] record[
+  asset_id                : nat;
+  fee_f                  : nat;
+]

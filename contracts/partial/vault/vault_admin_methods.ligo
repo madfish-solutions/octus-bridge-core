@@ -54,13 +54,35 @@ function set_fees(
     require(Tezos.sender = s.owner, Errors.not_owner)
   } with (Constants.no_operations, s with record[fees = new_fees])
 
+function set_asset_deposit_fee(
+  const params          : fee_per_asset_t;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    require(Tezos.sender = s.owner, Errors.not_owner);
+    var asset:= unwrap(s.assets[params.asset_id], Errors.asset_undefined);
+    asset.deposit_fee_f := params.fee_f;
+    s.assets[params.asset_id] := asset;
+  } with (Constants.no_operations, s)
+
+function set_asset_withdraw_fee(
+  const params          : fee_per_asset_t;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    require(Tezos.sender = s.owner, Errors.not_owner);
+    var asset := unwrap(s.assets[params.asset_id], Errors.asset_undefined);
+    asset.withdraw_fee_f := params.fee_f;
+    s.assets[params.asset_id] := asset;
+  } with (Constants.no_operations, s)
+
 function toggle_pause_vault(
   const s               : storage_t)
                         : return_t is
   block {
     if s.paused
     then require(Tezos.sender = s.owner, Errors.not_owner)
-    else require(Tezos.sender = s.guardian, Errors.not_guardian)
+    else require(Tezos.sender = s.guardian or Tezos.sender = s.owner, Errors.not_owner_or_guardian)
 
   } with (Constants.no_operations, s with record[paused = not(s.paused)])
 
@@ -72,7 +94,7 @@ function toggle_pause_asset(
     var asset := unwrap(s.assets[asset_id], Errors.asset_undefined);
     if asset.paused
     then require(Tezos.sender = s.owner, Errors.not_owner)
-    else require(Tezos.sender = s.guardian, Errors.not_guardian);
+    else require(Tezos.sender = s.guardian or Tezos.sender = s.owner, Errors.not_owner_or_guardian);
 
     s.assets[asset_id] := asset with record[paused = not(asset.paused)];
   } with (Constants.no_operations, s)
