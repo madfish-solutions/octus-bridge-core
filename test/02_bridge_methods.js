@@ -70,8 +70,8 @@ describe("Bridge-core methods test", async function () {
         eventData: roundToBytes(round_1),
         confWid: 2,
         confAddr: "0011",
-        eventContractWid: 2,
-        eventContractAddr: "0011",
+        eventContractWid: 0,
+        eventContractAddr: 1337,
         proxy: "0011",
         round: 3,
       };

@@ -6,6 +6,8 @@ module.exports = {
   owner: alice.pkh,
   pending_owner: null,
   round_submitter: alice.pkh,
+  configuration_wid: 0,
+  configuration_address: 1337,
   rounds: MichelsonMap.fromLiteral({}),
   round_count: 0,
   initial_round: 0,

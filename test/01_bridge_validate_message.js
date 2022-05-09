@@ -57,8 +57,8 @@ describe("Bridge-core validate message test", async function () {
       eventData: "0011",
       confWid: 2,
       confAddr: "0011",
-      eventContractWid: 2,
-      eventContractAddr: "0011",
+      eventContractWid: 0,
+      eventContractAddr: 1337,
       proxy: "0011",
       round: 3,
     };
