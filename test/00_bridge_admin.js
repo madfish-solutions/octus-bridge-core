@@ -25,10 +25,26 @@ describe("Bridge-core Admin tests", async function () {
         return true;
       });
     });
-    it("Should allow set owner", async function () {
+    it("Should allow start transfer ownership", async function () {
       Tezos.setSignerProvider(signerAlice);
 
       await bridge.call("set_owner", bob.pkh);
+
+      strictEqual(bridge.storage.pending_owner, bob.pkh);
+    });
+  });
+  describe("Testing entrypoint: Confirm_owner", async function () {
+    it("Shouldn't confirm owner if the user is not an pending owner", async function () {
+      Tezos.setSignerProvider(signerAlice);
+      await rejects(bridge.call("confirm_owner", bob.pkh), err => {
+        strictEqual(err.message, "Bridge-core/not-pending-owner");
+        return true;
+      });
+    });
+    it("Should allow confirm transfer ownership", async function () {
+      Tezos.setSignerProvider(signerBob);
+
+      await bridge.call("confirm_owner", bob.pkh);
 
       strictEqual(bridge.storage.owner, bob.pkh);
     });
