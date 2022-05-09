@@ -128,7 +128,6 @@ describe("Bridge-core Admin tests", async function () {
       const newRound = {
         endTime: String(Date.now() + 1000),
         relayKeys: [bob.pk],
-        validateQuorum: 1,
       };
       await rejects(bridge.call("force_round_relay", newRound), err => {
         strictEqual(err.message, "Bridge-core/not-round-submitter");
@@ -141,7 +140,6 @@ describe("Bridge-core Admin tests", async function () {
       const newRound = {
         endTime: String(Date.now() + 1000),
         relayKeys: [bob.pk],
-        validateQuorum: 1,
       };
       await bridge.call("force_round_relay", newRound);
       const addedRound = await bridge.storage.rounds.get("0");

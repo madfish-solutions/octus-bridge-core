@@ -10,6 +10,7 @@ module.exports = {
   round_count: 0,
   initial_round: 0,
   ttl: 10,
+  required_signatures: 1,
   banned_relays: MichelsonMap.fromLiteral({}),
   paused: false,
   metadata: MichelsonMap.fromLiteral({

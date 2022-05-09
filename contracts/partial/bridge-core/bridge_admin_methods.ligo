@@ -14,6 +14,14 @@ function set_round_ttl(
     require(Tezos.sender = s.owner, Errors.not_owner)
    } with (Constants.no_operations, s with record[ttl = new_ttl])
 
+function set_required_signatures(
+  const new_value       : nat;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    require(Tezos.sender = s.owner, Errors.not_owner)
+   } with (Constants.no_operations, s with record[required_signatures = new_value])
+
 function toggle_pause_bridge(
   var s                 : storage_t)
                         : return_t is
@@ -35,7 +43,7 @@ function toggle_ban_relay(
       )])
 
 function force_round_relay(
-  const params          : force_new_round_t;
+  const params          : new_round_t;
   var s                 : storage_t)
                         : return_t is
   block {
@@ -46,7 +54,7 @@ function force_round_relay(
         end_time = params.end_time;
         ttl      = params.end_time + int(s.ttl);
         relays   = params.relays;
-        required_signatures = params.required_signatures;
+        required_signatures = s.required_signatures;
     ];
     s.rounds[s.round_count] := new_round;
     s.round_count := s.round_count + 1n;

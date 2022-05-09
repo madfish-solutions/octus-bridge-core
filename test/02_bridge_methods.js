@@ -62,7 +62,6 @@ describe("Bridge-core methods test", async function () {
       round_1 = {
         endTime: String(Date.now() + 100000),
         relays: [`"${alice.pk}"`],
-        requiredSignatures: 1,
       };
 
       payload_1 = {
