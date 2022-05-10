@@ -1,17 +1,17 @@
 const { Parser, packDataBytes } = require("@taquito/michel-codec");
 
-function paramToBytes({ endTime, relays, requiredSignatures }) {
+function paramToBytes({ endTime, relays, round }) {
   const parser = new Parser();
   const type = `
     (pair
       (timestamp %end_time)
       (set %relays key)
-      (nat %required_signatures))`;
-  let data = `
+      (nat %round))`;
+  const data = `
     (Pair
       ${endTime}
       {${relays}}
-      ${requiredSignatures})`;
+      ${round})`;
 
   const dataJSON = parser.parseMichelineExpression(data);
   const typeJSON = parser.parseMichelineExpression(type);

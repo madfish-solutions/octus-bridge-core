@@ -3,9 +3,27 @@ const { MichelsonMap } = require("@taquito/michelson-encoder");
 const { alice } = require("../../scripts/sandbox/accounts");
 
 const fees = {
-  withdraw: 100,
-  deposit: 100,
+  native: {
+    withdraw_f: 100,
+    deposit_f: 100,
+  },
+  aliens: {
+    withdraw_f: 100,
+    deposit_f: 100,
+  },
 };
+
+const assetConfig = {
+  native: {
+    configuration_wid: 1,
+    configuration_address: 10101010,
+  },
+  aliens: {
+    configuration_wid: 2,
+    configuration_address: 20102010,
+  },
+};
+
 module.exports = {
   owner: alice.pkh,
   pending_owner: null,
@@ -18,6 +36,7 @@ module.exports = {
   fees: fees,
   assets: MichelsonMap.fromLiteral({}),
   asset_ids: MichelsonMap.fromLiteral({}),
+  asset_config: assetConfig,
   banned_assets: MichelsonMap.fromLiteral({}),
   paused: false,
   metadata: MichelsonMap.fromLiteral({

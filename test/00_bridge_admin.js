@@ -1,6 +1,7 @@
 const { Tezos, signerAlice, signerBob } = require("./utils/cli");
 const { eve, dev } = require("../scripts/sandbox/accounts");
 const { rejects, strictEqual, notStrictEqual } = require("assert");
+const { MichelsonMap } = require("@taquito/taquito");
 const BridgeCore = require("./helpers/bridgeInterface");
 const bridgeStorage = require("./storage/bridgeCore");
 const { alice, bob } = require("../scripts/sandbox/accounts");
@@ -11,6 +12,14 @@ describe("Bridge-core Admin tests", async function () {
   before(async () => {
     Tezos.setSignerProvider(signerAlice);
     try {
+      bridgeStorage.rounds = MichelsonMap.fromLiteral({
+        0: {
+          end_time: String(Date.now() + 1000),
+          ttl: String(Date.now() + 2000),
+          relays: [alice.pk],
+          required_signatures: 1,
+        },
+      });
       bridge = await new BridgeCore().init(bridgeStorage, "bridge_core");
     } catch (e) {
       console.log(e);
@@ -81,6 +90,39 @@ describe("Bridge-core Admin tests", async function () {
       strictEqual(bridge.storage.ttl.toNumber(), 1000);
     });
   });
+  describe("Testing entrypoint: Set_required_signatures", async function () {
+    it("Shouldn't set requires signatures if the user is not an owner", async function () {
+      Tezos.setSignerProvider(signerAlice);
+      await rejects(bridge.call("set_required_signatures", 1000), err => {
+        strictEqual(err.message, "Bridge-core/not-owner");
+        return true;
+      });
+    });
+    it("Should allow set required_signatures", async function () {
+      Tezos.setSignerProvider(signerBob);
+
+      await bridge.call("set_required_signatures", 10);
+
+      strictEqual(bridge.storage.required_signatures.toNumber(), 10);
+    });
+  });
+  describe("Testing entrypoint: Set_configuration", async function () {
+    it("Shouldn't set configuration if the user is not an owner", async function () {
+      Tezos.setSignerProvider(signerAlice);
+      await rejects(bridge.call("set_configuration", [0, 101010]), err => {
+        strictEqual(err.message, "Bridge-core/not-owner");
+        return true;
+      });
+    });
+    it("Should allow set configuration", async function () {
+      Tezos.setSignerProvider(signerBob);
+
+      await bridge.call("set_configuration", [120, 101010]);
+
+      strictEqual(bridge.storage.configuration_wid.toNumber(), 120);
+      strictEqual(bridge.storage.configuration_address.toNumber(), 101010);
+    });
+  });
   describe("Testing entrypoint: Toggle_pause_bridge", async function () {
     it("Shouldn't toggle pausing bridge if the user is not an owner", async function () {
       Tezos.setSignerProvider(signerAlice);
@@ -128,7 +170,6 @@ describe("Bridge-core Admin tests", async function () {
       const newRound = {
         endTime: String(Date.now() + 1000),
         relayKeys: [bob.pk],
-        validateQuorum: 1,
       };
       await rejects(bridge.call("force_round_relay", newRound), err => {
         strictEqual(err.message, "Bridge-core/not-round-submitter");
@@ -141,7 +182,6 @@ describe("Bridge-core Admin tests", async function () {
       const newRound = {
         endTime: String(Date.now() + 1000),
         relayKeys: [bob.pk],
-        validateQuorum: 1,
       };
       await bridge.call("force_round_relay", newRound);
       const addedRound = await bridge.storage.rounds.get("0");

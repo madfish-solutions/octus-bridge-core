@@ -14,7 +14,7 @@ describe("Bridge-core validate message test", async function () {
     Tezos.setSignerProvider(signerAlice);
     try {
       bridgeStorage.initial_round = 1;
-      bridgeStorage.round_count = 1;
+      bridgeStorage.last_round = 4;
       bridgeStorage.banned_relays = MichelsonMap.fromLiteral({
         [eve.pk]: true,
       });
@@ -55,10 +55,10 @@ describe("Bridge-core validate message test", async function () {
       eventTrxLt: 1,
       eventTimestamp: 2,
       eventData: "0011",
-      confWid: 2,
-      confAddr: "0011",
-      eventContractWid: 2,
-      eventContractAddr: "0011",
+      confWid: 0,
+      confAddr: 1337,
+      eventContractWid: 0,
+      eventContractAddr: 1337,
       proxy: "0011",
       round: 3,
     };

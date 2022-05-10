@@ -6,12 +6,16 @@ module.exports = {
   owner: alice.pkh,
   pending_owner: null,
   round_submitter: alice.pkh,
+  configuration_wid: 0,
+  configuration_address: 1337,
   rounds: MichelsonMap.fromLiteral({}),
-  round_count: 0,
+  last_round: 0,
   initial_round: 0,
   ttl: 10,
+  required_signatures: 1,
   banned_relays: MichelsonMap.fromLiteral({}),
   paused: false,
+  cache: MichelsonMap.fromLiteral({}),
   metadata: MichelsonMap.fromLiteral({
     "": Buffer.from("tezos-storage:meta", "ascii").toString("hex"),
     meta: Buffer.from(
