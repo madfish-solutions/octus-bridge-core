@@ -53,13 +53,13 @@ describe("Bridge-core validate message test", async function () {
   describe("Testing view method: Validate_message", async function () {
     const payload_1 = {
       eventTrxLt: 1,
-      eventTimestamp: 2,
+      eventTimestamp: String(Date.now()),
       eventData: "0011",
       confWid: 0,
       confAddr: 1337,
       eventContractWid: 0,
       eventContractAddr: 1337,
-      proxy: "0011",
+      proxy: bob.pkh,
       round: 3,
     };
 

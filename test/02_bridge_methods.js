@@ -67,13 +67,13 @@ describe("Bridge-core methods test", async function () {
 
       payload_1 = {
         eventTrxLt: 1,
-        eventTimestamp: 2,
+        eventTimestamp: String(Date.now()),
         eventData: roundToBytes(round_1),
         confWid: 0,
         confAddr: 1337,
         eventContractWid: 0,
         eventContractAddr: 1111,
-        proxy: "0011",
+        proxy: bob.pkh,
         round: 1,
       };
     });

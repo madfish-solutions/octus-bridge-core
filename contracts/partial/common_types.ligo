@@ -39,13 +39,13 @@ type burn_params_t      is [@layout:comb] record [
 
 type payload_t          is [@layout:comb] record [
   event_transaction_lt    : nat;
-  event_timestamp         : nat;
+  event_timestamp         : timestamp;
   event_data              : bytes;
   configuration_wid       : int;
   configuration_address   : nat;
   event_contract_wid      : int;
   event_contract_address  : nat;
-  proxy                   : bytes;
+  proxy                   : address;
   round                   : nat;
 ]
 
