@@ -12,7 +12,7 @@ type wrapped_token_t    is [@layout:comb] record[
   native_token_address    : native_address_t;
 ]
 
-type asset_standard_t is
+type asset_standard_t   is
 | Fa12                    of address
 | Fa2                     of token_t
 | Tez
@@ -37,4 +37,32 @@ type burn_params_t      is [@layout:comb] record [
   token_id                : token_id_t;
   account                 : address;
   amount                  : nat;
+]
+
+type payload_t          is [@layout:comb] record [
+  event_transaction_lt    : nat;
+  event_timestamp         : nat;
+  event_data              : bytes;
+  configuration_wid       : int;
+  configuration_address   : bytes;
+  event_contract_wid      : int;
+  event_contract_address  : bytes;
+  proxy                   : bytes;
+  round                   : nat;
+]
+
+type message_status_t  is
+| Round_greater_last_round
+| Round_less_initial_round
+| Not_enough_correct_signatures
+| Round_outdated
+| Bridge_paused
+| Invalid_payload
+| Message_valid
+
+type signatures_t       is map(key, signature)
+
+type message_t          is [@layout:comb] record[
+  payload                 : bytes;
+  signatures              : signatures_t;
 ]

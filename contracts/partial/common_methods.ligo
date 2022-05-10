@@ -1,4 +1,4 @@
-[@inline] function set_owner(
+function set_owner(
   const new_address     : address;
   var s                 : storage_t)
                         : return_t is
@@ -16,7 +16,7 @@ function confirm_owner(
     s.pending_owner := (None : option(address));
   } with (Constants.no_operations, s)
 
-[@inline] function update_metadata(
+function update_metadata(
   const params          : metadata_t;
   var s                 : storage_t)
                         : return_t is

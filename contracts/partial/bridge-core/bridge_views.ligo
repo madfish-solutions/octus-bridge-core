@@ -1,17 +1,27 @@
 [@view] function validate_message(
   const params          : validate_t;
   const s               : storage_t)
-                        : bool is
-  block {
-    const round = unwrap(s.rounds[params.round], Errors.round_undefined);
-    require(round.ttl_round > Tezos.now, Errors.signatures_outdated);
-    require(Map.size(params.signatures) >= round.validate_quorum, Errors.not_enough_signatures);
-
-    var valid_signatures := 0n;
-    for pk -> sign in map params.signatures {
-      if round.relays_keys contains pk and
-         Crypto.check(pk, sign, params.payload)
-      then valid_signatures := valid_signatures + 1n
-      else skip;
-    }
-  } with valid_signatures >= round.validate_quorum
+                        : message_status_t is
+  if s.paused
+  then Bridge_paused(unit)
+  else
+    case (Bytes.unpack(params.payload) : option(payload_t)) of [
+    | None -> Invalid_payload(unit)
+    | Some(payload) ->
+      case s.rounds[payload.round] of [
+      | None ->
+        if payload.round > abs(s.round_count - 1n)
+        then Round_greater_last_round(unit)
+        else Round_less_initial_round(unit)
+      | Some(round) ->
+        if round.ttl < Tezos.now
+        then Round_outdated(unit)
+        else
+          if Map.size(params.signatures) < round.required_signatures
+          then Not_enough_correct_signatures(unit)
+          else
+            if calculate_signatures(params, round.relays, s.banned_relays) < round.required_signatures
+            then Not_enough_correct_signatures(unit)
+            else Message_valid(unit)
+        ]
+    ]
