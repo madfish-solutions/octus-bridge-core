@@ -2,20 +2,43 @@ const { MichelsonMap } = require("@taquito/michelson-encoder");
 
 const { alice } = require("../../scripts/sandbox/accounts");
 
+const fees = {
+  native: {
+    withdraw_f: 100,
+    deposit_f: 100,
+  },
+  aliens: {
+    withdraw_f: 100,
+    deposit_f: 100,
+  },
+};
+
+const assetConfig = {
+  native: {
+    configuration_wid: 1,
+    configuration_address: 10101010,
+  },
+  aliens: {
+    configuration_wid: 2,
+    configuration_address: 20102010,
+  },
+};
+
 module.exports = {
   owner: alice.pkh,
   pending_owner: null,
-  round_submitter: alice.pkh,
-  configuration_wid: 0,
-  configuration_address: 1337,
-  rounds: MichelsonMap.fromLiteral({}),
-  last_round: 0,
-  initial_round: 0,
-  ttl: 10,
-  required_signatures: 1,
-  banned_relays: MichelsonMap.fromLiteral({}),
+  bridge: alice.pkh,
+  fish: alice.pkh,
+  management: alice.pkh,
+  guardian: alice.pkh,
+  baker: alice.pkh,
+  deposit_limit: 10000,
+  fees: fees,
+  assets: MichelsonMap.fromLiteral({}),
+  asset_ids: MichelsonMap.fromLiteral({}),
+  asset_config: assetConfig,
+  banned_assets: MichelsonMap.fromLiteral({}),
   paused: false,
-  cache: MichelsonMap.fromLiteral({}),
   metadata: MichelsonMap.fromLiteral({
     "": Buffer.from("tezos-storage:meta", "ascii").toString("hex"),
     meta: Buffer.from(

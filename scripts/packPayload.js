@@ -18,9 +18,9 @@ function paramToBytes({
       (nat %event_timestamp)
       (bytes %event_data)
       (int %configuration_wid)
-      (bytes %configuration_address)
+      (nat %configuration_address)
       (int %event_contract_wid)
-      (bytes %event_contract_address)
+      (nat %event_contract_address)
       (bytes %proxy)
       (nat %round))`;
   let data = `
@@ -29,9 +29,9 @@ function paramToBytes({
       ${eventTimestamp}
       0x${eventData}
       ${confWid}
-      0x${confAddr}
+      ${confAddr}
       ${eventContractWid}
-      0x${eventContractAddr}
+      ${eventContractAddr}
       0x${proxy}
       ${round})`;
 

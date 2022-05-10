@@ -10,10 +10,6 @@ const { confirmOperation } = require("../scripts/confirmation");
 const transferAmount = 1000 * 10 ** 6;
 describe("Wrapped token FA2 methods test", async function () {
   let token;
-  const everscaleAddress = Buffer.from(
-    "efd5a14409a8a129686114fc092525fddd508f1ea56d1b649a3a695d3a5b188c",
-    "ascii",
-  ).toString("hex");
   before(async () => {
     Tezos.setSignerProvider(signerAlice);
     try {
@@ -25,7 +21,6 @@ describe("Wrapped token FA2 methods test", async function () {
       }
 
       await token.call("create_token", [
-        everscaleAddress,
         MichelsonMap.fromLiteral({
           symbol: Buffer.from("wEVER").toString("hex"),
           name: Buffer.from("Wrapped EVER").toString("hex"),

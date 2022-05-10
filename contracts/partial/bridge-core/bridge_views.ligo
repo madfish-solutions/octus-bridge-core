@@ -2,26 +2,4 @@
   const params          : validate_t;
   const s               : storage_t)
                         : message_status_t is
-  if s.paused
-  then Bridge_paused(unit)
-  else
-    case (Bytes.unpack(params.payload) : option(payload_t)) of [
-    | None -> Invalid_payload(unit)
-    | Some(payload) ->
-      case s.rounds[payload.round] of [
-      | None ->
-        if payload.round > abs(s.round_count - 1n)
-        then Round_greater_last_round(unit)
-        else Round_less_initial_round(unit)
-      | Some(round) ->
-        if round.ttl < Tezos.now
-        then Round_outdated(unit)
-        else
-          if Map.size(params.signatures) < round.required_signatures
-          then Not_enough_correct_signatures(unit)
-          else
-            if calculate_signatures(params, round.relays, s.banned_relays) < round.required_signatures
-            then Not_enough_correct_signatures(unit)
-            else Message_valid(unit)
-        ]
-    ]
+  check_message(params, s.rounds, s.last_round, s.banned_relays, s.paused)

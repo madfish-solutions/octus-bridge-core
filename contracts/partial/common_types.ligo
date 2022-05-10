@@ -1,4 +1,5 @@
 type token_id_t         is nat
+type asset_id_t         is nat
 type native_address_t   is bytes
 type chain_id_t         is bytes
 
@@ -41,9 +42,9 @@ type payload_t          is [@layout:comb] record [
   event_timestamp         : nat;
   event_data              : bytes;
   configuration_wid       : int;
-  configuration_address   : bytes;
+  configuration_address   : nat;
   event_contract_wid      : int;
-  event_contract_address  : bytes;
+  event_contract_address  : nat;
   proxy                   : bytes;
   round                   : nat;
 ]
@@ -62,4 +63,9 @@ type signatures_t       is map(key, signature)
 type message_t          is [@layout:comb] record[
   payload                 : bytes;
   signatures              : signatures_t;
+]
+
+type config_t           is [@layout:comb] record[
+  configuration_wid       : int;
+  configuration_address   : nat;
 ]

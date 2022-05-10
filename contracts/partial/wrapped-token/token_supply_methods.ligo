@@ -35,10 +35,9 @@ function create_token(
 
     s.token_metadata[s.token_count] := record [
       token_id = s.token_count;
-      token_info = new_token.metadata;
+      token_info = new_token;
     ];
-    s.token_ids[new_token.source] := s.token_count;
-    s.token_infos[s.token_count] := new_token.source;
+
     s.token_count := s.token_count + 1n;
   } with (Constants.no_operations, s)
 
@@ -49,11 +48,11 @@ function burn(
   block {
     require(Tezos.sender = s.vault, Errors.not_vault);
 
-    const token_supply = unwrap(s.tokens_supply[params.token_id], Errors.token_undefined);
-    s.tokens_supply[params.token_id] := get_nat_or_fail(token_supply - params.amount, Errors.not_nat);
-
     const ledger_key = (params.account, params.token_id);
     const account_balance = unwrap_or(s.ledger[ledger_key], 0n);
+
+    const token_supply = unwrap(s.tokens_supply[params.token_id], Errors.token_undefined);
+    s.tokens_supply[params.token_id] := get_nat_or_fail(token_supply - params.amount, Errors.not_nat);
 
     s.ledger[ledger_key] := get_nat_or_fail(account_balance - params.amount, Errors.fa2_low_balance);
   } with (Constants.no_operations, s)
