@@ -45,7 +45,7 @@ type payload_t          is [@layout:comb] record [
   configuration_address   : nat;
   event_contract_wid      : int;
   event_contract_address  : nat;
-  proxy                   : bytes;
+  proxy                   : address;
   round                   : nat;
 ]
 

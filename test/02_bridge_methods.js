@@ -73,7 +73,7 @@ describe("Bridge-core methods test", async function () {
         confAddr: 1337,
         eventContractWid: 0,
         eventContractAddr: 1111,
-        proxy: "0011",
+        proxy: bob.pkh,
         round: 1,
       };
     });

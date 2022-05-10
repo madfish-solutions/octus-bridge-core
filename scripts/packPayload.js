@@ -21,7 +21,7 @@ function paramToBytes({
       (nat %configuration_address)
       (int %event_contract_wid)
       (nat %event_contract_address)
-      (bytes %proxy)
+      (address %proxy)
       (nat %round))`;
   let data = `
     (Pair
@@ -32,7 +32,7 @@ function paramToBytes({
       ${confAddr}
       ${eventContractWid}
       ${eventContractAddr}
-      0x${proxy}
+      "${proxy}"
       ${round})`;
 
   const dataJSON = parser.parseMichelineExpression(data);

@@ -59,7 +59,7 @@ describe("Bridge-core validate message test", async function () {
       confAddr: 1337,
       eventContractWid: 0,
       eventContractAddr: 1337,
-      proxy: "0011",
+      proxy: bob.pkh,
       round: 3,
     };
 
