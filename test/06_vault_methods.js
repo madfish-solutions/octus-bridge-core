@@ -1,6 +1,6 @@
 const { Tezos, signerAlice } = require("./utils/cli");
 const { rejects, strictEqual, notStrictEqual, deepEqual } = require("assert");
-const BigNumber = require("BigNumber.js");
+const BigNumber = require("bignumber.js");
 const Vault = require("./helpers/vaultInterface");
 const vaultStorage = require("./storage/vault");
 const Token = require("./helpers/tokenInterface");
