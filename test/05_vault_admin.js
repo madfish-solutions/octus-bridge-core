@@ -18,7 +18,7 @@ describe("Vault Admin tests", async function () {
           asset_type: { fa12: alice.pkh },
           deposit_fee_f: 0,
           withdraw_fee_f: 0,
-          precision: 6,
+          deposit_limit: 0,
           tvl: 0,
           virtual_balance: 0,
           paused: false,
