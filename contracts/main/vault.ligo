@@ -4,7 +4,11 @@
 #include "../partial/vault/vault_types.ligo"
 #include "../partial/common_helpers.ligo"
 #include "../partial/common_methods.ligo"
+#include "../partial/fa2_types.ligo"
+#include "../partial/fa2_helpers.ligo"
+#include "../partial/vault/vault_helpers.ligo"
 #include "../partial/vault/vault_admin_methods.ligo"
+#include "../partial/vault/vault_methods.ligo"
 
 type parameter_t        is
 | Set_owner               of address
@@ -13,7 +17,7 @@ type parameter_t        is
 | Set_fish                of address
 | Set_guardian            of address
 | Set_baker               of key_hash
-| Set_deposit_limit       of nat
+| Set_deposit_limit       of set_deposit_limit_t
 | Set_fees                of vault_fees_t
 | Set_asset_deposit_fee   of fee_per_asset_t
 | Set_asset_withdraw_fee  of fee_per_asset_t
@@ -24,6 +28,8 @@ type parameter_t        is
 | Toggle_ban_asset        of asset_standard_t
 | Update_metadata         of metadata_t
 | Confirm_owner           of unit
+
+| Deposit                 of deposit_t
 
 function main(
   const action             : parameter_t;
@@ -48,5 +54,7 @@ function main(
   | Toggle_ban_asset(params)        -> toggle_ban_asset(params, s)
   | Update_metadata(params)         -> update_metadata(params, s)
   | Confirm_owner                   -> confirm_owner(s)
+
+  | Deposit(params)                 -> deposit(params, s)
 
   ]

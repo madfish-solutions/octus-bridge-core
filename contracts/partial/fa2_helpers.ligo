@@ -33,6 +33,6 @@ function transfer_fa2(
     0mutez,
     unwrap(
       (Tezos.get_entrypoint_opt("%transfer", contract_address) : option(contract(fa2_transfer_t))),
-      Errors.transfer_not_found)
+      Errors.transfer_etp_404)
   );
 

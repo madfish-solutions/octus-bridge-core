@@ -39,12 +39,15 @@ function set_baker(
   } with (Constants.no_operations, s with record[baker = new_baker])
 
 function set_deposit_limit(
-  const value           : nat;
-  const s               : storage_t)
+  const params          : set_deposit_limit_t;
+  var s                 : storage_t)
                         : return_t is
   block {
-    require(Tezos.sender = s.owner, Errors.not_owner)
-  } with (Constants.no_operations, s with record[deposit_limit = value])
+    require(Tezos.sender = s.owner, Errors.not_owner);
+    var asset := unwrap(s.assets[params.asset_id], Errors.asset_undefined);
+    asset.deposit_limit := params.deposit_limit;
+    s.assets[params.asset_id] := asset;
+  } with (Constants.no_operations, s)
 
 function set_fees(
   const new_fees        : vault_fees_t;
