@@ -36,8 +36,12 @@ module.exports = {
   fees: fees,
   assets: MichelsonMap.fromLiteral({}),
   asset_ids: MichelsonMap.fromLiteral({}),
+  asset_count: 0,
   asset_config: assetConfig,
   banned_assets: MichelsonMap.fromLiteral({}),
+  deposits: MichelsonMap.fromLiteral({}),
+  deposit_count: 0,
+  fee_balances: MichelsonMap.fromLiteral({}),
   paused: false,
   metadata: MichelsonMap.fromLiteral({
     "": Buffer.from("tezos-storage:meta", "ascii").toString("hex"),

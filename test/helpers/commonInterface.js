@@ -25,7 +25,7 @@ module.exports = class Contract {
     return updatedStorage;
   }
 
-  async call(option, value = null) {
+  async call(option, value = null, tezAmount = 0) {
     let params = [];
 
     if (typeof value === "object") {
@@ -37,7 +37,9 @@ module.exports = class Contract {
     if (params.length === 0) {
       params.push(null);
     }
-    const operation = await this.contract.methods[option](...params).send();
+    const operation = await this.contract.methods[option](...params).send({
+      amount: tezAmount,
+    });
     await confirmOperation(Tezos, operation.hash);
     return this.updateStorage();
   }
