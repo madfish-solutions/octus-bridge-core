@@ -30,14 +30,6 @@ function set_guardian(
     require(Tezos.sender = s.guardian, Errors.not_guardian)
   } with (Constants.no_operations, s with record[guardian = new_guardian])
 
-function set_baker(
-  const new_baker       : key_hash;
-  const s               : storage_t)
-                        : return_t is
-  block {
-    require(Tezos.sender = s.owner, Errors.not_owner)
-  } with (Constants.no_operations, s with record[baker = new_baker])
-
 function set_deposit_limit(
   const params          : set_deposit_limit_t;
   var s                 : storage_t)
@@ -132,3 +124,4 @@ function toggle_ban_asset(
         Some(not(unwrap_or(s.banned_assets[asset], False))),
         s.banned_assets
       )])
+
