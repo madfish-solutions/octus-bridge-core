@@ -26,13 +26,14 @@ type parameter_t        is
 | Toggle_pause_asset      of asset_id_t
 | Toggle_ban_asset        of asset_standard_t
 | Update_metadata         of metadata_t
-
+| Delegate_tez            of option(key_hash)
+| Claim_baker_rewards     of address
 | Confirm_owner           of unit
 
 | Deposit                 of deposit_t
 | Withdraw                of message_t
 
-
+| Default                 of unit
 
 function main(
   const action             : parameter_t;
@@ -55,12 +56,13 @@ function main(
   | Toggle_pause_asset(params)      -> toggle_pause_asset(params, s)
   | Toggle_ban_asset(params)        -> toggle_ban_asset(params, s)
   | Update_metadata(params)         -> update_metadata(params, s)
-
+  | Delegate_tez(params)            -> delegate_tez(params, s)
+  | Claim_baker_rewards(params)     -> claim_baker_rewards(params, s)
   | Confirm_owner                   -> confirm_owner(s)
 
   | Deposit(params)                 -> deposit(params, s)
   | Withdraw(params)                -> withdraw(params, s)
 
-
+  | Default                         -> default(s)
 
   ]

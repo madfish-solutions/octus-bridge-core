@@ -125,3 +125,40 @@ function toggle_ban_asset(
         s.banned_assets
       )])
 
+function delegate_tez(
+  const baker           : option(key_hash);
+  const s               : storage_t)
+                        : return_t is
+  block {
+    require(Tezos.sender = s.owner, Errors.not_owner)
+  } with (list[Tezos.set_delegate(baker)], s)
+
+function claim_baker_rewards(
+  const recipient       : address;
+  var s                 : storage_t)
+                        : return_t is
+  if Tezos.sender = s.fish
+  then block {
+      const reward = s.baker_rewards.fish_f / Constants.precision;
+
+      s.baker_rewards.fish_f := get_nat_or_fail(s.baker_rewards.fish_f - reward * Constants.precision, Errors.not_nat)
+    } with (list[
+          wrap_transfer(
+            Tezos.self_address,
+            recipient,
+            reward,
+            Tez(unit)
+          )], s)
+  else if Tezos.sender = s.management
+    then block {
+      const reward = s.baker_rewards.management_f / Constants.precision;
+
+      s.baker_rewards.management_f := get_nat_or_fail(s.baker_rewards.management_f - reward * Constants.precision, Errors.not_nat)
+    } with (list[
+          wrap_transfer(
+            Tezos.self_address,
+            recipient,
+            reward,
+            Tez(unit)
+          )], s)
+  else failwith(Errors.not_fish_or_management)

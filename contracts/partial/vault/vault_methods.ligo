@@ -156,3 +156,14 @@ function withdraw(
     s.withdrawal_count := s.withdrawal_count + 1n;
 
   } with (operations, s)
+
+function default(
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    const reward = (Tezos.amount / 1mutez) * Constants.precision;
+    s.baker_rewards := s.baker_rewards with record[
+        fish_f += reward / 2n;
+        management_f += reward / 2n
+      ]
+  } with (Constants.no_operations, s)
