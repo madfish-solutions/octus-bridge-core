@@ -41,6 +41,9 @@ module.exports = {
   banned_assets: MichelsonMap.fromLiteral({}),
   deposits: MichelsonMap.fromLiteral({}),
   deposit_count: 0,
+  withdrawals: MichelsonMap.fromLiteral({}),
+  withdrawal_count: 0,
+  withdrawal_ids: MichelsonMap.fromLiteral({}),
   fee_balances: MichelsonMap.fromLiteral({}),
   paused: false,
   metadata: MichelsonMap.fromLiteral({

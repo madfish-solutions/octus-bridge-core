@@ -152,7 +152,7 @@ describe("Vault Admin tests", async function () {
   describe("Testing entrypoint: Set_deposit_limit", async function () {
     it("Shouldn't set deposit_limit if the user is not an owner", async function () {
       Tezos.setSignerProvider(signerAlice);
-      await rejects(vault.call("set_deposit_limit", 99999), err => {
+      await rejects(vault.call("set_deposit_limit", [0, 99999]), err => {
         strictEqual(err.message, "Vault/not-owner");
         return true;
       });
@@ -160,9 +160,9 @@ describe("Vault Admin tests", async function () {
     it("Should allow set deposit_limit", async function () {
       Tezos.setSignerProvider(signerBob);
 
-      await vault.call("set_deposit_limit", 9999999);
-
-      strictEqual(vault.storage.deposit_limit.toNumber(), 9999999);
+      await vault.call("set_deposit_limit", [0, 99999]);
+      const asset = await vault.storage.assets.get("0");
+      strictEqual(asset.deposit_limit.toNumber(), 99999);
     });
   });
   describe("Testing entrypoint: Set_fees", async function () {
