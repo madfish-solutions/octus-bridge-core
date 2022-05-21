@@ -132,4 +132,3 @@ function toggle_ban_asset(
         Some(not(unwrap_or(s.banned_assets[asset], False))),
         s.banned_assets
       )])
-

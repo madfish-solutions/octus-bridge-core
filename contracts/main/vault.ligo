@@ -30,6 +30,7 @@ type parameter_t        is
 | Confirm_owner           of unit
 
 | Deposit                 of deposit_t
+| Withdraw                of message_t
 
 function main(
   const action             : parameter_t;
@@ -56,5 +57,6 @@ function main(
   | Confirm_owner                   -> confirm_owner(s)
 
   | Deposit(params)                 -> deposit(params, s)
+  | Withdraw(params)                -> withdraw(params, s)
 
   ]

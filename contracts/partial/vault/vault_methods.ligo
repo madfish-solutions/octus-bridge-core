@@ -43,17 +43,16 @@ function deposit(
         account = Tezos.sender;
         amount = deposit_without_fee
       ];
-      operations := list[
-        Tezos.transaction(
+      operations := Tezos.transaction(
           burn_params,
           0mutez,
           unwrap(
             (Tezos.get_entrypoint_opt("%burn", token_.address) : option(contract(burn_params_t))),
             Errors.burn_etp_404)
-        );
-      ]
+        ) # operations;
+      asset.tvl := get_nat_or_fail(asset.tvl - deposited_amount, Errors.not_nat)
      }
-    | Tez -> skip
+    | Tez -> asset.tvl := asset.tvl + deposited_amount
     | _ -> {
         operations := wrap_transfer(
           Tezos.sender,
@@ -61,9 +60,9 @@ function deposit(
           deposit_without_fee,
           asset.asset_type
         ) # operations;
+        asset.tvl := asset.tvl + deposited_amount
       }
     ];
-    asset.tvl := asset.tvl + deposited_amount;
     s.assets[asset_id] := asset;
 
     s.deposits[s.deposit_count] := record[
@@ -72,5 +71,88 @@ function deposit(
         asset     = asset.asset_type;
     ];
     s.deposit_count := s.deposit_count + 1n;
+
+  } with (operations, s)
+
+function withdraw(
+  const message        : message_t;
+  var s                : storage_t)
+                       : return_t is
+  block {
+    require(not(s.paused), Errors.vault_paused);
+    require_none(s.withdrawal_ids[message.payload], Errors.payload_already_seen);
+    is_withdraw_valid(message, s.bridge);
+
+    const payload = unwrap((Bytes.unpack(message.payload) : option(payload_t)), Errors.invalid_payload);
+    const params = unwrap((Bytes.unpack(payload.event_data) : option(withdrawal_data_t)), Errors.invalid_withdrawal_params);
+
+    const result = get_or_create_asset(params.asset, params.metadata, s);
+    var asset := result.asset;
+    const asset_id = result.asset_id;
+    s := result.storage;
+
+    require(not(asset.paused), Errors.asset_paused);
+    require(not(asset.banned), Errors.asset_banned);
+
+    require(params.amount > 0n, Errors.zero_transfer);
+
+    const fee = params.amount * asset.withdraw_fee_f / Constants.precision;
+
+    const withdrawal_amount = if fee > 0n
+      then get_nat_or_fail(params.amount - fee, Errors.not_nat)
+      else params.amount;
+
+    if fee > 0n
+    then {
+      var fee_balance := unwrap_or(s.fee_balances[asset_id], Constants.fee_balances_mock);
+      s.fee_balances[asset_id] := fee_balance with record[
+          fish_f += fee * Constants.precision / 2n;
+          management_f += fee * Constants.precision / 2n;
+      ];
+    } else skip;
+
+    var operations := result.operations;
+    case asset.asset_type of [
+    | Wrapped(token_) -> {
+      var mint_params : mint_params_t := list[
+        record[
+          token_id = token_.id;
+          recipient = params.recipient;
+          amount = withdrawal_amount
+        ];
+      ];
+      operations := Tezos.transaction(
+          mint_params,
+          0mutez,
+          unwrap(
+            (Tezos.get_entrypoint_opt("%mint", token_.address) : option(contract(mint_params_t))),
+            Errors.mint_etp_404
+          )
+         ) # operations;
+      asset.tvl := asset.tvl + withdrawal_amount;
+     }
+    | _ -> {
+        operations := wrap_transfer(
+          Tezos.self_address,
+          params.recipient,
+          withdrawal_amount,
+          asset.asset_type
+        ) # operations;
+        asset.tvl := get_nat_or_fail(asset.tvl - params.amount, Errors.not_nat);
+      }
+    ];
+
+    s.assets[asset_id] := asset;
+
+    s.withdrawals[s.withdrawal_count] := record[
+        deposit_id = params.deposit_id;
+        asset      = asset.asset_type;
+        amount     = params.amount;
+        recipient  = params.recipient;
+        metadata   = params.metadata;
+        signatures = message.signatures;
+    ];
+    s.withdrawal_ids[message.payload] := s.withdrawal_count;
+    s.withdrawal_count := s.withdrawal_count + 1n;
 
   } with (operations, s)

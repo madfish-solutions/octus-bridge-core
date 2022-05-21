@@ -25,6 +25,19 @@ type deposit_t          is [@layout:comb] record[
 
 type deposits_t         is big_map(nat, deposit_t)
 
+type withdrawal_t       is [@layout:comb] record[
+  deposit_id              : bytes;
+  asset                   : asset_standard_t;
+  amount                  : nat;
+  recipient               : address;
+	metadata                : option(metadata_t);
+  signatures              : signatures_t;
+]
+
+type withdrawals_t      is big_map(nat, withdrawal_t)
+type withdrawal_ids_t   is big_map(bytes, nat)
+
+
 type storage_t          is [@layout:comb] record[
   owner                   : address;
   pending_owner           : option(address);
@@ -42,6 +55,9 @@ type storage_t          is [@layout:comb] record[
 
   deposits                : deposits_t;
   deposit_count           : nat;
+  withdrawals             : withdrawals_t;
+  withdrawal_count        : nat;
+  withdrawal_ids          : withdrawal_ids_t;
 
   fee_balances            : big_map(asset_id_t, fee_balances_t);
 
@@ -53,7 +69,7 @@ type return_t           is list (operation) * storage_t
 
 type fee_per_asset_t    is [@layout:comb] record[
   asset_id                : nat;
-  fee_f                  : nat;
+  fee_f                   : nat;
 ]
 
 type set_deposit_limit_t is [@layout:comb] record[
@@ -61,9 +77,19 @@ type set_deposit_limit_t is [@layout:comb] record[
   deposit_limit            : nat;
 ]
 
-type get_asset_return_t  is [@layout:comb] record[
-  storage                  : storage_t;
-  asset                    : asset_t;
-  operations               : list(operation);
-  asset_id                 : asset_id_t
+type get_asset_return_t is [@layout:comb] record[
+  storage                 : storage_t;
+  asset                   : asset_t;
+  operations              : list(operation);
+  asset_id                : asset_id_t
 ]
+
+type withdrawal_data_t  is [@layout:comb] record[
+  deposit_id              : bytes;
+  asset                   : asset_standard_t;
+  amount                  : nat;
+  recipient               : address;
+	metadata                : option(metadata_t);
+]
+
+[@inline] const no_operations     : list(operation) = nil;

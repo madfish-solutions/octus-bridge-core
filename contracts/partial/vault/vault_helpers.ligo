@@ -5,7 +5,7 @@ function get_or_create_asset(
                         : get_asset_return_t is
   block {
     var asset := Constants.asset_mock;
-    var operations := Constants.no_operations;
+    var operations := no_operations;
     var asset_id := 0n;
     case s.asset_ids[asset_type] of [
     | Some(id) -> {
@@ -47,7 +47,6 @@ function get_or_create_asset(
         ]
       }
     ];
-   
   } with record[
         storage = s;
         asset = asset;
@@ -85,3 +84,20 @@ function wrap_transfer(
         token_.id,
         token_.address)
     ]
+
+function is_withdraw_valid(
+  const message         : message_t;
+  const bridge          : address)
+                        : unit is
+  case unwrap(
+      (Tezos.call_view("validate_message", message, bridge) : option(message_status_t)),
+      Errors.validate_message_view_404
+    ) of [
+  | Round_greater_last_round      -> failwith(Errors.round_greater_last_round)
+  | Round_less_initial_round      -> failwith(Errors.round_less_initial_round)
+  | Not_enough_correct_signatures -> failwith(Errors.not_enough_signatures)
+  | Round_outdated                -> failwith(Errors.round_outdated)
+  | Bridge_paused                 -> failwith(Errors.bridge_paused)
+  | Invalid_payload               -> failwith(Errors.invalid_payload)
+  | Message_valid                 -> unit
+  ]
