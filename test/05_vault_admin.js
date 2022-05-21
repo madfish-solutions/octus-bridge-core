@@ -25,6 +25,9 @@ describe("Vault Admin tests", async function () {
           banned: false,
         },
       });
+
+      vaultStorage.fish = alice.pkh;
+      vaultStorage.management = bob.pkh;
       vault = await new Vault().init(vaultStorage, "vault");
       const operation = await Tezos.contract.transfer({
         to: eve.pkh,
@@ -88,7 +91,7 @@ describe("Vault Admin tests", async function () {
   describe("Testing entrypoint: Set_management", async function () {
     it("Shouldn't set management if the user is not an  owner", async function () {
       Tezos.setSignerProvider(signerAlice);
-      await rejects(vault.call("set_management", bob.pkh), err => {
+      await rejects(vault.call("set_management", alice.pkh), err => {
         strictEqual(err.message, "Vault/not-owner");
         return true;
       });
@@ -96,15 +99,15 @@ describe("Vault Admin tests", async function () {
     it("Should allow set management", async function () {
       Tezos.setSignerProvider(signerBob);
 
-      await vault.call("set_management", bob.pkh);
+      await vault.call("set_management", alice.pkh);
 
-      strictEqual(vault.storage.management, bob.pkh);
+      strictEqual(vault.storage.management, alice.pkh);
     });
   });
   describe("Testing entrypoint: Set_fish", async function () {
     it("Shouldn't set fish if the user is not an fish", async function () {
       Tezos.setSignerProvider(signerBob);
-      await rejects(vault.call("set_fish", bob.pkh), err => {
+      await rejects(vault.call("set_fish", alice.pkh), err => {
         strictEqual(err.message, "Vault/not-fish");
         return true;
       });
@@ -133,22 +136,7 @@ describe("Vault Admin tests", async function () {
       strictEqual(vault.storage.guardian, eve.pkh);
     });
   });
-  describe("Testing entrypoint: Set_baker", async function () {
-    Tezos.setSignerProvider(signerAlice);
-    it("Shouldn't set baker if the user is not an owner", async function () {
-      await rejects(vault.call("set_baker", bob.pkh), err => {
-        strictEqual(err.message, "Vault/not-owner");
-        return true;
-      });
-    });
-    it("Should allow set baker", async function () {
-      Tezos.setSignerProvider(signerBob);
 
-      await vault.call("set_baker", bob.pkh);
-
-      strictEqual(vault.storage.baker, bob.pkh);
-    });
-  });
   describe("Testing entrypoint: Set_deposit_limit", async function () {
     it("Shouldn't set deposit_limit if the user is not an owner", async function () {
       Tezos.setSignerProvider(signerAlice);
@@ -393,6 +381,65 @@ describe("Vault Admin tests", async function () {
 
       const meta = await vault.storage.metadata.get("foo");
       strictEqual(meta, Buffer.from("alice").toString("hex"));
+    });
+  });
+  describe("Testing entrypoint: Delegate_tez", async function () {
+    it("Should allow delegate tez", async function () {
+      await vault.call("delegate_tez", alice.pkh);
+    });
+    it("Shouldn't delegate tez if the if passed baker is current", async function () {
+      await rejects(vault.call("delegate_tez", alice.pkh), err => {
+        strictEqual(
+          err.message,
+          "(temporary) proto.012-Psithaca.delegate.unchanged",
+        );
+        return true;
+      });
+    });
+    it("Should allow withdraw delegated tez", async function () {
+      await vault.call("delegate_tez", null);
+    });
+  });
+  describe("Testing entrypoint: Default (baker rewards)", async function () {
+    it("Should allow receive baker rewards", async function () {
+      await vault.call("default", null, 10 / 1e6);
+      const bakerRewards = vault.storage.baker_rewards;
+      strictEqual(bakerRewards.fish_f.toNumber(), 5 * 10 ** 6);
+      strictEqual(bakerRewards.management_f.toNumber(), 5 * 10 ** 6);
+    });
+
+    it("Should allow withdraw delegated tez", async function () {
+      await vault.call("delegate_tez", null);
+    });
+  });
+  describe("Testing entrypoint: Claim_baker_rewards", async function () {
+    it("Shouldn't claim baker rewards if the user is not an madfish or management", async function () {
+      Tezos.setSignerProvider(signerEve);
+      await rejects(vault.call("claim_baker_rewards", eve.pkh), err => {
+        strictEqual(err.message, "Vault/not-fish-or-management");
+        return true;
+      });
+    });
+    it("Should allow claim baker rewards (fish and management)", async function () {
+      const prevEveBalance = await Tezos.tz
+        .getBalance(eve.pkh)
+        .then(balance => Math.floor(balance.toNumber()))
+        .catch(error => console.log(JSON.stringify(error)));
+
+      Tezos.setSignerProvider(signerAlice);
+      await vault.call("claim_baker_rewards", eve.pkh);
+
+      Tezos.setSignerProvider(signerBob);
+      await vault.call("claim_baker_rewards", eve.pkh);
+      const eveBalance = await Tezos.tz
+        .getBalance(eve.pkh)
+        .then(balance => Math.floor(balance.toNumber()))
+        .catch(error => console.log(JSON.stringify(error)));
+
+      const bakerRewards = vault.storage.baker_rewards;
+      strictEqual(bakerRewards.fish_f.toNumber(), 0);
+      strictEqual(bakerRewards.management_f.toNumber(), 0);
+      strictEqual(eveBalance, prevEveBalance + 10);
     });
   });
 });

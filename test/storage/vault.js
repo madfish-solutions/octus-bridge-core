@@ -13,6 +13,11 @@ const fees = {
   },
 };
 
+const bakerRewards = {
+  fish_f: 0,
+  management_f: 0,
+};
+
 const assetConfig = {
   native: {
     configuration_wid: 1,
@@ -31,7 +36,6 @@ module.exports = {
   fish: alice.pkh,
   management: alice.pkh,
   guardian: alice.pkh,
-  baker: alice.pkh,
   deposit_limit: 10000,
   fees: fees,
   assets: MichelsonMap.fromLiteral({}),
@@ -45,7 +49,9 @@ module.exports = {
   withdrawal_count: 0,
   withdrawal_ids: MichelsonMap.fromLiteral({}),
   fee_balances: MichelsonMap.fromLiteral({}),
+  baker_rewards: bakerRewards,
   paused: false,
+
   metadata: MichelsonMap.fromLiteral({
     "": Buffer.from("tezos-storage:meta", "ascii").toString("hex"),
     meta: Buffer.from(
