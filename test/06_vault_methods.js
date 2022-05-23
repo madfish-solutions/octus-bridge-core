@@ -290,6 +290,9 @@ describe("Vault methods tests", async function () {
     it("Should deposit tez asset", async function () {
       const depositAmount = 100 * precision;
       const prevDepositCount = vault.storage.deposit_count.toNumber();
+      const prevFeeBalances = await vault.storage.fee_balances.get({
+        tez: null,
+      });
       await vault.call(
         "deposit",
         ["001100", depositAmount, "tez"],
@@ -310,8 +313,14 @@ describe("Vault methods tests", async function () {
       strictEqual(vault.storage.deposit_count.toNumber(), prevDepositCount + 1);
       strictEqual(asset.tvl.toNumber(), depositAmount - fee);
       strictEqual(vaultBalance, depositAmount);
-      strictEqual(feeBalances.fish_f.toNumber(), (fee * precision) / 2);
-      strictEqual(feeBalances.management_f.toNumber(), (fee * precision) / 2);
+      strictEqual(
+        feeBalances.fish_f.toNumber(),
+        prevFeeBalances.fish_f.toNumber() + (fee * precision) / 2,
+      );
+      strictEqual(
+        feeBalances.management_f.toNumber(),
+        prevFeeBalances.management_f.toNumber() + (fee * precision) / 2,
+      );
       strictEqual(newDeposit.recipient, "001100");
       strictEqual(newDeposit.amount.toNumber(), depositAmount - fee);
       notStrictEqual(newDeposit.asset["tez"], undefined);
