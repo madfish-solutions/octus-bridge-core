@@ -18,6 +18,8 @@ function deposit(
     | _ -> params.amount
     ];
 
+    require(asset.tvl + deposit_without_fee <= asset.deposit_limit or asset.deposit_limit = 0n, Errors.deposit_limit);
+
     require(deposit_without_fee > 0n, Errors.zero_transfer);
 
     const fee = params.amount * asset.deposit_fee_f / Constants.precision;
