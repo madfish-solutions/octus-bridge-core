@@ -172,7 +172,6 @@ describe("Vault methods tests", async function () {
       vault = await new Vault().init(vaultStorage, "vault");
       await wrappedToken.call("set_vault", vault.address);
     } catch (e) {
-      console.log(111);
       console.log(e);
     }
   });
@@ -230,7 +229,9 @@ describe("Vault methods tests", async function () {
       const fee = Math.floor(
         (depositAmount * asset.deposit_fee_f.toNumber()) / precision,
       );
-      const feeBalances = await vault.storage.fee_balances.get("0");
+      const feeBalances = await vault.storage.fee_balances.get({
+        fa12: fa12Token.address,
+      });
 
       const newDeposit = await vault.storage.deposits.get("0");
       strictEqual(vault.storage.deposit_count.toNumber(), prevDepositCount + 1);
@@ -266,7 +267,9 @@ describe("Vault methods tests", async function () {
       const fee = Math.floor(
         (depositAmount * asset.deposit_fee_f.toNumber()) / precision,
       );
-      const feeBalances = await vault.storage.fee_balances.get("1");
+      const feeBalances = await vault.storage.fee_balances.get({
+        fa2: { address: fa2Token.address, id: 0 },
+      });
 
       const newDeposit = await vault.storage.deposits.get("1");
 
@@ -300,7 +303,7 @@ describe("Vault methods tests", async function () {
       const fee = Math.floor(
         (depositAmount * asset.deposit_fee_f.toNumber()) / precision,
       );
-      const feeBalances = await vault.storage.fee_balances.get("2");
+      const feeBalances = await vault.storage.fee_balances.get({ tez: null });
 
       const newDeposit = await vault.storage.deposits.get("2");
 
@@ -335,7 +338,9 @@ describe("Vault methods tests", async function () {
       const fee = Math.floor(
         (depositAmount * asset.deposit_fee_f.toNumber()) / precision,
       );
-      const feeBalances = await vault.storage.fee_balances.get("3");
+      const feeBalances = await vault.storage.fee_balances.get({
+        wrapped: { address: wrappedToken.address, id: 0 },
+      });
 
       const newDeposit = await vault.storage.deposits.get("3");
 
@@ -366,7 +371,9 @@ describe("Vault methods tests", async function () {
       const asset = await vault.storage.assets.get("6");
       const vaultBalance = await fa12Token.getBalance(vault.address);
 
-      const feeBalances = await vault.storage.fee_balances.get("6");
+      const feeBalances = await vault.storage.fee_balances.get({
+        fa12: fa12Token_2.address,
+      });
 
       const newDeposit = await vault.storage.deposits.get("4");
       strictEqual(vault.storage.deposit_count.toNumber(), prevDepositCount + 1);
@@ -395,7 +402,9 @@ describe("Vault methods tests", async function () {
       const fee = Math.floor(
         (depositAmount * asset.deposit_fee_f.toNumber()) / precision,
       );
-      const feeBalances = await vault.storage.fee_balances.get("7");
+      const feeBalances = await vault.storage.fee_balances.get({
+        fa12: fa12Token_3.address,
+      });
 
       const newDeposit = await vault.storage.deposits.get("5");
 
@@ -642,7 +651,9 @@ describe("Vault methods tests", async function () {
       const prevAliceBalance = await fa12Token.getBalance(alice.pkh);
       const prevVaultBalance = await fa12Token.getBalance(vault.address);
       const prevAsset = await vault.storage.assets.get("0");
-      const prevFeeBalances = await vault.storage.fee_balances.get("0");
+      const prevFeeBalances = await vault.storage.fee_balances.get({
+        fa12: fa12Token.address,
+      });
 
       await vault.call("withdraw", {
         payload: payload,
@@ -655,7 +666,9 @@ describe("Vault methods tests", async function () {
         (withdrawalAmount * asset.withdraw_fee_f.toNumber()) / precision,
       );
 
-      const feeBalances = await vault.storage.fee_balances.get("0");
+      const feeBalances = await vault.storage.fee_balances.get({
+        fa12: fa12Token.address,
+      });
 
       const newWithdrawal = await vault.storage.withdrawals.get("0");
       const newWithdrawalId = await vault.storage.withdrawal_ids.get(payload);
@@ -704,7 +717,9 @@ describe("Vault methods tests", async function () {
       const prevAliceBalance = await fa2Token.getBalance(alice.pkh);
       const prevVaultBalance = await fa2Token.getBalance(vault.address);
       const prevAsset = await vault.storage.assets.get("1");
-      const prevFeeBalances = await vault.storage.fee_balances.get("1");
+      const prevFeeBalances = await vault.storage.fee_balances.get({
+        fa2: { address: fa2Token.address, id: 0 },
+      });
 
       await vault.call("withdraw", {
         payload: payload,
@@ -717,7 +732,9 @@ describe("Vault methods tests", async function () {
         (withdrawalAmount * asset.withdraw_fee_f.toNumber()) / precision,
       );
 
-      const feeBalances = await vault.storage.fee_balances.get("1");
+      const feeBalances = await vault.storage.fee_balances.get({
+        fa2: { address: fa2Token.address, id: 0 },
+      });
 
       const newWithdrawal = await vault.storage.withdrawals.get("1");
       const newWithdrawalId = await vault.storage.withdrawal_ids.get(payload);
@@ -771,7 +788,9 @@ describe("Vault methods tests", async function () {
         .then(balance => Math.floor(balance.toNumber()))
         .catch(error => console.log(JSON.stringify(error)));
       const prevAsset = await vault.storage.assets.get("2");
-      const prevFeeBalances = await vault.storage.fee_balances.get("2");
+      const prevFeeBalances = await vault.storage.fee_balances.get({
+        tez: null,
+      });
 
       await vault.call("withdraw", {
         payload: payload,
@@ -791,7 +810,7 @@ describe("Vault methods tests", async function () {
         (withdrawalAmount * asset.withdraw_fee_f.toNumber()) / precision,
       );
 
-      const feeBalances = await vault.storage.fee_balances.get("2");
+      const feeBalances = await vault.storage.fee_balances.get({ tez: null });
 
       const newWithdrawal = await vault.storage.withdrawals.get("2");
       const newWithdrawalId = await vault.storage.withdrawal_ids.get(payload);
@@ -845,7 +864,9 @@ describe("Vault methods tests", async function () {
       const prevAliceBalance = await wrappedToken.getWBalance(alice.pkh);
 
       const prevAsset = await vault.storage.assets.get("3");
-      const prevFeeBalances = await vault.storage.fee_balances.get("3");
+      const prevFeeBalances = await vault.storage.fee_balances.get({
+        wrapped: { address: wrappedToken.address, id: 0 },
+      });
 
       await vault.call("withdraw", {
         payload: payload,
@@ -858,7 +879,9 @@ describe("Vault methods tests", async function () {
         (withdrawalAmount * asset.withdraw_fee_f.toNumber()) / precision,
       );
 
-      const feeBalances = await vault.storage.fee_balances.get("3");
+      const feeBalances = await vault.storage.fee_balances.get({
+        wrapped: { address: wrappedToken.address, id: 0 },
+      });
 
       const newWithdrawal = await vault.storage.withdrawals.get("3");
       const newWithdrawalId = await vault.storage.withdrawal_ids.get(payload);

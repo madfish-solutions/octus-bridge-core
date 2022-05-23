@@ -2,17 +2,42 @@ const { Tezos, signerAlice, signerBob, signerEve } = require("./utils/cli");
 const { eve, dev } = require("../scripts/sandbox/accounts");
 const { rejects, strictEqual, notStrictEqual } = require("assert");
 const Vault = require("./helpers/vaultInterface");
+const Token = require("./helpers/tokenInterface");
+const WrappedToken = require("./helpers/wrappedTokenInterface");
+const fa12TokenStorage = require("../test/storage/FA12");
+const fa2TokenStorage = require("../test/storage/FA2");
+const wrappedTokenStorage = require("../test/storage/wrappedToken");
+
 const vaultStorage = require("./storage/vault");
 const { alice, bob } = require("../scripts/sandbox/accounts");
 const { MichelsonMap } = require("@taquito/taquito");
 const { confirmOperation } = require("../scripts/confirmation");
 
+const precision = 10 ** 6;
+
 describe("Vault Admin tests", async function () {
   let vault;
+  let fa12Token;
+  let fa2Token;
+  let wrappedToken;
 
   before(async () => {
     Tezos.setSignerProvider(signerAlice);
     try {
+      fa12Token = await new Token().init(fa12TokenStorage);
+      fa2Token = await new Token("fa2").init(fa2TokenStorage);
+
+      wrappedToken = await new WrappedToken("fa2").init(
+        wrappedTokenStorage,
+        "wrapped_token",
+      );
+
+      await wrappedToken.createToken(
+        MichelsonMap.fromLiteral({
+          name: Buffer.from("wrapped", "ascii").toString("hex"),
+        }),
+      );
+
       vaultStorage.assets = MichelsonMap.fromLiteral({
         0: {
           asset_type: { fa12: alice.pkh },
@@ -28,12 +53,54 @@ describe("Vault Admin tests", async function () {
 
       vaultStorage.fish = alice.pkh;
       vaultStorage.management = bob.pkh;
+      vaultStorage.fee_balances.set(
+        { fa12: fa12Token.address },
+        {
+          fish_f: 500 * precision,
+          management_f: 500 * precision,
+        },
+      );
+      vaultStorage.fee_balances.set(
+        { fa2: { address: fa2Token.address, id: fa2Token.tokenId } },
+        {
+          fish_f: 500 * precision,
+          management_f: 500 * precision,
+        },
+      );
+      vaultStorage.fee_balances.set(
+        { tez: null },
+        {
+          fish_f: 5 * precision,
+          management_f: 5 * precision,
+        },
+      );
+      vaultStorage.fee_balances.set(
+        {
+          wrapped: { address: wrappedToken.address, id: wrappedToken.tokenId },
+        },
+        {
+          fish_f: 500 * precision,
+          management_f: 500 * precision,
+        },
+      );
+
       vault = await new Vault().init(vaultStorage, "vault");
       const operation = await Tezos.contract.transfer({
         to: eve.pkh,
         amount: 10,
       });
       await confirmOperation(Tezos, operation.hash);
+      await wrappedToken.call("mint", [
+        [{ token_id: 0, recipient: vault.address, amount: 1000 * precision }],
+      ]);
+      await fa12Token.transfer(alice.pkh, vault.address, 100 * precision);
+      await fa2Token.transfer(alice.pkh, vault.address, 100 * precision);
+
+      // const operation_2 = await Tezos.contract.transfer({
+      //   to: vault.address,
+      //   amount: 10,
+      // });
+      // await confirmOperation(Tezos, operation_2.hash);
     } catch (e) {
       console.log(e);
     }
@@ -50,7 +117,7 @@ describe("Vault Admin tests", async function () {
     it("Should allow start transfer ownership", async function () {
       Tezos.setSignerProvider(signerAlice);
 
-      await vault.call("set_owner", bob.pkh);
+      await vault.call("set_owner", bob.pkh, 50);
 
       strictEqual(vault.storage.pending_owner, bob.pkh);
     });
@@ -250,6 +317,101 @@ describe("Vault Admin tests", async function () {
       );
     });
   });
+  describe("Testing entrypoint: Claim_fee", async function () {
+    it("Shouldn't claim fee if the asset is undefined", async function () {
+      Tezos.setSignerProvider(signerEve);
+      await rejects(
+        vault.call("claim_fee", ["fa12", alice.pkh, eve.pkh]),
+        err => {
+          strictEqual(err.message, "Vault/asset-undefined");
+          return true;
+        },
+      );
+    });
+    it("Shouldn't claim fee if the user is not an fish or management", async function () {
+      Tezos.setSignerProvider(signerEve);
+      await rejects(
+        vault.call("claim_fee", ["fa12", fa12Token.address, eve.pkh]),
+        err => {
+          strictEqual(err.message, "Vault/not-fish-or-management");
+          return true;
+        },
+      );
+    });
+    it("Should allow claim fee fa12 token (fish and management)", async function () {
+      const prevAliceBalance = await fa12Token.getBalance(alice.pkh);
+      const prevBobBalance = await fa12Token.getBalance(bob.pkh);
+
+      Tezos.setSignerProvider(signerAlice);
+      await vault.call("claim_fee", ["fa12", fa12Token.address, alice.pkh]);
+      const aliceBalance = await fa12Token.getBalance(alice.pkh);
+
+      Tezos.setSignerProvider(signerBob);
+      await vault.call("claim_fee", ["fa12", fa12Token.address, bob.pkh]);
+      const bobBalance = await fa12Token.getBalance(bob.pkh);
+      const fees = await vault.storage.fee_balances.get({
+        fa12: fa12Token.address,
+      });
+
+      strictEqual(fees.fish_f.toNumber(), 0);
+      strictEqual(fees.management_f.toNumber(), 0);
+      strictEqual(aliceBalance, prevAliceBalance + 500);
+      strictEqual(bobBalance, prevBobBalance + 500);
+    });
+    it("Should allow claim fee fa2 token (fish and management)", async function () {
+      const prevAliceBalance = await fa2Token.getBalance(alice.pkh);
+      const prevBobBalance = await fa2Token.getBalance(bob.pkh);
+
+      Tezos.setSignerProvider(signerAlice);
+      await vault.call("claim_fee", [
+        "fa2",
+        fa2Token.address,
+        fa2Token.tokenId,
+        alice.pkh,
+      ]);
+      const aliceBalance = await fa2Token.getBalance(alice.pkh);
+
+      Tezos.setSignerProvider(signerBob);
+      await vault.call("claim_fee", [
+        "fa2",
+        fa2Token.address,
+        fa2Token.tokenId,
+        bob.pkh,
+      ]);
+      const bobBalance = await fa2Token.getBalance(bob.pkh);
+      const fees = await vault.storage.fee_balances.get({
+        fa2: { address: fa2Token.address, id: fa2Token.tokenId },
+      });
+
+      strictEqual(fees.fish_f.toNumber(), 0);
+      strictEqual(fees.management_f.toNumber(), 0);
+      strictEqual(aliceBalance, prevAliceBalance + 500);
+      strictEqual(bobBalance, prevBobBalance + 500);
+    });
+    it("Should allow claim fee tez (fish and management)", async function () {
+      const prevEveBalance = await Tezos.tz
+        .getBalance(eve.pkh)
+        .then(balance => Math.floor(balance.toNumber()))
+        .catch(error => console.log(JSON.stringify(error)));
+
+      Tezos.setSignerProvider(signerAlice);
+      await vault.call("claim_fee", ["tez", null, eve.pkh]);
+
+      Tezos.setSignerProvider(signerBob);
+      await vault.call("claim_fee", ["tez", null, eve.pkh]);
+      const eveBalance = await Tezos.tz
+        .getBalance(eve.pkh)
+        .then(balance => Math.floor(balance.toNumber()))
+        .catch(error => console.log(JSON.stringify(error)));
+      const fees = await vault.storage.fee_balances.get({
+        tez: null,
+      });
+
+      strictEqual(fees.fish_f.toNumber(), 0);
+      strictEqual(fees.management_f.toNumber(), 0);
+      strictEqual(eveBalance, prevEveBalance + 10);
+    });
+  });
   describe("Testing entrypoint: Toggle_pause_vault", async function () {
     it("Shouldn't pausing vault if the user is not an guardian or owner", async function () {
       Tezos.setSignerProvider(signerAlice);
@@ -383,6 +545,7 @@ describe("Vault Admin tests", async function () {
       strictEqual(meta, Buffer.from("alice").toString("hex"));
     });
   });
+
   describe("Testing entrypoint: Delegate_tez", async function () {
     it("Should allow delegate tez", async function () {
       await vault.call("delegate_tez", alice.pkh);
@@ -407,13 +570,9 @@ describe("Vault Admin tests", async function () {
       strictEqual(bakerRewards.fish_f.toNumber(), 5 * 10 ** 6);
       strictEqual(bakerRewards.management_f.toNumber(), 5 * 10 ** 6);
     });
-
-    it("Should allow withdraw delegated tez", async function () {
-      await vault.call("delegate_tez", null);
-    });
   });
   describe("Testing entrypoint: Claim_baker_rewards", async function () {
-    it("Shouldn't claim baker rewards if the user is not an madfish or management", async function () {
+    it("Shouldn't claim baker rewards if the user is not an fish or management", async function () {
       Tezos.setSignerProvider(signerEve);
       await rejects(vault.call("claim_baker_rewards", eve.pkh), err => {
         strictEqual(err.message, "Vault/not-fish-or-management");
@@ -425,6 +584,7 @@ describe("Vault Admin tests", async function () {
         .getBalance(eve.pkh)
         .then(balance => Math.floor(balance.toNumber()))
         .catch(error => console.log(JSON.stringify(error)));
+      const prevBakerRewards = vault.storage.baker_rewards;
 
       Tezos.setSignerProvider(signerAlice);
       await vault.call("claim_baker_rewards", eve.pkh);
@@ -439,7 +599,13 @@ describe("Vault Admin tests", async function () {
       const bakerRewards = vault.storage.baker_rewards;
       strictEqual(bakerRewards.fish_f.toNumber(), 0);
       strictEqual(bakerRewards.management_f.toNumber(), 0);
-      strictEqual(eveBalance, prevEveBalance + 10);
+      strictEqual(
+        eveBalance,
+        prevEveBalance +
+          (prevBakerRewards.management_f.toNumber() +
+            prevBakerRewards.fish_f.toNumber()) /
+            precision,
+      );
     });
   });
 });

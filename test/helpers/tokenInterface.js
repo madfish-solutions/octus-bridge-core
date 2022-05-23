@@ -63,7 +63,6 @@ module.exports = class Token {
     let operation;
     switch (this.tokenType) {
       case "FA12":
-        console.log(111);
         operation = await this.contract.methods
           .transfer(from, receiver, amount)
           .send();
