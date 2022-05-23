@@ -1,6 +1,6 @@
 function get_or_create_asset(
   const asset_type      : asset_standard_t;
-  const metadata        : option(metadata_t);
+  const metadata        : option(token_meta_t);
   var s                 : storage_t)
                         : get_asset_return_t is
   block {
@@ -32,7 +32,7 @@ function get_or_create_asset(
                     meta,
                     0mutez,
                     unwrap(
-                      (Tezos.get_entrypoint_opt("%create_token", token_.address) : option(contract(metadata_t))),
+                      (Tezos.get_entrypoint_opt("%create_token", token_.address) : option(contract(token_meta_t))),
                       Errors.create_token_etp_404
                     )
                   ) # operations;

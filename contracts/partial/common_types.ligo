@@ -16,11 +16,13 @@ type asset_standard_t   is
 | Tez
 | Wrapped                 of token_t
 
-type metadata_t         is map(string, bytes)
+type token_meta_t       is map(string, bytes)
 
-type token_metadata_t   is [@layout:comb] record [
+type metadata_t         is big_map(string, bytes)
+
+type token_token_meta_t   is [@layout:comb] record [
   token_id                : token_id_t;
-  token_info              : metadata_t;
+  token_info              : token_meta_t;
 ]
 
 type mint_param_t       is [@layout:comb] record [

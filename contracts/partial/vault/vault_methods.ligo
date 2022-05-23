@@ -5,7 +5,7 @@ function deposit(
   block {
     require(not(s.paused), Errors.vault_paused);
 
-    const result = get_or_create_asset(params.asset, (None : option(metadata_t)), s);
+    const result = get_or_create_asset(params.asset, (None : option(token_meta_t)), s);
     var asset := result.asset;
     const asset_id = result.asset_id;
     s := result.storage;
