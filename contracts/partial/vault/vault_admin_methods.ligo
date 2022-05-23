@@ -162,3 +162,30 @@ function claim_baker_rewards(
             Tez(unit)
           )], s)
   else failwith(Errors.not_fish_or_management)
+
+function claim_fee(
+  const params          : claim_fee_t;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    var fees := unwrap(s.fee_balances[params.asset], Errors.asset_undefined);
+    var reward := 0n;
+
+    if Tezos.sender = s.fish
+    then {
+      reward := fees.fish_f / Constants.precision;
+      fees.fish_f := get_nat_or_fail(fees.fish_f - reward * Constants.precision, Errors.not_nat)}
+    else if Tezos.sender = s.management
+      then {
+        reward := fees.management_f / Constants.precision;
+        fees.management_f := get_nat_or_fail(fees.management_f - reward * Constants.precision, Errors.not_nat)}
+    else failwith(Errors.not_fish_or_management) ;
+
+    s.fee_balances[params.asset] := fees;
+  } with (list[
+      wrap_transfer(
+        Tezos.self_address,
+        params.recipient,
+        reward,
+        params.asset
+      )], s)

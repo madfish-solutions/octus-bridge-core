@@ -28,6 +28,7 @@ type parameter_t        is
 | Update_metadata         of metadata_t
 | Delegate_tez            of option(key_hash)
 | Claim_baker_rewards     of address
+| Claim_fee               of claim_fee_t
 | Confirm_owner           of unit
 
 | Deposit                 of deposit_t
@@ -58,6 +59,7 @@ function main(
   | Update_metadata(params)         -> update_metadata(params, s)
   | Delegate_tez(params)            -> delegate_tez(params, s)
   | Claim_baker_rewards(params)     -> claim_baker_rewards(params, s)
+  | Claim_fee(params)               -> claim_fee(params, s)
   | Confirm_owner                   -> confirm_owner(s)
 
   | Deposit(params)                 -> deposit(params, s)

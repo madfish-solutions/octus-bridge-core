@@ -62,7 +62,7 @@ type storage_t          is [@layout:comb] record[
   withdrawal_count        : nat;
   withdrawal_ids          : withdrawal_ids_t;
 
-  fee_balances            : big_map(asset_id_t, fee_balances_t);
+  fee_balances            : big_map(asset_standard_t, fee_balances_t);
   baker_rewards           : baker_rewards_t;
 
   metadata                : metadata_t;
@@ -94,6 +94,11 @@ type withdrawal_data_t  is [@layout:comb] record[
   amount                  : nat;
   recipient               : address;
 	metadata                : option(metadata_t);
+]
+
+type claim_fee_t        is [@layout:comb] record[
+  asset                   : asset_standard_t;
+  recipient               : address;
 ]
 
 [@inline] const no_operations     : list(operation) = nil;
