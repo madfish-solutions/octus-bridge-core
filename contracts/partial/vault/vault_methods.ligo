@@ -22,9 +22,7 @@ function deposit(
 
     const fee = params.amount * asset.deposit_fee_f / Constants.precision;
 
-    const deposited_amount = if fee > 0n
-      then get_nat_or_fail(deposit_without_fee - fee, Errors.not_nat)
-      else deposit_without_fee;
+    const deposited_amount = get_nat_or_fail(deposit_without_fee - fee, Errors.not_nat);
 
     if fee > 0n
     then {
@@ -98,9 +96,7 @@ function withdraw(
 
     const fee = params.amount * asset.withdraw_fee_f / Constants.precision;
 
-    const withdrawal_amount = if fee > 0n
-      then get_nat_or_fail(params.amount - fee, Errors.not_nat)
-      else params.amount;
+    const withdrawal_amount = get_nat_or_fail(params.amount - fee, Errors.not_nat);
 
     if fee > 0n
     then {
