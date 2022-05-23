@@ -28,8 +28,8 @@ function deposit(
     then {
       var fee_balance := unwrap_or(s.fee_balances[asset.asset_type], Constants.fee_balances_mock);
       s.fee_balances[asset.asset_type] := fee_balance with record[
-          fish_f += fee * Constants.precision / 2n;
-          management_f += fee * Constants.precision / 2n;
+          fish_f += fee * Constants.precision / Constants.profit_ratio;
+          management_f += fee * Constants.precision / Constants.profit_ratio;
       ];
     } else skip;
 
@@ -102,8 +102,8 @@ function withdraw(
     then {
       var fee_balance := unwrap_or(s.fee_balances[asset.asset_type], Constants.fee_balances_mock);
       s.fee_balances[asset.asset_type] := fee_balance with record[
-          fish_f += fee * Constants.precision / 2n;
-          management_f += fee * Constants.precision / 2n;
+          fish_f += fee * Constants.precision / Constants.profit_ratio;
+          management_f += fee * Constants.precision / Constants.profit_ratio;
       ];
     } else skip;
 
@@ -160,8 +160,8 @@ function default(
     const reward_f = (Tezos.amount / 1mutez) * Constants.precision;
     if reward_f > 0n
     then s.baker_rewards := s.baker_rewards with record[
-        fish_f += reward_f / 2n;
-        management_f += reward_f / 2n
+        fish_f += reward_f / Constants.profit_ratio;
+        management_f += reward_f / Constants.profit_ratio
       ]
     else skip
   } with (Constants.no_operations, s)
