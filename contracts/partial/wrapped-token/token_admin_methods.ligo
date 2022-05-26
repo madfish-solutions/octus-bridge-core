@@ -4,8 +4,9 @@ function set_vault(
                         : return_t is
   block {
     require(Tezos.sender = s.owner, Errors.not_owner);
-    s.vault := new_address;
-  } with (Constants.no_operations, s)
+  } with (Constants.no_operations, s with record[
+      vault = new_address
+  ])
 
 function update_token_metadata(
   const params          : token_metadata_t;

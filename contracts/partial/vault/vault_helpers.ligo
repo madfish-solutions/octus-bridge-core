@@ -17,34 +17,30 @@ function get_or_create_asset(
         asset_id := s.asset_count;
         s.asset_count := s.asset_count + 1n;
 
-        case s.assets[asset_id] of [
-        | Some(_) -> failwith(Errors.failed_create_asset)
-        | None -> {
-            asset.asset_type := asset_type;
-            case asset_type of [
-            | Wrapped(token_) -> {
-                asset.deposit_fee_f  := s.fees.aliens.deposit_f;
-                asset.withdraw_fee_f := s.fees.aliens.withdraw_f;
+        require_none(s.assets[asset_id], Errors.failed_create_asset);
+        asset.asset_type := asset_type;
+        case asset_type of [
+        | Wrapped(token_) -> {
+            asset.deposit_fee_f  := s.fees.aliens.deposit_f;
+            asset.withdraw_fee_f := s.fees.aliens.withdraw_f;
 
-                const meta = unwrap(metadata, Errors.metadata_undefined);
+            const meta = unwrap(metadata, Errors.metadata_undefined);
 
-                operations := Tezos.transaction(
-                    meta,
-                    0mutez,
-                    unwrap(
-                      (Tezos.get_entrypoint_opt("%create_token", token_.address) : option(contract(token_meta_t))),
-                      Errors.create_token_etp_404
-                    )
-                  ) # operations;
+            operations := Tezos.transaction(
+                meta,
+                0mutez,
+                unwrap(
+                  (Tezos.get_entrypoint_opt("%create_token", token_.address) : option(contract(token_meta_t))),
+                  Errors.create_token_etp_404
+                )
+            ) # operations;
               }
-            | _ -> {
-                asset.deposit_fee_f  := s.fees.native.deposit_f;
-                asset.withdraw_fee_f := s.fees.native.withdraw_f;
+        | _ -> {
+            asset.deposit_fee_f  := s.fees.native.deposit_f;
+            asset.withdraw_fee_f := s.fees.native.withdraw_f;
               }
-            ];
-            s.assets[asset_id] := asset;
-          }
-        ]
+        ];
+        s.assets[asset_id] := asset;
       }
     ];
   } with record[

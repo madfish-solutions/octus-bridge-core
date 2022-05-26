@@ -20,11 +20,6 @@ type token_meta_t       is map(string, bytes)
 
 type metadata_t         is big_map(string, bytes)
 
-type token_token_meta_t   is [@layout:comb] record [
-  token_id                : token_id_t;
-  token_info              : token_meta_t;
-]
-
 type mint_param_t       is [@layout:comb] record [
   token_id                : token_id_t;
   recipient               : address;
