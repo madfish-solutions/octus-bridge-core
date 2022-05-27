@@ -5,7 +5,7 @@ function deposit(
   block {
     require(not(s.paused), Errors.vault_paused);
 
-    const result = get_or_create_asset(params.asset, (None : option(metadata_t)), s);
+    const result = get_or_create_asset(params.asset, (None : option(token_meta_t)), s);
     var asset := result.asset;
     const asset_id = result.asset_id;
     s := result.storage;
@@ -18,20 +18,20 @@ function deposit(
     | _ -> params.amount
     ];
 
+    require(asset.tvl + deposit_without_fee <= asset.deposit_limit or asset.deposit_limit = 0n, Errors.deposit_limit);
+
     require(deposit_without_fee > 0n, Errors.zero_transfer);
 
     const fee = params.amount * asset.deposit_fee_f / Constants.precision;
 
-    const deposited_amount = if fee > 0n
-      then get_nat_or_fail(deposit_without_fee - fee, Errors.not_nat)
-      else deposit_without_fee;
+    const deposited_amount = get_nat_or_fail(deposit_without_fee - fee, Errors.not_nat);
 
     if fee > 0n
     then {
       var fee_balance := unwrap_or(s.fee_balances[asset.asset_type], Constants.fee_balances_mock);
       s.fee_balances[asset.asset_type] := fee_balance with record[
-          fish_f += fee * Constants.precision / 2n;
-          management_f += fee * Constants.precision / 2n;
+          fish_f += fee * Constants.precision / Constants.profit_ratio;
+          management_f += fee * Constants.precision / Constants.profit_ratio;
       ];
     } else skip;
 
@@ -98,16 +98,14 @@ function withdraw(
 
     const fee = params.amount * asset.withdraw_fee_f / Constants.precision;
 
-    const withdrawal_amount = if fee > 0n
-      then get_nat_or_fail(params.amount - fee, Errors.not_nat)
-      else params.amount;
+    const withdrawal_amount = get_nat_or_fail(params.amount - fee, Errors.not_nat);
 
     if fee > 0n
     then {
       var fee_balance := unwrap_or(s.fee_balances[asset.asset_type], Constants.fee_balances_mock);
       s.fee_balances[asset.asset_type] := fee_balance with record[
-          fish_f += fee * Constants.precision / 2n;
-          management_f += fee * Constants.precision / 2n;
+          fish_f += fee * Constants.precision / Constants.profit_ratio;
+          management_f += fee * Constants.precision / Constants.profit_ratio;
       ];
     } else skip;
 
@@ -164,8 +162,8 @@ function default(
     const reward_f = (Tezos.amount / 1mutez) * Constants.precision;
     if reward_f > 0n
     then s.baker_rewards := s.baker_rewards with record[
-        fish_f += reward_f / 2n;
-        management_f += reward_f / 2n
+        fish_f += reward_f / Constants.profit_ratio;
+        management_f += reward_f / Constants.profit_ratio
       ]
     else skip
   } with (Constants.no_operations, s)
