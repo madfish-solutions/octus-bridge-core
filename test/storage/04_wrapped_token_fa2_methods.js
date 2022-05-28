@@ -15,7 +15,10 @@ describe("Wrapped token FA2 methods test", async function () {
     try {
       Tezos.setSignerProvider(signerAlice);
       try {
-        token = await new WrappedToken().init(wrappedStorage, "wrapped_token");
+        token = await new WrappedToken("FA2").init(
+          wrappedStorage,
+          "wrapped_token",
+        );
       } catch (e) {
         console.log(e);
       }
@@ -62,13 +65,13 @@ describe("Wrapped token FA2 methods test", async function () {
     // Scenario 2
     describe("Scenario 2: Should cases Transfer", async function () {
       it("Should allow Transfer", async function () {
-        const prevAliceBalance = await token.getBalance(alice.pkh, 0);
-        const prevBobBalance = await token.getBalance(bob.pkh, 0);
+        const prevAliceBalance = await token.getWBalance(alice.pkh, 0);
+        const prevBobBalance = await token.getWBalance(bob.pkh, 0);
         await token.transfer(alice.pkh, bob.pkh, transferAmount);
         await token.updateStorage();
 
-        const aliceBalance = await token.getBalance(alice.pkh, 0);
-        const bobBalance = await token.getBalance(bob.pkh, 0);
+        const aliceBalance = await token.getWBalance(alice.pkh, 0);
+        const bobBalance = await token.getWBalance(bob.pkh, 0);
 
         strictEqual(bobBalance, prevBobBalance + transferAmount);
         strictEqual(aliceBalance, prevAliceBalance - transferAmount);

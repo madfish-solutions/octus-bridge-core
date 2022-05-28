@@ -30,21 +30,16 @@ function set_guardian(
     require(Tezos.sender = s.guardian, Errors.not_guardian)
   } with (Constants.no_operations, s with record[guardian = new_guardian])
 
-function set_baker(
-  const new_baker       : key_hash;
-  const s               : storage_t)
-                        : return_t is
-  block {
-    require(Tezos.sender = s.owner, Errors.not_owner)
-  } with (Constants.no_operations, s with record[baker = new_baker])
-
 function set_deposit_limit(
-  const value           : nat;
-  const s               : storage_t)
+  const params          : set_deposit_limit_t;
+  var s                 : storage_t)
                         : return_t is
   block {
-    require(Tezos.sender = s.owner, Errors.not_owner)
-  } with (Constants.no_operations, s with record[deposit_limit = value])
+    require(Tezos.sender = s.owner, Errors.not_owner);
+    var asset := unwrap(s.assets[params.asset_id], Errors.asset_undefined);
+    asset.deposit_limit := params.deposit_limit;
+    s.assets[params.asset_id] := asset;
+  } with (Constants.no_operations, s)
 
 function set_fees(
   const new_fees        : vault_fees_t;
@@ -130,3 +125,67 @@ function toggle_ban_asset(
         s.banned_assets
       )])
 
+function delegate_tez(
+  const baker           : option(key_hash);
+  const s               : storage_t)
+                        : return_t is
+  block {
+    require(Tezos.sender = s.owner, Errors.not_owner)
+  } with (list[Tezos.set_delegate(baker)], s)
+
+function claim_baker_rewards(
+  const recipient       : address;
+  var s                 : storage_t)
+                        : return_t is
+  if Tezos.sender = s.fish
+  then block {
+      const reward = s.baker_rewards.fish_f / Constants.precision;
+
+      s.baker_rewards.fish_f := get_nat_or_fail(s.baker_rewards.fish_f - reward * Constants.precision, Errors.not_nat)
+    } with (list[
+          wrap_transfer(
+            Tezos.self_address,
+            recipient,
+            reward,
+            Tez(unit)
+          )], s)
+  else if Tezos.sender = s.management
+    then block {
+      const reward = s.baker_rewards.management_f / Constants.precision;
+
+      s.baker_rewards.management_f := get_nat_or_fail(s.baker_rewards.management_f - reward * Constants.precision, Errors.not_nat)
+    } with (list[
+          wrap_transfer(
+            Tezos.self_address,
+            recipient,
+            reward,
+            Tez(unit)
+          )], s)
+  else failwith(Errors.not_fish_or_management)
+
+function claim_fee(
+  const params          : claim_fee_t;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    var fees := unwrap(s.fee_balances[params.asset], Errors.asset_undefined);
+    var reward := 0n;
+
+    if Tezos.sender = s.fish
+    then {
+      reward := fees.fish_f / Constants.precision;
+      fees.fish_f := get_nat_or_fail(fees.fish_f - reward * Constants.precision, Errors.not_nat)}
+    else if Tezos.sender = s.management
+      then {
+        reward := fees.management_f / Constants.precision;
+        fees.management_f := get_nat_or_fail(fees.management_f - reward * Constants.precision, Errors.not_nat)}
+    else failwith(Errors.not_fish_or_management) ;
+
+    s.fee_balances[params.asset] := fees;
+  } with (list[
+      wrap_transfer(
+        Tezos.self_address,
+        params.recipient,
+        reward,
+        params.asset
+      )], s)

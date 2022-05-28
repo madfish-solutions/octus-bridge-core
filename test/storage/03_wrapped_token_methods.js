@@ -11,7 +11,10 @@ describe("Wrapped token methods test", async function () {
   before(async () => {
     Tezos.setSignerProvider(signerAlice);
     try {
-      token = await new WrappedToken().init(wrappedStorage, "wrapped_token");
+      token = await new WrappedToken("FA2").init(
+        wrappedStorage,
+        "wrapped_token",
+      );
     } catch (e) {
       console.log(e);
     }
@@ -119,7 +122,7 @@ describe("Wrapped token methods test", async function () {
       ]);
 
       const tokenSupply = await token.storage.tokens_supply.get("0");
-      const balance = await token.getBalance(bob.pkh, 0);
+      const balance = await token.getWBalance(bob.pkh, 0);
       strictEqual(tokenSupply.toNumber(), 10000);
       strictEqual(balance, 10000);
     });

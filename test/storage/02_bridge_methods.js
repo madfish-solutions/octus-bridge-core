@@ -330,6 +330,7 @@ describe("Bridge-core methods test", async function () {
           return true;
         },
       );
+      bridgeStorage.paused = false;
     });
   });
 });
