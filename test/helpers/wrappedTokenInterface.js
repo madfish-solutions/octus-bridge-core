@@ -14,7 +14,6 @@ module.exports = class WrappedToken extends Token {
 
       return balance.toNumber();
     } catch (e) {
-      console.log(e);
       return 0;
     }
   }
