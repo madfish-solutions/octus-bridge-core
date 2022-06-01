@@ -15,6 +15,7 @@ describe("Wrapped token methods test", async function () {
         wrappedStorage,
         "wrapped_token",
       );
+      const balance = await token.getWBalance(bob.pkh, 0);
     } catch (e) {
       console.log(e);
     }

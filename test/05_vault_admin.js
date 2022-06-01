@@ -53,35 +53,21 @@ describe("Vault Admin tests", async function () {
 
       vaultStorage.fish = alice.pkh;
       vaultStorage.management = bob.pkh;
-      vaultStorage.fee_balances.set(
-        { fa12: fa12Token.address },
-        {
-          fish_f: 500 * precision,
-          management_f: 500 * precision,
-        },
-      );
+      const feeBalances = MichelsonMap.fromLiteral({
+        [alice.pkh]: 500 * precision,
+        [bob.pkh]: 500 * precision,
+      });
+      vaultStorage.fee_balances.set({ fa12: fa12Token.address }, feeBalances);
       vaultStorage.fee_balances.set(
         { fa2: { address: fa2Token.address, id: fa2Token.tokenId } },
-        {
-          fish_f: 500 * precision,
-          management_f: 500 * precision,
-        },
+        feeBalances,
       );
-      vaultStorage.fee_balances.set(
-        { tez: null },
-        {
-          fish_f: 5 * precision,
-          management_f: 5 * precision,
-        },
-      );
+      vaultStorage.fee_balances.set({ tez: null }, feeBalances);
       vaultStorage.fee_balances.set(
         {
           wrapped: { address: wrappedToken.address, id: wrappedToken.tokenId },
         },
-        {
-          fish_f: 500 * precision,
-          management_f: 500 * precision,
-        },
+        feeBalances,
       );
 
       vault = await new Vault().init(vaultStorage, "vault");
@@ -328,12 +314,12 @@ describe("Vault Admin tests", async function () {
         },
       );
     });
-    it("Shouldn't claim fee if the user is not an fish or management", async function () {
+    it("Shouldn't claim fee if fee balance is zero", async function () {
       Tezos.setSignerProvider(signerEve);
       await rejects(
         vault.call("claim_fee", ["fa12", fa12Token.address, eve.pkh]),
         err => {
-          strictEqual(err.message, "Vault/not-fish-or-management");
+          strictEqual(err.message, "Vault/zero-fee-balance");
           return true;
         },
       );
@@ -352,9 +338,10 @@ describe("Vault Admin tests", async function () {
       const fees = await vault.storage.fee_balances.get({
         fa12: fa12Token.address,
       });
-
-      strictEqual(fees.fish_f.toNumber(), 0);
-      strictEqual(fees.management_f.toNumber(), 0);
+      const fishFee = await fees.get(vault.storage.fish);
+      const managementFee = await fees.get(vault.storage.management);
+      strictEqual(fishFee.toNumber(), 0);
+      strictEqual(managementFee.toNumber(), 0);
       strictEqual(aliceBalance, prevAliceBalance + 500);
       strictEqual(bobBalance, prevBobBalance + 500);
     });
@@ -382,9 +369,11 @@ describe("Vault Admin tests", async function () {
       const fees = await vault.storage.fee_balances.get({
         fa2: { address: fa2Token.address, id: fa2Token.tokenId },
       });
+      const fishFee = await fees.get(vault.storage.fish);
+      const managementFee = await fees.get(vault.storage.management);
 
-      strictEqual(fees.fish_f.toNumber(), 0);
-      strictEqual(fees.management_f.toNumber(), 0);
+      strictEqual(fishFee.toNumber(), 0);
+      strictEqual(managementFee.toNumber(), 0);
       strictEqual(aliceBalance, prevAliceBalance + 500);
       strictEqual(bobBalance, prevBobBalance + 500);
     });
@@ -406,10 +395,12 @@ describe("Vault Admin tests", async function () {
       const fees = await vault.storage.fee_balances.get({
         tez: null,
       });
+      const fishFee = await fees.get(vault.storage.fish);
+      const managementFee = await fees.get(vault.storage.management);
 
-      strictEqual(fees.fish_f.toNumber(), 0);
-      strictEqual(fees.management_f.toNumber(), 0);
-      strictEqual(eveBalance, prevEveBalance + 10);
+      strictEqual(fishFee.toNumber(), 0);
+      strictEqual(managementFee.toNumber(), 0);
+      strictEqual(eveBalance, prevEveBalance + 1000);
     });
   });
   describe("Testing entrypoint: Toggle_pause_vault", async function () {
@@ -566,16 +557,20 @@ describe("Vault Admin tests", async function () {
   describe("Testing entrypoint: Default (baker rewards)", async function () {
     it("Should allow receive baker rewards", async function () {
       await vault.call("default", null, 10 / 1e6);
-      const bakerRewards = vault.storage.baker_rewards;
-      strictEqual(bakerRewards.fish_f.toNumber(), 5 * 10 ** 6);
-      strictEqual(bakerRewards.management_f.toNumber(), 5 * 10 ** 6);
+
+      const fishFee = await vault.storage.baker_rewards.get(vault.storage.fish);
+      const managementFee = await vault.storage.baker_rewards.get(
+        vault.storage.management,
+      );
+      strictEqual(fishFee.toNumber(), 5 * 10 ** 6);
+      strictEqual(managementFee.toNumber(), 5 * 10 ** 6);
     });
   });
   describe("Testing entrypoint: Claim_baker_rewards", async function () {
-    it("Shouldn't claim baker rewards if the user is not an fish or management", async function () {
+    it("Shouldn't claim baker rewards if baker rewards is zero", async function () {
       Tezos.setSignerProvider(signerEve);
       await rejects(vault.call("claim_baker_rewards", eve.pkh), err => {
-        strictEqual(err.message, "Vault/not-fish-or-management");
+        strictEqual(err.message, "Vault/zero-fee-balance");
         return true;
       });
     });
@@ -584,7 +579,12 @@ describe("Vault Admin tests", async function () {
         .getBalance(eve.pkh)
         .then(balance => Math.floor(balance.toNumber()))
         .catch(error => console.log(JSON.stringify(error)));
-      const prevBakerRewards = vault.storage.baker_rewards;
+      const prevFishFee = await vault.storage.baker_rewards.get(
+        vault.storage.fish,
+      );
+      const prevManagementFee = await vault.storage.baker_rewards.get(
+        vault.storage.management,
+      );
 
       Tezos.setSignerProvider(signerAlice);
       await vault.call("claim_baker_rewards", eve.pkh);
@@ -596,15 +596,16 @@ describe("Vault Admin tests", async function () {
         .then(balance => Math.floor(balance.toNumber()))
         .catch(error => console.log(JSON.stringify(error)));
 
-      const bakerRewards = vault.storage.baker_rewards;
-      strictEqual(bakerRewards.fish_f.toNumber(), 0);
-      strictEqual(bakerRewards.management_f.toNumber(), 0);
+      const fishFee = await vault.storage.baker_rewards.get(vault.storage.fish);
+      const managementFee = await vault.storage.baker_rewards.get(
+        vault.storage.management,
+      );
+      strictEqual(fishFee.toNumber(), 0);
+      strictEqual(managementFee.toNumber(), 0);
       strictEqual(
         eveBalance,
         prevEveBalance +
-          (prevBakerRewards.management_f.toNumber() +
-            prevBakerRewards.fish_f.toNumber()) /
-            precision,
+          (prevFishFee.toNumber() + prevManagementFee.toNumber()) / precision,
       );
     });
   });

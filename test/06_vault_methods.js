@@ -232,13 +232,15 @@ describe("Vault methods tests", async function () {
       const feeBalances = await vault.storage.fee_balances.get({
         fa12: fa12Token.address,
       });
+      const fishFee = await feeBalances.get(vault.storage.fish);
+      const managementFee = await feeBalances.get(vault.storage.management);
 
       const newDeposit = await vault.storage.deposits.get("0");
       strictEqual(vault.storage.deposit_count.toNumber(), prevDepositCount + 1);
       strictEqual(asset.tvl.toNumber(), depositAmount - fee);
       strictEqual(vaultBalance, depositAmount);
-      strictEqual(feeBalances.fish_f.toNumber(), (fee * precision) / 2);
-      strictEqual(feeBalances.management_f.toNumber(), (fee * precision) / 2);
+      strictEqual(fishFee.toNumber(), (fee * precision) / 2);
+      strictEqual(managementFee.toNumber(), (fee * precision) / 2);
       strictEqual(newDeposit.recipient, "001100");
       strictEqual(newDeposit.amount.toNumber(), depositAmount - fee);
       deepEqual(newDeposit.asset, {
@@ -270,14 +272,16 @@ describe("Vault methods tests", async function () {
       const feeBalances = await vault.storage.fee_balances.get({
         fa2: { address: fa2Token.address, id: 0 },
       });
+      const fishFee = await feeBalances.get(vault.storage.fish);
+      const managementFee = await feeBalances.get(vault.storage.management);
 
       const newDeposit = await vault.storage.deposits.get("1");
 
       strictEqual(vault.storage.deposit_count.toNumber(), prevDepositCount + 1);
       strictEqual(asset.tvl.toNumber(), depositAmount - fee);
       strictEqual(vaultBalance, depositAmount);
-      strictEqual(feeBalances.fish_f.toNumber(), (fee * precision) / 2);
-      strictEqual(feeBalances.management_f.toNumber(), (fee * precision) / 2);
+      strictEqual(fishFee.toNumber(), (fee * precision) / 2);
+      strictEqual(managementFee.toNumber(), (fee * precision) / 2);
       strictEqual(newDeposit.recipient, "001100");
       strictEqual(newDeposit.amount.toNumber(), depositAmount - fee);
       deepEqual(newDeposit.asset, {
@@ -290,9 +294,8 @@ describe("Vault methods tests", async function () {
     it("Should deposit tez asset", async function () {
       const depositAmount = 100 * precision;
       const prevDepositCount = vault.storage.deposit_count.toNumber();
-      const prevFeeBalances = await vault.storage.fee_balances.get({
-        tez: null,
-      });
+      const prevFishFee = 0;
+      const prevManagementFee = 0;
       await vault.call(
         "deposit",
         ["001100", depositAmount, "tez"],
@@ -307,19 +310,18 @@ describe("Vault methods tests", async function () {
         (depositAmount * asset.deposit_fee_f.toNumber()) / precision,
       );
       const feeBalances = await vault.storage.fee_balances.get({ tez: null });
+      const fishFee = await feeBalances.get(vault.storage.fish);
+      const managementFee = await feeBalances.get(vault.storage.management);
 
       const newDeposit = await vault.storage.deposits.get("2");
 
       strictEqual(vault.storage.deposit_count.toNumber(), prevDepositCount + 1);
       strictEqual(asset.tvl.toNumber(), depositAmount - fee);
       strictEqual(vaultBalance, depositAmount);
+      strictEqual(fishFee.toNumber(), prevFishFee + (fee * precision) / 2);
       strictEqual(
-        feeBalances.fish_f.toNumber(),
-        prevFeeBalances.fish_f.toNumber() + (fee * precision) / 2,
-      );
-      strictEqual(
-        feeBalances.management_f.toNumber(),
-        prevFeeBalances.management_f.toNumber() + (fee * precision) / 2,
+        managementFee.toNumber(),
+        prevManagementFee + (fee * precision) / 2,
       );
       strictEqual(newDeposit.recipient, "001100");
       strictEqual(newDeposit.amount.toNumber(), depositAmount - fee);
@@ -350,14 +352,16 @@ describe("Vault methods tests", async function () {
       const feeBalances = await vault.storage.fee_balances.get({
         wrapped: { address: wrappedToken.address, id: 0 },
       });
+      const fishFee = await feeBalances.get(vault.storage.fish);
+      const managementFee = await feeBalances.get(vault.storage.management);
 
       const newDeposit = await vault.storage.deposits.get("3");
 
       strictEqual(vault.storage.deposit_count.toNumber(), prevDepositCount + 1);
       strictEqual(asset.tvl.toNumber(), 0);
       strictEqual(aliceBalance, 0);
-      strictEqual(feeBalances.fish_f.toNumber(), (fee * precision) / 2);
-      strictEqual(feeBalances.management_f.toNumber(), (fee * precision) / 2);
+      strictEqual(fishFee.toNumber(), (fee * precision) / 2);
+      strictEqual(managementFee.toNumber(), (fee * precision) / 2);
       strictEqual(newDeposit.recipient, "001100");
       strictEqual(newDeposit.amount.toNumber(), depositAmount - fee);
       deepEqual(newDeposit.asset, {
@@ -414,6 +418,8 @@ describe("Vault methods tests", async function () {
       const feeBalances = await vault.storage.fee_balances.get({
         fa12: fa12Token_3.address,
       });
+      const fishFee = await feeBalances.get(vault.storage.fish);
+      const managementFee = await feeBalances.get(vault.storage.management);
 
       const newDeposit = await vault.storage.deposits.get("5");
 
@@ -421,8 +427,8 @@ describe("Vault methods tests", async function () {
       strictEqual(prevAsset, undefined);
       strictEqual(asset.tvl.toNumber(), depositAmount - fee);
       strictEqual(vaultBalance, depositAmount);
-      strictEqual(feeBalances.fish_f.toNumber(), (fee * precision) / 2);
-      strictEqual(feeBalances.management_f.toNumber(), (fee * precision) / 2);
+      strictEqual(fishFee.toNumber(), (fee * precision) / 2);
+      strictEqual(managementFee.toNumber(), (fee * precision) / 2);
       strictEqual(newDeposit.recipient, "001100");
       strictEqual(newDeposit.amount.toNumber(), depositAmount - fee);
       deepEqual(newDeposit.asset, {
@@ -663,6 +669,10 @@ describe("Vault methods tests", async function () {
       const prevFeeBalances = await vault.storage.fee_balances.get({
         fa12: fa12Token.address,
       });
+      const prevFishFee = await prevFeeBalances.get(vault.storage.fish);
+      const prevManagementFee = await prevFeeBalances.get(
+        vault.storage.management,
+      );
 
       await vault.call("withdraw", {
         payload: payload,
@@ -678,6 +688,8 @@ describe("Vault methods tests", async function () {
       const feeBalances = await vault.storage.fee_balances.get({
         fa12: fa12Token.address,
       });
+      const fishFee = await feeBalances.get(vault.storage.fish);
+      const managementFee = await feeBalances.get(vault.storage.management);
 
       const newWithdrawal = await vault.storage.withdrawals.get("0");
       const newWithdrawalId = await vault.storage.withdrawal_ids.get(payload);
@@ -692,12 +704,12 @@ describe("Vault methods tests", async function () {
       strictEqual(vaultBalance, prevVaultBalance - (withdrawalAmount - fee));
       strictEqual(aliceBalance, prevAliceBalance + withdrawalAmount - fee);
       strictEqual(
-        feeBalances.fish_f.toNumber(),
-        prevFeeBalances.fish_f.toNumber() + (fee * precision) / 2,
+        fishFee.toNumber(),
+        prevFishFee.toNumber() + (fee * precision) / 2,
       );
       strictEqual(
-        feeBalances.management_f.toNumber(),
-        prevFeeBalances.management_f.toNumber() + (fee * precision) / 2,
+        managementFee.toNumber(),
+        prevManagementFee.toNumber() + (fee * precision) / 2,
       );
       strictEqual(newWithdrawal.recipient, alice.pkh);
       strictEqual(newWithdrawal.amount.toNumber(), withdrawalAmount);
@@ -729,6 +741,10 @@ describe("Vault methods tests", async function () {
       const prevFeeBalances = await vault.storage.fee_balances.get({
         fa2: { address: fa2Token.address, id: 0 },
       });
+      const prevFishFee = await prevFeeBalances.get(vault.storage.fish);
+      const prevManagementFee = await prevFeeBalances.get(
+        vault.storage.management,
+      );
 
       await vault.call("withdraw", {
         payload: payload,
@@ -744,6 +760,8 @@ describe("Vault methods tests", async function () {
       const feeBalances = await vault.storage.fee_balances.get({
         fa2: { address: fa2Token.address, id: 0 },
       });
+      const fishFee = await feeBalances.get(vault.storage.fish);
+      const managementFee = await feeBalances.get(vault.storage.management);
 
       const newWithdrawal = await vault.storage.withdrawals.get("1");
       const newWithdrawalId = await vault.storage.withdrawal_ids.get(payload);
@@ -758,12 +776,12 @@ describe("Vault methods tests", async function () {
       strictEqual(vaultBalance, prevVaultBalance - (withdrawalAmount - fee));
       strictEqual(aliceBalance, prevAliceBalance + (withdrawalAmount - fee));
       strictEqual(
-        feeBalances.fish_f.toNumber(),
-        prevFeeBalances.fish_f.toNumber() + (fee * precision) / 2,
+        fishFee.toNumber(),
+        prevFishFee.toNumber() + (fee * precision) / 2,
       );
       strictEqual(
-        feeBalances.management_f.toNumber(),
-        prevFeeBalances.management_f.toNumber() + (fee * precision) / 2,
+        managementFee.toNumber(),
+        prevManagementFee.toNumber() + (fee * precision) / 2,
       );
       strictEqual(newWithdrawal.recipient, alice.pkh);
       strictEqual(newWithdrawal.amount.toNumber(), withdrawalAmount);
@@ -800,6 +818,10 @@ describe("Vault methods tests", async function () {
       const prevFeeBalances = await vault.storage.fee_balances.get({
         tez: null,
       });
+      const prevFishFee = await prevFeeBalances.get(vault.storage.fish);
+      const prevManagementFee = await prevFeeBalances.get(
+        vault.storage.management,
+      );
 
       await vault.call("withdraw", {
         payload: payload,
@@ -820,6 +842,8 @@ describe("Vault methods tests", async function () {
       );
 
       const feeBalances = await vault.storage.fee_balances.get({ tez: null });
+      const fishFee = await feeBalances.get(vault.storage.fish);
+      const managementFee = await feeBalances.get(vault.storage.management);
 
       const newWithdrawal = await vault.storage.withdrawals.get("2");
       const newWithdrawalId = await vault.storage.withdrawal_ids.get(payload);
@@ -840,12 +864,12 @@ describe("Vault methods tests", async function () {
         prevAliceBalance + Math.ceil(withdrawalAmount - fee),
       );
       strictEqual(
-        feeBalances.fish_f.toNumber(),
-        prevFeeBalances.fish_f.toNumber() + (fee * precision) / 2,
+        fishFee.toNumber(),
+        prevFishFee.toNumber() + (fee * precision) / 2,
       );
       strictEqual(
-        feeBalances.management_f.toNumber(),
-        prevFeeBalances.management_f.toNumber() + (fee * precision) / 2,
+        managementFee.toNumber(),
+        prevManagementFee.toNumber() + (fee * precision) / 2,
       );
       strictEqual(newWithdrawal.recipient, alice.pkh);
       strictEqual(newWithdrawal.amount.toNumber(), withdrawalAmount);
@@ -876,7 +900,10 @@ describe("Vault methods tests", async function () {
       const prevFeeBalances = await vault.storage.fee_balances.get({
         wrapped: { address: wrappedToken.address, id: 0 },
       });
-
+      const prevFishFee = await prevFeeBalances.get(vault.storage.fish);
+      const prevManagementFee = await prevFeeBalances.get(
+        vault.storage.management,
+      );
       await vault.call("withdraw", {
         payload: payload,
         signatures: MichelsonMap.fromLiteral({ [alice.pk]: signature.sig }),
@@ -891,6 +918,8 @@ describe("Vault methods tests", async function () {
       const feeBalances = await vault.storage.fee_balances.get({
         wrapped: { address: wrappedToken.address, id: 0 },
       });
+      const fishFee = await feeBalances.get(vault.storage.fish);
+      const managementFee = await feeBalances.get(vault.storage.management);
 
       const newWithdrawal = await vault.storage.withdrawals.get("3");
       const newWithdrawalId = await vault.storage.withdrawal_ids.get(payload);
@@ -904,12 +933,12 @@ describe("Vault methods tests", async function () {
       );
       strictEqual(aliceBalance, prevAliceBalance + (withdrawalAmount - fee));
       strictEqual(
-        feeBalances.fish_f.toNumber(),
-        prevFeeBalances.fish_f.toNumber() + (fee * precision) / 2,
+        fishFee.toNumber(),
+        prevFishFee.toNumber() + (fee * precision) / 2,
       );
       strictEqual(
-        feeBalances.management_f.toNumber(),
-        prevFeeBalances.management_f.toNumber() + (fee * precision) / 2,
+        managementFee.toNumber(),
+        prevManagementFee.toNumber() + (fee * precision) / 2,
       );
       strictEqual(newWithdrawal.recipient, alice.pkh);
       strictEqual(newWithdrawal.amount.toNumber(), withdrawalAmount);

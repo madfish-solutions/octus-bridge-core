@@ -36,6 +36,7 @@ module.exports = class Token {
 
   async updateStorage() {
     this.storage = await this.contract.storage();
+    return this.storage;
   }
 
   async approveToken(operator, amount = 0, owner = null, token_id = 0) {
