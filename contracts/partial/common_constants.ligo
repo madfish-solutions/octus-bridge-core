@@ -4,6 +4,7 @@ module Constants is {
   const empty_allowances  : set(address) = set[];
   const precision         : nat = 1_000_000n;
   const zero_address      : address = ("tz1ZZZZZZZZZZZZZZZZZZZZZZZZZZZZNkiRg" : address);
+  const profit_ratio      : nat = 2n;
   const asset_mock        : asset_t = record[
     asset_type      = Fa12(zero_address);
     deposit_fee_f   = 0n;

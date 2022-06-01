@@ -87,7 +87,7 @@ describe("Vault methods tests", async function () {
           asset_type: { fa12: fa12Token.address },
           deposit_fee_f: 100000,
           withdraw_fee_f: 100000,
-          deposit_limit: 0,
+          deposit_limit: 1000 * precision,
           tvl: 0,
           virtual_balance: 0,
           paused: false,
@@ -192,6 +192,20 @@ describe("Vault methods tests", async function () {
         vault.call("deposit", ["001100", 0, "fa12", alice.pkh]),
         err => {
           strictEqual(err.message, "Vault/asset-is-paused");
+          return true;
+        },
+      );
+    });
+    it("Shouldn't deposit if amount + tvl > deposit limit", async function () {
+      await rejects(
+        vault.call("deposit", [
+          "001100",
+          99999 * precision,
+          "fa12",
+          fa12Token.address,
+        ]),
+        err => {
+          strictEqual(err.message, "Vault/respect-deposit-limit");
           return true;
         },
       );
