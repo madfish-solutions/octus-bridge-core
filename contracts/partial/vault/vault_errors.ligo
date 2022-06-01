@@ -18,6 +18,7 @@ module Errors is {
   const vault_paused              : string = "Vault/vault-is-paused";
   const zero_transfer             : string = "Vault/zero-transfer";
   const not_nat                   : string = "Vault/not-nat";
+  const amounts_mismatch          : string = "Vault/amounts-mismatch";
   const failed_create_asset       : string = "Vault/failed-create-asset";
   const validate_message_view_404 : string = "Vault/validate-message-view-404";
   const round_greater_last_round  : string = "Vault/round-greater-than-last-round";

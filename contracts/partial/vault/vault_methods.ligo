@@ -47,7 +47,10 @@ function deposit(
         ) # operations;
       asset.tvl := get_nat_or_fail(asset.tvl - deposited_amount, Errors.not_nat)
      }
-    | Tez -> asset.tvl := asset.tvl + deposited_amount
+    | Tez -> {
+        require(deposit_without_fee = params.amount, Errors.amounts_mismatch);
+        asset.tvl := asset.tvl + deposited_amount
+      }
     | _ -> {
         operations := wrap_transfer(
           Tezos.sender,
