@@ -30,7 +30,7 @@ type withdrawal_t       is [@layout:comb] record[
   asset                   : asset_standard_t;
   amount                  : nat;
   recipient               : address;
-	metadata                : option(metadata_t);
+	metadata                : option(token_meta_t);
   signatures              : signatures_t;
 ]
 
@@ -90,7 +90,7 @@ type withdrawal_data_t  is [@layout:comb] record[
   asset                   : asset_standard_t;
   amount                  : nat;
   recipient               : address;
-	metadata                : option(metadata_t);
+	metadata                : option(token_meta_t);
 ]
 
 type claim_fee_t        is [@layout:comb] record[

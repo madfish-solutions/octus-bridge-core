@@ -5,7 +5,7 @@ function deposit(
   block {
     require(not(s.paused), Errors.vault_paused);
 
-    const result = get_or_create_asset(params.asset, (None : option(metadata_t)), s);
+    const result = get_or_create_asset(params.asset, (None : option(token_meta_t)), s);
     var asset := result.asset;
     const asset_id = result.asset_id;
     s := result.storage;
@@ -18,13 +18,13 @@ function deposit(
     | _ -> params.amount
     ];
 
+    require(asset.tvl + deposit_without_fee <= asset.deposit_limit or asset.deposit_limit = 0n, Errors.deposit_limit);
+
     require(deposit_without_fee > 0n, Errors.zero_transfer);
 
     const fee = params.amount * asset.deposit_fee_f / Constants.precision;
 
-    const deposited_amount = if fee > 0n
-      then get_nat_or_fail(deposit_without_fee - fee, Errors.not_nat)
-      else deposit_without_fee;
+    const deposited_amount = get_nat_or_fail(deposit_without_fee - fee, Errors.not_nat);
 
     if fee > 0n
     then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset.asset_type)
@@ -96,9 +96,7 @@ function withdraw(
 
     const fee = params.amount * asset.withdraw_fee_f / Constants.precision;
 
-    const withdrawal_amount = if fee > 0n
-      then get_nat_or_fail(params.amount - fee, Errors.not_nat)
-      else params.amount;
+    const withdrawal_amount = get_nat_or_fail(params.amount - fee, Errors.not_nat);
 
     if fee > 0n
     then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset.asset_type)

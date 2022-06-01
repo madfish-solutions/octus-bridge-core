@@ -48,3 +48,6 @@ type fa2_transfer_param_t is [@layout:comb] record [
 type fa2_transfer_t     is list(fa2_transfer_param_t)
 
 type fa12_transfer_t    is michelson_pair(address, "from", michelson_pair(address, "to", nat, "value"), "")
+
+type approve_fa12_token_t is michelson_pair(address, "spender", nat, "value")
+type approve_fa2_token_t  is update_operator_params_t
