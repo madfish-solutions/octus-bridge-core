@@ -1,12 +1,12 @@
 const { OpKind } = require("@taquito/taquito");
 
-const SYNC_INTERVAL = 10000;
-const CONFIRM_TIMEOUT = 60000;
+const SYNC_INTERVAL = 500;
+const CONFIRM_TIMEOUT = 5000;
 
 async function confirmOperation(
   tezos,
   opHash,
-  { initializedAt, fromBlockLevel, signal } = {}
+  { initializedAt, fromBlockLevel, signal } = {},
 ) {
   if (!initializedAt) initializedAt = Date.now();
   if (initializedAt && initializedAt + CONFIRM_TIMEOUT < Date.now()) {
@@ -46,7 +46,7 @@ async function confirmOperation(
   }
 
   const timeToWait = Math.max(startedAt + SYNC_INTERVAL - Date.now(), 0);
-  await new Promise((r) => setTimeout(r, timeToWait));
+  await new Promise(r => setTimeout(r, timeToWait));
 
   return confirmOperation(tezos, opHash, {
     initializedAt,
@@ -71,7 +71,7 @@ function getOriginatedContractAddress(opEntry) {
     ? opEntry.contents
     : [opEntry.contents];
   const originationOp =
-    results.find((op) => op.kind === OpKind.ORIGINATION) | undefined;
+    results.find(op => op.kind === OpKind.ORIGINATION) | undefined;
   return (
     originationOp?.metadata?.operation_result?.originated_contracts?.[0] ?? null
   );
@@ -80,7 +80,7 @@ function getOriginatedContractAddress(opEntry) {
 async function confirmContract(Tezos, deployedContract) {
   let contract;
   do {
-    contract = await Tezos.contract.at(deployedContract).catch((e) => {});
+    contract = await Tezos.contract.at(deployedContract).catch(e => {});
   } while (contract === undefined);
   return contract;
 }
