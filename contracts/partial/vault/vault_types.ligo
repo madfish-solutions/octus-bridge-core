@@ -37,10 +37,7 @@ type withdrawal_t       is [@layout:comb] record[
 type withdrawals_t      is big_map(nat, withdrawal_t)
 type withdrawal_ids_t   is big_map(bytes, nat)
 
-type baker_rewards_t    is [@layout:comb] record[
-  fish_f                  : nat;
-  management_f            : nat;
-]
+type fee_balances_map_t is big_map(asset_standard_t, fee_balances_t)
 
 type storage_t          is [@layout:comb] record[
   owner                   : address;
@@ -62,8 +59,8 @@ type storage_t          is [@layout:comb] record[
   withdrawal_count        : nat;
   withdrawal_ids          : withdrawal_ids_t;
 
-  fee_balances            : big_map(asset_standard_t, fee_balances_t);
-  baker_rewards           : baker_rewards_t;
+  fee_balances            : fee_balances_map_t;
+  baker_rewards           : fee_balances_t;
 
   metadata                : metadata_t;
   paused                  : bool;

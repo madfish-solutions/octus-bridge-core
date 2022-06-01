@@ -27,13 +27,8 @@ function deposit(
       else deposit_without_fee;
 
     if fee > 0n
-    then {
-      var fee_balance := unwrap_or(s.fee_balances[asset.asset_type], Constants.fee_balances_mock);
-      s.fee_balances[asset.asset_type] := fee_balance with record[
-          fish_f += fee * Constants.precision / 2n;
-          management_f += fee * Constants.precision / 2n;
-      ];
-    } else skip;
+    then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset.asset_type)
+    else skip;
 
     var operations := result.operations;
     case asset.asset_type of [
@@ -103,13 +98,8 @@ function withdraw(
       else params.amount;
 
     if fee > 0n
-    then {
-      var fee_balance := unwrap_or(s.fee_balances[asset.asset_type], Constants.fee_balances_mock);
-      s.fee_balances[asset.asset_type] := fee_balance with record[
-          fish_f += fee * Constants.precision / 2n;
-          management_f += fee * Constants.precision / 2n;
-      ];
-    } else skip;
+    then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset.asset_type)
+    else skip;
 
     var operations := result.operations;
     case asset.asset_type of [
@@ -163,9 +153,11 @@ function default(
   block {
     const reward_f = (Tezos.amount / 1mutez) * Constants.precision;
     if reward_f > 0n
-    then s.baker_rewards := s.baker_rewards with record[
-        fish_f += reward_f / 2n;
-        management_f += reward_f / 2n
-      ]
-    else skip
+    then {
+      const fish_balance_f = unwrap_or(s.baker_rewards[s.fish], 0n);
+      const management_balance_f = unwrap_or(s.baker_rewards[s.management], 0n);
+      s.baker_rewards[s.fish] := fish_balance_f + reward_f / Constants.div_two;
+      s.baker_rewards[s.management] := management_balance_f + reward_f / Constants.div_two;
+    } else skip
+
   } with (Constants.no_operations, s)

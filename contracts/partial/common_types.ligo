@@ -81,7 +81,4 @@ type asset_t            is [@layout:comb] record[
   banned                  : bool;
 ]
 
-type fee_balances_t     is [@layout:comb] record[
-  fish_f                  : nat;
-  management_f            : nat;
-]
+type fee_balances_t     is map(address, nat)

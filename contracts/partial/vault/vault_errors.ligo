@@ -32,4 +32,5 @@ module Errors is {
   const bridge_paused             : string = "Vault/bridge-paused";
   const validate_message_404      : string = "Vault/view-validate-methods-not-found";
   const invalid_withdrawal_params : string = "Vault/invalid-withdawal-params";
+  const zero_fee_balance          : string = "Vault/zero-fee-balance";
   }
