@@ -18,6 +18,7 @@ module Errors is {
   const vault_paused              : string = "Vault/vault-is-paused";
   const zero_transfer             : string = "Vault/zero-transfer";
   const not_nat                   : string = "Vault/not-nat";
+  const amounts_mismatch          : string = "Vault/amounts-mismatch";
   const failed_create_asset       : string = "Vault/failed-create-asset";
   const validate_message_view_404 : string = "Vault/validate-message-view-404";
   const round_greater_last_round  : string = "Vault/round-greater-than-last-round";
@@ -32,5 +33,6 @@ module Errors is {
   const bridge_paused             : string = "Vault/bridge-paused";
   const validate_message_404      : string = "Vault/view-validate-methods-not-found";
   const invalid_withdrawal_params : string = "Vault/invalid-withdawal-params";
+  const zero_fee_balance          : string = "Vault/zero-fee-balance";
   const deposit_limit             : string = "Vault/respect-deposit-limit";
   }

@@ -3,6 +3,7 @@ module Constants is {
   const no_operations     : list(operation) = nil;
   const empty_allowances  : set(address) = set[];
   const precision         : nat = 1_000_000n;
+  const div_two           : nat = 2n;
   const zero_address      : address = ("tz1ZZZZZZZZZZZZZZZZZZZZZZZZZZZZNkiRg" : address);
   const profit_ratio      : nat = 2n;
   const asset_mock        : asset_t = record[
@@ -15,8 +16,5 @@ module Constants is {
     paused          = False;
     banned          = False;
   ];
-   const fee_balances_mock : fee_balances_t = record[
-    fish_f = 0n;
-    management_f = 0n;
-  ]
+   const fee_balances_mock : fee_balances_t = map[]
 }

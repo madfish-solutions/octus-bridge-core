@@ -13,11 +13,6 @@ const fees = {
   },
 };
 
-const bakerRewards = {
-  fish_f: 0,
-  management_f: 0,
-};
-
 const assetConfig = {
   native: {
     configuration_wid: 1,
@@ -49,7 +44,7 @@ module.exports = {
   withdrawal_count: 0,
   withdrawal_ids: MichelsonMap.fromLiteral({}),
   fee_balances: MichelsonMap.fromLiteral({}),
-  baker_rewards: bakerRewards,
+  baker_rewards: MichelsonMap.fromLiteral({}),
   paused: false,
 
   metadata: MichelsonMap.fromLiteral({

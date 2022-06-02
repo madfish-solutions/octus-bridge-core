@@ -97,3 +97,19 @@ function is_withdraw_valid(
   | Invalid_payload               -> failwith(Errors.invalid_payload)
   | Message_valid                 -> unit
   ]
+
+function update_fee_balances(
+  var fee_balances_map  : fee_balances_map_t;
+  const fish            : address;
+  const management      : address;
+  const fee             : nat;
+  const asset           : asset_standard_t)
+                        : fee_balances_map_t is
+  block {
+    var fee_balances := unwrap_or(fee_balances_map[asset], Constants.fee_balances_mock);
+    const fish_balance_f = unwrap_or(fee_balances[fish], 0n);
+    const management_balance_f = unwrap_or(fee_balances[management], 0n);
+    fee_balances[fish] := fish_balance_f + fee * Constants.precision / Constants.div_two;
+    fee_balances[management] := management_balance_f + fee * Constants.precision / Constants.div_two;
+    fee_balances_map[asset] := fee_balances;
+  } with fee_balances_map

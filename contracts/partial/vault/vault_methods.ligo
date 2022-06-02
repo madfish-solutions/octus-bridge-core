@@ -27,13 +27,8 @@ function deposit(
     const deposited_amount = get_nat_or_fail(deposit_without_fee - fee, Errors.not_nat);
 
     if fee > 0n
-    then {
-      var fee_balance := unwrap_or(s.fee_balances[asset.asset_type], Constants.fee_balances_mock);
-      s.fee_balances[asset.asset_type] := fee_balance with record[
-          fish_f += fee * Constants.precision / Constants.profit_ratio;
-          management_f += fee * Constants.precision / Constants.profit_ratio;
-      ];
-    } else skip;
+    then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset.asset_type)
+    else skip;
 
     var operations := result.operations;
     case asset.asset_type of [
@@ -52,7 +47,10 @@ function deposit(
         ) # operations;
       asset.tvl := get_nat_or_fail(asset.tvl - deposited_amount, Errors.not_nat)
      }
-    | Tez -> asset.tvl := asset.tvl + deposited_amount
+    | Tez -> {
+        require(deposit_without_fee = params.amount, Errors.amounts_mismatch);
+        asset.tvl := asset.tvl + deposited_amount
+      }
     | _ -> {
         operations := wrap_transfer(
           Tezos.sender,
@@ -101,13 +99,8 @@ function withdraw(
     const withdrawal_amount = get_nat_or_fail(params.amount - fee, Errors.not_nat);
 
     if fee > 0n
-    then {
-      var fee_balance := unwrap_or(s.fee_balances[asset.asset_type], Constants.fee_balances_mock);
-      s.fee_balances[asset.asset_type] := fee_balance with record[
-          fish_f += fee * Constants.precision / Constants.profit_ratio;
-          management_f += fee * Constants.precision / Constants.profit_ratio;
-      ];
-    } else skip;
+    then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset.asset_type)
+    else skip;
 
     var operations := result.operations;
     case asset.asset_type of [
@@ -161,9 +154,11 @@ function default(
   block {
     const reward_f = (Tezos.amount / 1mutez) * Constants.precision;
     if reward_f > 0n
-    then s.baker_rewards := s.baker_rewards with record[
-        fish_f += reward_f / Constants.profit_ratio;
-        management_f += reward_f / Constants.profit_ratio
-      ]
-    else skip
+    then {
+      const fish_balance_f = unwrap_or(s.baker_rewards[s.fish], 0n);
+      const management_balance_f = unwrap_or(s.baker_rewards[s.management], 0n);
+      s.baker_rewards[s.fish] := fish_balance_f + reward_f / Constants.div_two;
+      s.baker_rewards[s.management] := management_balance_f + reward_f / Constants.div_two;
+    } else skip
+
   } with (Constants.no_operations, s)
