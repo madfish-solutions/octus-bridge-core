@@ -51,3 +51,6 @@ type fa12_transfer_t    is michelson_pair(address, "from", michelson_pair(addres
 
 type approve_fa12_token_t is michelson_pair(address, "spender", nat, "value")
 type approve_fa2_token_t  is update_operator_params_t
+
+type approve_fa12_token_t is michelson_pair(address, "spender", nat, "value")
+type approve_fa2_token_t  is update_operator_params_t

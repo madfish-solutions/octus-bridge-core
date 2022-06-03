@@ -79,3 +79,10 @@ type asset_t            is [@layout:comb] record[
 ]
 
 type fee_balances_t     is map(address, nat)
+
+type convert_amount_t   is [@layout:comb] record [
+  toShares              : bool;
+  tokenId               : nat;
+  amount                : nat;
+  precision             : bool;
+]
