@@ -1,0 +1,173 @@
+const { Tezos, signerAlice, signerBob, signerEve } = require("./utils/cli");
+const { eve, dev } = require("../scripts/sandbox/accounts");
+const { rejects, strictEqual, notStrictEqual } = require("assert");
+const YupanaStrategy = require("./helpers/commonInterface");
+const YupanaMock = require("./helpers/commonInterface");
+const Token = require("./helpers/tokenInterface");
+
+const fa12TokenStorage = require("../test/storage/FA12");
+
+const yupanaStrategyStorage = require("./storage/yupanaStrategy");
+
+const yupanaMockStorage = require("./storage/yupanaMock");
+const { alice, bob } = require("../scripts/sandbox/accounts");
+
+const { MichelsonMap } = require("@taquito/taquito");
+const { confirmOperation } = require("../scripts/confirmation");
+const { OpKind } = require("@taquito/taquito");
+const precision = 10 ** 6;
+
+function sleep(sec) {
+  return new Promise(resolve => setTimeout(resolve, sec * 1000));
+}
+describe("Yupana-strategy tests", async function () {
+  let strategy;
+  let fa12Token;
+  let yupana;
+
+  before(async () => {
+    Tezos.setSignerProvider(signerAlice);
+    try {
+      fa12Token = await new Token("fa12").init(fa12TokenStorage);
+      yupana = await new YupanaMock().init(yupanaMockStorage, "yupana_mock");
+      yupanaStrategyStorage.vault = alice.pkh;
+      yupanaStrategyStorage.protocol = yupana.address;
+      yupanaStrategyStorage.deposit_asset = { fa12: fa12Token.address };
+      yupanaStrategyStorage.reward_asset = { fa12: fa12Token.address };
+      strategy = await new YupanaStrategy().init(
+        yupanaStrategyStorage,
+        "yupana_strategy",
+      );
+
+      await yupana.call("addMarket", [
+        alice.pkh,
+        "fA12",
+        fa12Token.address,
+        0.75 * precision,
+        0.4 * precision,
+        0.000009 * precision,
+        MichelsonMap.fromLiteral({
+          symbol: Buffer.from("btc", "ascii").toString("hex"),
+        }),
+        0.55 * precision,
+        0.5 * precision,
+      ]);
+      const operation = await Tezos.contract.transfer({
+        to: eve.pkh,
+        amount: 10,
+      });
+      await confirmOperation(Tezos, operation.hash);
+      await wrappedToken.call("mint", [
+        [
+          {
+            token_id: 0,
+            recipient: strategy.address,
+            amount: 1000 * precision,
+          },
+        ],
+      ]);
+      await fa12Token.transfer(alice.pkh, strategy.address, 100 * precision);
+      await fa2Token.transfer(alice.pkh, strategy.address, 100 * precision);
+    } catch (e) {
+      console.log(e);
+    }
+  });
+
+  describe("Testing entrypoint: Invest", async function () {
+    it("Shouldn't invest if the user is not an vault", async function () {
+      Tezos.setSignerProvider(signerBob);
+      await rejects(
+        strategy.call("invest", [500 * precision, 500 * precision]),
+        err => {
+          strictEqual(err.message, "Yup-strategy/not-vault");
+          return true;
+        },
+      );
+    });
+    it("Should allow invest tokens", async function () {
+      Tezos.setSignerProvider(signerAlice);
+      await fa12Token.approveToken(strategy.address, 500 * precision);
+      const prevAliceBalance = await fa12Token.getBalance(alice.pkh);
+
+      await strategy.call("invest", [500 * precision, 500 * precision]);
+
+      const aliceBalance = await fa12Token.getBalance(alice.pkh);
+      strictEqual(strategy.storage.tvl.toNumber(), 500 * precision);
+      strictEqual(aliceBalance, prevAliceBalance - 500 * precision);
+    });
+  });
+  // describe("Testing entrypoint: Divest", async function () {
+  //   it("Shouldn't invest if the user is not an vault", async function () {
+  //     Tezos.setSignerProvider(signerBob);
+  //     await rejects(
+  //       strategy.call("divest", [500 * precision, 500 * precision]),
+  //       err => {
+  //         strictEqual(err.message, "Yup-strategy/not-vault");
+  //         return true;
+  //       },
+  //     );
+  //   });
+  //   it("Shouldn't invest if the amount > tvl", async function () {
+  //     Tezos.setSignerProvider(signerAlice);
+  //     await rejects(
+  //       strategy.call("divest", [1000 * precision, 1000 * precision]),
+  //       err => {
+  //         strictEqual(err.message, "Yup-strategy/low-balance");
+  //         return true;
+  //       },
+  //     );
+  //   });
+  //   it("Should allow divest tokens", async function () {
+  //     // Tezos.setSignerProvider(signerBob);
+  //     // await yupana.call("borrow", [0, 500 * precision, 500 * precision]);
+  //     // await sleep(5);
+  //     // await fa12Token.approveToken(yupana.address, 500 * precision);
+  //     // await yupana.call("repay", [0, 500 * precision, 500 * precision]);
+
+  //     const prevAliceBalance = await fa12Token.getBalance(alice.pkh);
+
+  //     const prevTvl = strategy.storage.tvl.toNumber();
+  //     Tezos.setSignerProvider(signerAlice);
+
+  //     await strategy.call("divest", [500 * precision, 500 * precision]);
+
+  //     const aliceBalance = await fa12Token.getBalance(alice.pkh);
+  //     strictEqual(strategy.storage.tvl.toNumber(), prevTvl - 500 * precision);
+  //     strictEqual(aliceBalance, prevAliceBalance + 500 * precision);
+  //   });
+  // });
+  describe("Testing entrypoint: Harvest", async function () {
+    it("Shouldn't invest if the user is not an vault", async function () {
+      Tezos.setSignerProvider(signerBob);
+      await rejects(strategy.call("harvest"), err => {
+        strictEqual(err.message, "Yup-strategy/not-vault");
+        return true;
+      });
+    });
+    it("Shouldn't harvest if profit is zero", async function () {
+      Tezos.setSignerProvider(signerAlice);
+      await rejects(strategy.call("harvest"), err => {
+        strictEqual(err.message, "Yup-strategy/zero-profit");
+        return true;
+      });
+    });
+    it("Should allow harvest tokens", async function () {
+      Tezos.setSignerProvider(signerBob);
+      await yupana.call("borrow", [0, 500 * precision, 500 * precision]);
+      await sleep(5);
+      await fa12Token.approveToken(yupana.address, 500 * precision);
+      await yupana.call("repay", [0, 500 * precision, 500 * precision]);
+
+      const prevAliceBalance = await fa12Token.getBalance(alice.pkh);
+
+      const prevTvl = strategy.storage.tvl.toNumber();
+      Tezos.setSignerProvider(signerAlice);
+
+      await strategy.call("harvest");
+
+      // const aliceBalance = await fa12Token.getBalance(alice.pkh);
+      // strictEqual(strategy.storage.tvl.toNumber(), prevTvl - 500 * precision);
+      // strictEqual(aliceBalance, prevAliceBalance + 500 * precision);
+    });
+  });
+});
