@@ -13,8 +13,8 @@ type parameter_t        is
 | Mint                    of asset_params_t
 | Redeem                  of asset_params_t
 | AddMarket               of newMarketParams
-| Borrow                  of asset_params_t
-| Repay                  of asset_params_t
+| Borrow                  of asset_dl_params_t
+| Repay                   of asset_params_t
 
 function main(
   const action             : parameter_t;

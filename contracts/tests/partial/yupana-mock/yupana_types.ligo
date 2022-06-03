@@ -60,6 +60,12 @@ type asset_params_t     is [@layout:comb] record [
   minReceived             : nat;
 ]
 
+type asset_dl_params_t  is [@layout:comb] record [
+  tokenId                 : nat;
+  amount                  : nat;
+  deadline                : timestamp;
+]
+
 type fa12TransferParams   is michelson_pair(
   address,
   "",

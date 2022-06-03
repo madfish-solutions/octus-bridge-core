@@ -161,7 +161,7 @@ function redeem(
   } with (operations, s)
 
 function borrow(
-  const params          : asset_params_t;
+  const params          : asset_dl_params_t;
   var s                 : storage_t)
                         : return_t is
   block {
