@@ -119,7 +119,7 @@ describe("Vault methods tests", async function () {
           withdraw_fee_f: 100000,
           deposit_limit: 0,
           tvl: 90 * precision,
-          virtual_balance: 0,
+          virtual_balance: 90 * precision,
           paused: false,
           banned: false,
         },
@@ -252,6 +252,7 @@ describe("Vault methods tests", async function () {
       const newDeposit = await vault.storage.deposits.get("0");
       strictEqual(vault.storage.deposit_count.toNumber(), prevDepositCount + 1);
       strictEqual(asset.tvl.toNumber(), depositAmount - fee);
+      strictEqual(asset.virtual_balance.toNumber(), depositAmount - fee);
       strictEqual(vaultBalance, depositAmount);
       strictEqual(fishFee.toNumber(), (fee * precision) / 2);
       strictEqual(managementFee.toNumber(), (fee * precision) / 2);
@@ -293,6 +294,7 @@ describe("Vault methods tests", async function () {
 
       strictEqual(vault.storage.deposit_count.toNumber(), prevDepositCount + 1);
       strictEqual(asset.tvl.toNumber(), depositAmount - fee);
+      strictEqual(asset.virtual_balance.toNumber(), depositAmount - fee);
       strictEqual(vaultBalance, depositAmount);
       strictEqual(fishFee.toNumber(), (fee * precision) / 2);
       strictEqual(managementFee.toNumber(), (fee * precision) / 2);
@@ -382,6 +384,7 @@ describe("Vault methods tests", async function () {
 
       strictEqual(vault.storage.deposit_count.toNumber(), prevDepositCount + 1);
       strictEqual(asset.tvl.toNumber(), 0);
+      strictEqual(asset.virtual_balance.toNumber(), 0);
       strictEqual(aliceBalance, 0);
       strictEqual(fishFee.toNumber(), (fee * precision) / 2);
       strictEqual(managementFee.toNumber(), (fee * precision) / 2);
@@ -414,6 +417,7 @@ describe("Vault methods tests", async function () {
       const newDeposit = await vault.storage.deposits.get("4");
       strictEqual(vault.storage.deposit_count.toNumber(), prevDepositCount + 1);
       strictEqual(asset.tvl.toNumber(), depositAmount);
+      strictEqual(asset.virtual_balance.toNumber(), depositAmount);
       strictEqual(vaultBalance, depositAmount);
       strictEqual(feeBalances, undefined);
       strictEqual(newDeposit.recipient, "001100");
@@ -449,6 +453,7 @@ describe("Vault methods tests", async function () {
       strictEqual(vault.storage.deposit_count.toNumber(), prevDepositCount + 1);
       strictEqual(prevAsset, undefined);
       strictEqual(asset.tvl.toNumber(), depositAmount - fee);
+      strictEqual(asset.virtual_balance.toNumber(), depositAmount - fee);
       strictEqual(vaultBalance, depositAmount);
       strictEqual(fishFee.toNumber(), (fee * precision) / 2);
       strictEqual(managementFee.toNumber(), (fee * precision) / 2);
@@ -974,6 +979,94 @@ describe("Vault methods tests", async function () {
 
       strictEqual(newWithdrawalId.toNumber(), 3);
     });
+    it("Should create pending withdrawal fa2 asset", async function () {
+      const withdrawalAmount = 90 * precision;
+
+      payload_1.eventData = packWithdrawal({
+        depositId: "01",
+        amount: withdrawalAmount,
+        recipient: alice.pkh,
+        assetType: "FA2",
+        assetAddress: fa2Token.address,
+        assetId: fa2Token.tokenId,
+        bounty: 1000000,
+      });
+      payload_1.round = 1;
+      const payload = packPayload(payload_1);
+      const signature = await signerAlice.sign(payload);
+
+      const prevWithdrawalCount = vault.storage.withdrawal_count.toNumber();
+      const prevAliceBalance = await fa2Token.getBalance(alice.pkh);
+      const prevVaultBalance = await fa2Token.getBalance(vault.address);
+      const prevAsset = await vault.storage.assets.get("1");
+      const prevFeeBalances = await vault.storage.fee_balances.get({
+        fa2: { address: fa2Token.address, id: 0 },
+      });
+      const prevFishFee = await prevFeeBalances.get(vault.storage.fish);
+      const prevManagementFee = await prevFeeBalances.get(
+        vault.storage.management,
+      );
+
+      await vault.call("withdraw", {
+        payload: payload,
+        signatures: MichelsonMap.fromLiteral({ [alice.pk]: signature.sig }),
+      });
+      const aliceBalance = await fa2Token.getBalance(alice.pkh);
+      const asset = await vault.storage.assets.get("1");
+      const vaultBalance = await fa2Token.getBalance(vault.address);
+
+      const feeBalances = await vault.storage.fee_balances.get({
+        fa2: { address: fa2Token.address, id: 0 },
+      });
+      const fishFee = await feeBalances.get(vault.storage.fish);
+      const managementFee = await feeBalances.get(vault.storage.management);
+
+      const newWithdrawal = await vault.storage.withdrawals.get("4");
+      const newWithdrawalId = await vault.storage.withdrawal_ids.get(payload);
+
+      const newPendingWithdrawal = await vault.storage.pending_withdrawals.get(
+        "0",
+      );
+      strictEqual(
+        vault.storage.withdrawal_count.toNumber(),
+        prevWithdrawalCount,
+      );
+      strictEqual(asset.tvl.toNumber(), prevAsset.tvl.toNumber());
+      strictEqual(vaultBalance, prevVaultBalance);
+      strictEqual(aliceBalance, prevAliceBalance);
+      strictEqual(fishFee.toNumber(), prevFishFee.toNumber());
+      strictEqual(managementFee.toNumber(), prevManagementFee.toNumber());
+      strictEqual(newWithdrawal, undefined);
+      strictEqual(newWithdrawalId, undefined);
+
+      notStrictEqual(newPendingWithdrawal.status["pending"], undefined);
+      strictEqual(newPendingWithdrawal.bounty.toNumber(), 1000000);
+    });
+    it("Shouldn't create pending withdrawal if payload already seen", async function () {
+      const withdrawalAmount = 90 * precision;
+      payload_1.eventData = packWithdrawal({
+        depositId: "01",
+        amount: withdrawalAmount,
+        recipient: alice.pkh,
+        assetType: "FA2",
+        assetAddress: fa2Token.address,
+        assetId: fa2Token.tokenId,
+        bounty: 1000000,
+      });
+      payload_1.round = 1;
+      const payload = packPayload(payload_1);
+      const signature = await signerAlice.sign(payload);
+      await rejects(
+        vault.call("withdraw", {
+          payload: payload,
+          signatures: MichelsonMap.fromLiteral({ [alice.pk]: signature.sig }),
+        }),
+        err => {
+          strictEqual(err.message, "Vault/payload-already-seen");
+          return true;
+        },
+      );
+    });
     it("Shouldn't withdraw if payload already seen", async function () {
       const withdrawalAmount = 90 * precision;
       payload_1.eventData = packWithdrawal({
@@ -998,6 +1091,7 @@ describe("Vault methods tests", async function () {
         },
       );
     });
+
     it("Shouldn't withdraw unknown wrapped asset if metadata not passed", async function () {
       payload_1.eventData = packWithdrawal({
         depositId: "00",

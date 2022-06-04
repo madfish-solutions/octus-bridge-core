@@ -25,6 +25,11 @@ type deposit_t          is [@layout:comb] record[
 
 type deposits_t         is big_map(nat, deposit_t)
 
+type withdrawal_status_t is
+| Completed
+| Pending
+| Canceled
+
 type withdrawal_t       is [@layout:comb] record[
   deposit_id              : bytes;
   asset                   : asset_standard_t;
@@ -36,6 +41,19 @@ type withdrawal_t       is [@layout:comb] record[
 
 type withdrawals_t      is big_map(nat, withdrawal_t)
 type withdrawal_ids_t   is big_map(bytes, nat)
+
+type pending_withdrawal_t is [@layout:comb] record[
+  deposit_id              : bytes;
+  asset                   : asset_standard_t;
+  amount                  : nat;
+  recipient               : address;
+	metadata                : option(token_meta_t);
+  bounty                  : nat;
+  signatures              : signatures_t;
+  status                  : withdrawal_status_t;
+]
+
+type pending_withdrawals_t is big_map(nat, pending_withdrawal_t)
 
 type fee_balances_map_t is big_map(asset_standard_t, fee_balances_t)
 
@@ -58,6 +76,10 @@ type storage_t          is [@layout:comb] record[
   withdrawals             : withdrawals_t;
   withdrawal_count        : nat;
   withdrawal_ids          : withdrawal_ids_t;
+
+  pending_withdrawals     : pending_withdrawals_t;
+  pending_count           : nat;
+  pending_withdrawal_ids  : withdrawal_ids_t;
 
   fee_balances            : fee_balances_map_t;
   baker_rewards           : fee_balances_t;
@@ -90,6 +112,7 @@ type withdrawal_data_t  is [@layout:comb] record[
   asset                   : asset_standard_t;
   amount                  : nat;
   recipient               : address;
+  bounty                  : nat;
 	metadata                : option(token_meta_t);
 ]
 
