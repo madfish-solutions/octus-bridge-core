@@ -1042,6 +1042,68 @@ describe("Vault methods tests", async function () {
       notStrictEqual(newPendingWithdrawal.status["pending"], undefined);
       strictEqual(newPendingWithdrawal.bounty.toNumber(), 1000000);
     });
+    it("Should create pending withdrawal fa12 asset", async function () {
+      const withdrawalAmount = 90 * precision;
+
+      payload_1.eventData = packWithdrawal({
+        depositId: "02",
+        amount: withdrawalAmount,
+        recipient: alice.pkh,
+        assetType: "FA12",
+        assetAddress: fa12Token.address,
+        bounty: 1000000,
+      });
+      payload_1.round = 1;
+      const payload = packPayload(payload_1);
+      const signature = await signerAlice.sign(payload);
+
+      const prevWithdrawalCount = vault.storage.withdrawal_count.toNumber();
+      const prevAliceBalance = await fa12Token.getBalance(alice.pkh);
+      const prevVaultBalance = await fa12Token.getBalance(vault.address);
+      const prevAsset = await vault.storage.assets.get("0");
+      const prevFeeBalances = await vault.storage.fee_balances.get({
+        fa12: fa12Token.address,
+      });
+      const prevFishFee = await prevFeeBalances.get(vault.storage.fish);
+      const prevManagementFee = await prevFeeBalances.get(
+        vault.storage.management,
+      );
+
+      await vault.call("withdraw", {
+        payload: payload,
+        signatures: MichelsonMap.fromLiteral({ [alice.pk]: signature.sig }),
+      });
+      const aliceBalance = await fa12Token.getBalance(alice.pkh);
+      const asset = await vault.storage.assets.get("0");
+      const vaultBalance = await fa12Token.getBalance(vault.address);
+
+      const feeBalances = await vault.storage.fee_balances.get({
+        fa12: fa12Token.address,
+      });
+      const fishFee = await feeBalances.get(vault.storage.fish);
+      const managementFee = await feeBalances.get(vault.storage.management);
+
+      const newWithdrawal = await vault.storage.withdrawals.get("4");
+      const newWithdrawalId = await vault.storage.withdrawal_ids.get(payload);
+
+      const newPendingWithdrawal = await vault.storage.pending_withdrawals.get(
+        "1",
+      );
+      strictEqual(
+        vault.storage.withdrawal_count.toNumber(),
+        prevWithdrawalCount,
+      );
+      strictEqual(asset.tvl.toNumber(), prevAsset.tvl.toNumber());
+      strictEqual(vaultBalance, prevVaultBalance);
+      strictEqual(aliceBalance, prevAliceBalance);
+      strictEqual(fishFee.toNumber(), prevFishFee.toNumber());
+      strictEqual(managementFee.toNumber(), prevManagementFee.toNumber());
+      strictEqual(newWithdrawal, undefined);
+      strictEqual(newWithdrawalId, undefined);
+
+      notStrictEqual(newPendingWithdrawal.status["pending"], undefined);
+      strictEqual(newPendingWithdrawal.bounty.toNumber(), 1000000);
+    });
     it("Shouldn't create pending withdrawal if payload already seen", async function () {
       const withdrawalAmount = 90 * precision;
       payload_1.eventData = packWithdrawal({
@@ -1201,5 +1263,68 @@ describe("Vault methods tests", async function () {
 
     //   strictEqual(newWithdrawalId.toNumber(), 3);
     // });
+  });
+  describe("Testing entrypoint: Cancel_withdrawal", async function () {
+    it("Shouldn't cancel pending withdrawal if unknown pending withdrawal", async function () {
+      await rejects(vault.call("cancel_withdrawal", 5), err => {
+        strictEqual(err.message, "Vault/unknown-pending-withdrawal");
+        return true;
+      });
+    });
+    it("Shouldn't cancel pending withdrawal if sender not recipient", async function () {
+      Tezos.setSignerProvider(signerBob);
+      await rejects(vault.call("cancel_withdrawal", 0), err => {
+        strictEqual(err.message, "Vault/not-recipient");
+        return true;
+      });
+    });
+    it("Should cancel pending withdrawal", async function () {
+      Tezos.setSignerProvider(signerAlice);
+      await vault.call("cancel_withdrawal", 0);
+      const wihdrawal = await vault.storage.pending_withdrawals.get("0");
+      notStrictEqual(wihdrawal.status["canceled"], undefined);
+    });
+    it("Shouldn't cancel pending withdrawal if pending withdrawal is closed", async function () {
+      Tezos.setSignerProvider(signerAlice);
+      await rejects(vault.call("cancel_withdrawal", 0), err => {
+        strictEqual(err.message, "Vault/pending-withdrawal-closed");
+        return true;
+      });
+    });
+  });
+  describe("Testing entrypoint: Set_bounty", async function () {
+    it("Shouldn't set_bounty if unknown pending withdrawal", async function () {
+      await rejects(vault.call("set_bounty", [2, 10000]), err => {
+        strictEqual(err.message, "Vault/unknown-pending-withdrawal");
+        return true;
+      });
+    });
+    it("Shouldn't set_bounty if sender not recipient", async function () {
+      Tezos.setSignerProvider(signerBob);
+      await rejects(vault.call("set_bounty", [0, 10000]), err => {
+        strictEqual(err.message, "Vault/not-recipient");
+        return true;
+      });
+    });
+    it("Shouldn't set_bounty if bounty too high", async function () {
+      Tezos.setSignerProvider(signerAlice);
+      await rejects(vault.call("set_bounty", [1, 100000 * precision]), err => {
+        strictEqual(err.message, "Vault/bounty-too-high");
+        return true;
+      });
+    });
+    it("Shouldn't set_bounty if pending withdrawal is closed", async function () {
+      Tezos.setSignerProvider(signerAlice);
+      await rejects(vault.call("set_bounty", [0, 10 * precision]), err => {
+        strictEqual(err.message, "Vault/pending-withdrawal-closed");
+        return true;
+      });
+    });
+
+    it("Should set_bounty", async function () {
+      await vault.call("set_bounty", [1, 10 * precision]);
+      const wihdrawal = await vault.storage.pending_withdrawals.get("1");
+      strictEqual(wihdrawal.bounty.toNumber(), 10 * precision);
+    });
   });
 });

@@ -203,3 +203,35 @@ function default(
     } else skip
 
   } with (Constants.no_operations, s)
+
+function set_bounty(
+  const params          : set_bounty_t;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    var pending_withdrawal := unwrap(s.pending_withdrawals[params.pending_id], Errors.unknown_pending_withdrawal);
+    require(Tezos.sender = pending_withdrawal.recipient, Errors.not_recipient);
+    require(pending_withdrawal.status = Pending(unit), Errors.pending_withdrawal_closed);
+    const asset_id = unwrap(s.asset_ids[pending_withdrawal.asset], Errors.asset_undefined);
+    const asset = unwrap(s.assets[asset_id], Errors.asset_undefined);
+    const fee = pending_withdrawal.amount * asset.withdraw_fee_f / Constants.precision;
+    const amount_with_fee = get_nat_or_fail(pending_withdrawal.amount - fee, Errors.not_nat);
+    require(params.bounty <= amount_with_fee, Errors.bounty_too_high);
+    pending_withdrawal.bounty := params.bounty;
+
+    s.pending_withdrawals[params.pending_id] := pending_withdrawal;
+  } with (Constants.no_operations, s)
+
+function cancel_pending_withdrawal(
+  const pending_id      : nat;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    var pending_withdrawal := unwrap(s.pending_withdrawals[pending_id], Errors.unknown_pending_withdrawal);
+    require(Tezos.sender = pending_withdrawal.recipient, Errors.not_recipient);
+    require(pending_withdrawal.status = Pending(unit), Errors.pending_withdrawal_closed);
+
+    pending_withdrawal.status := Canceled(unit);
+
+    s.pending_withdrawals[pending_id] := pending_withdrawal;
+  } with (Constants.no_operations, s)

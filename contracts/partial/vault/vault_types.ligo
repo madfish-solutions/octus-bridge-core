@@ -121,4 +121,9 @@ type claim_fee_t        is [@layout:comb] record[
   recipient               : address;
 ]
 
+type set_bounty_t       is [@layout:comb] record[
+  pending_id              : nat;
+  bounty                  : nat;
+]
+
 [@inline] const no_operations     : list(operation) = nil;

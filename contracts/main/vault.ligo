@@ -33,6 +33,8 @@ type parameter_t        is
 
 | Deposit                 of deposit_t
 | Withdraw                of message_t
+| Set_bounty              of set_bounty_t
+| Cancel_withdrawal       of nat
 
 | Default                 of unit
 
@@ -64,6 +66,8 @@ function main(
 
   | Deposit(params)                 -> deposit(params, s)
   | Withdraw(params)                -> withdraw(params, s)
+  | Set_bounty(params)              -> set_bounty(params, s)
+  | Cancel_withdrawal(params)       -> cancel_pending_withdrawal(params, s)
 
   | Default                         -> default(s)
 
