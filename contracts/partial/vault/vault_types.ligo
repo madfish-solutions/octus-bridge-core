@@ -23,6 +23,13 @@ type deposit_t          is [@layout:comb] record[
   asset                   : asset_standard_t;
 ]
 
+type deposit_with_bounty_t is [@layout:comb] record[
+  recipient                  : bytes;
+  amount                     : nat;
+  asset                      : asset_standard_t;
+  pending_withdrawal_id      : nat;
+]
+
 type deposits_t         is big_map(nat, deposit_t)
 
 type withdrawal_status_t is
@@ -46,10 +53,11 @@ type pending_withdrawal_t is [@layout:comb] record[
   deposit_id              : bytes;
   asset                   : asset_standard_t;
   amount                  : nat;
+  fee_f                   : nat;
   recipient               : address;
 	metadata                : option(token_meta_t);
   bounty                  : nat;
-  signatures              : signatures_t;
+  message                 : message_t;
   status                  : withdrawal_status_t;
 ]
 

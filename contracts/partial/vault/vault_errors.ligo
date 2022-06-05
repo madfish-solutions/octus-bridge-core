@@ -39,5 +39,6 @@ module Errors is {
   const not_recipient               : string = "Vault/not-recipient";
   const pending_withdrawal_closed   : string = "Vault/pending-withdrawal-closed";
   const bounty_too_high             : string = "Vault/bounty-too-high";
-  
+  const amount_less_pending_amount  : string = "Vault/amount-less-than-pending-withdrawal-amount";
+  const assets_do_not_match         : string = "Vault/assets-do-not-match";
   }
