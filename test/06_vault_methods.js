@@ -1489,11 +1489,7 @@ describe("Vault methods tests", async function () {
         "1",
       );
 
-      const withdrawalFee = Math.floor(
-        (pendingWithdrawal.amount.toNumber() *
-          pendingWithdrawal.fee_f.toNumber()) /
-          precision,
-      );
+      const withdrawalFee = pendingWithdrawal.fee.toNumber();
       const totalFee = depositFee + withdrawalFee;
 
       notStrictEqual(pendingWithdrawal.status["completed"], undefined);
@@ -1533,10 +1529,7 @@ describe("Vault methods tests", async function () {
       notStrictEqual(newDeposit.asset["tez"], undefined);
       strictEqual(
         aliceBalance,
-        prevAliceBalance +
-          pendingWithdrawal.amount.toNumber() -
-          withdrawalFee -
-          pendingWithdrawal.bounty.toNumber(),
+        prevAliceBalance + pendingWithdrawal.amount.toNumber(),
       );
     });
   });

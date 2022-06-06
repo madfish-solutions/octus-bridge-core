@@ -108,7 +108,7 @@ function deposit_with_bounty(
 
     const fee = params.amount * asset.deposit_fee_f / Constants.precision;
     require(
-      get_nat_or_fail(params.amount - fee, Errors.not_nat) >= get_nat_or_fail(pending_withdrawal.amount - pending_withdrawal.bounty,  Errors.not_nat), Errors.amount_less_pending_amount);
+      get_nat_or_fail(params.amount - fee, Errors.not_nat) >= pending_withdrawal.amount, Errors.amount_less_pending_amount);
 
     const deposited_amount = get_nat_or_fail(params.amount + pending_withdrawal.bounty - fee, Errors.not_nat);
 
@@ -125,17 +125,15 @@ function deposit_with_bounty(
         asset     = asset.asset_type;
     ];
     s.deposit_count := s.deposit_count + 1n;
-    const withdrawal_fee = pending_withdrawal.amount * pending_withdrawal.fee_f / Constants.precision;
 
-    const withdrawal_amount = get_nat_or_fail(pending_withdrawal.amount - withdrawal_fee - pending_withdrawal.bounty, Errors.not_nat);
-    if withdrawal_fee + fee > 0n
-    then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, withdrawal_fee + fee, asset.asset_type)
+    if pending_withdrawal.fee + fee > 0n
+    then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, pending_withdrawal.fee + fee, asset.asset_type)
     else skip;
 
     operations := wrap_transfer(
         Tezos.self_address,
         pending_withdrawal.recipient,
-        withdrawal_amount,
+        pending_withdrawal.amount,
         pending_withdrawal.asset
       ) # operations;
 
@@ -247,11 +245,12 @@ function withdraw(
           }
         else {
             require_none(s.pending_withdrawal_ids[message.payload], Errors.payload_already_seen);
+            const withdrawal_fee = params.amount * asset.withdrawal_fee_f / Constants.precision;
             s.pending_withdrawals[s.pending_count] := record[
                 deposit_id = params.deposit_id;
                 asset      = asset.asset_type;
-                amount     = params.amount;
-                fee_f      = asset.withdrawal_fee_f;
+                amount     = get_nat_or_fail(params.amount - withdrawal_fee - params.bounty, Errors.not_nat);
+                fee        = withdrawal_fee;
                 recipient  = params.recipient;
                 metadata   = params.metadata;
                 bounty     = params.bounty;

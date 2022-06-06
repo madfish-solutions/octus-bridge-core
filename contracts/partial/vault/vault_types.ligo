@@ -53,7 +53,7 @@ type pending_withdrawal_t is [@layout:comb] record[
   deposit_id              : bytes;
   asset                   : asset_standard_t;
   amount                  : nat;
-  fee_f                   : nat;
+  fee                     : nat;
   recipient               : address;
 	metadata                : option(token_meta_t);
   bounty                  : nat;
