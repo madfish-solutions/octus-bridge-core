@@ -13,18 +13,18 @@ function deposit(
     require(not(asset.paused), Errors.asset_paused);
     require(not(asset.banned), Errors.asset_banned);
 
-    const deposit_without_fee = case asset.asset_type of [
-    | Tez -> Tezos.amount / 1mutez
-    | _ -> params.amount
+    case asset.asset_type of [
+    | Tez -> require(Tezos.amount / 1mutez = params.amount, Errors.amounts_mismatch)
+    | _ -> skip
     ];
 
-    require(asset.tvl + deposit_without_fee <= asset.deposit_limit or asset.deposit_limit = 0n, Errors.deposit_limit);
+    require(asset.tvl + params.amount <= asset.deposit_limit or asset.deposit_limit = 0n, Errors.deposit_limit);
 
-    require(deposit_without_fee > 0n, Errors.zero_transfer);
+    require(params.amount > 0n, Errors.zero_transfer);
 
     const fee = params.amount * asset.deposit_fee_f / Constants.precision;
 
-    const deposited_amount = get_nat_or_fail(deposit_without_fee - fee, Errors.not_nat);
+    const deposited_amount = get_nat_or_fail(params.amount - fee, Errors.not_nat);
 
     if fee > 0n
     then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset.asset_type)
@@ -36,7 +36,7 @@ function deposit(
       const burn_params : burn_params_t = record[
         token_id = token_.id;
         account = Tezos.sender;
-        amount = deposit_without_fee
+        amount = params.amount
       ];
       operations := Tezos.transaction(
           burn_params,
@@ -51,18 +51,15 @@ function deposit(
         ];
 
      }
-    | Tez -> {
-        require(deposit_without_fee = params.amount, Errors.amounts_mismatch);
-        asset := asset with record[
-            tvl = asset.tvl + deposited_amount;
-            virtual_balance = asset.virtual_balance + deposited_amount
-          ];
-      }
+    | Tez -> asset := asset with record[
+        tvl = asset.tvl + deposited_amount;
+        virtual_balance = asset.virtual_balance + deposited_amount
+      ]
     | _ -> {
         operations := wrap_transfer(
           Tezos.sender,
           Tezos.self_address,
-          deposit_without_fee,
+          params.amount,
           asset.asset_type
         ) # operations;
         asset := asset with record[
@@ -101,24 +98,24 @@ function deposit_with_bounty(
     require(not(asset.banned), Errors.asset_banned);
 
     require(pending_withdrawal.asset = params.asset, Errors.assets_do_not_match);
-    const deposit_without_fee = case asset.asset_type of [
-    | Tez -> Tezos.amount / 1mutez
-    | _ -> params.amount
+
+    case asset.asset_type of [
+    | Tez -> require(Tezos.amount / 1mutez = params.amount, Errors.amounts_mismatch)
+    | _ -> skip
     ];
 
-    require(asset.tvl + deposit_without_fee <= asset.deposit_limit or asset.deposit_limit = 0n, Errors.deposit_limit);
+    require(asset.tvl + params.amount <= asset.deposit_limit or asset.deposit_limit = 0n, Errors.deposit_limit);
 
     const fee = params.amount * asset.deposit_fee_f / Constants.precision;
     require(
       get_nat_or_fail(params.amount + asset.virtual_balance - fee, Errors.not_nat) >= get_nat_or_fail(pending_withdrawal.amount - pending_withdrawal.bounty,  Errors.not_nat), Errors.amount_less_pending_amount);
 
-    const deposited_amount = get_nat_or_fail(deposit_without_fee + pending_withdrawal.bounty - fee, Errors.not_nat);
+    const deposited_amount = get_nat_or_fail(params.amount + pending_withdrawal.bounty - fee, Errors.not_nat);
 
-    require(deposit_without_fee = params.amount, Errors.amounts_mismatch);
     var operations := wrap_transfer(
       Tezos.sender,
       Tezos.self_address,
-      deposit_without_fee,
+      params.amount,
       asset.asset_type
     ) # result.operations;
 
