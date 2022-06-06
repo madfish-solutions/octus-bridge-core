@@ -108,7 +108,7 @@ function deposit_with_bounty(
 
     const fee = params.amount * asset.deposit_fee_f / Constants.precision;
     require(
-      get_nat_or_fail(params.amount + asset.virtual_balance - fee, Errors.not_nat) >= get_nat_or_fail(pending_withdrawal.amount - pending_withdrawal.bounty,  Errors.not_nat), Errors.amount_less_pending_amount);
+      get_nat_or_fail(params.amount - fee, Errors.not_nat) >= get_nat_or_fail(pending_withdrawal.amount - pending_withdrawal.bounty,  Errors.not_nat), Errors.amount_less_pending_amount);
 
     const deposited_amount = get_nat_or_fail(params.amount + pending_withdrawal.bounty - fee, Errors.not_nat);
 
