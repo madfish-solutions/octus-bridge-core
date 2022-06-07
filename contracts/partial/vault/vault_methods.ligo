@@ -176,6 +176,7 @@ function withdraw(
   block {
     require(not(s.paused), Errors.vault_paused);
     require_none(s.withdrawal_ids[message.payload], Errors.payload_already_seen);
+    require_none(s.pending_withdrawal_ids[message.payload], Errors.payload_already_seen);
     is_withdraw_valid(message, s.bridge);
 
     const payload = unwrap((Bytes.unpack(message.payload) : option(payload_t)), Errors.invalid_payload);
@@ -255,7 +256,6 @@ function withdraw(
             s.withdrawal_count := s.withdrawal_count + 1n;
           }
         else {
-            require_none(s.pending_withdrawal_ids[message.payload], Errors.payload_already_seen);
             const withdrawal_fee = params.amount * asset.withdrawal_fee_f / Constants.precision;
             require(params.bounty <= get_nat_or_fail(params.amount - withdrawal_fee, Errors.not_nat), Errors.bounty_too_high);
 
