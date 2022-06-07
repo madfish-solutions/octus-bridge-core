@@ -257,6 +257,8 @@ function withdraw(
         else {
             require_none(s.pending_withdrawal_ids[message.payload], Errors.payload_already_seen);
             const withdrawal_fee = params.amount * asset.withdrawal_fee_f / Constants.precision;
+            require(params.bounty <= get_nat_or_fail(params.amount - withdrawal_fee, Errors.not_nat), Errors.bounty_too_high);
+
             s.pending_withdrawals[s.pending_count] := record[
                 deposit_id = params.deposit_id;
                 asset      = asset.asset_type;
