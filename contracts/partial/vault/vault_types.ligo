@@ -27,7 +27,7 @@ type deposit_with_bounty_t is [@layout:comb] record[
   recipient                  : bytes;
   amount                     : nat;
   asset                      : asset_standard_t;
-  pending_withdrawal_id      : nat;
+  pending_withdrawal_ids     : set(nat);
 ]
 
 type deposits_t         is big_map(nat, deposit_t)
