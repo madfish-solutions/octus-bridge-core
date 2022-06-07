@@ -198,7 +198,7 @@ function withdraw(
     const new_withdrawal = record[
         deposit_id = params.deposit_id;
         asset      = asset.asset_type;
-        amount     = params.amount;
+        amount     = withdrawal_amount;
         recipient  = params.recipient;
         metadata   = params.metadata;
         signatures = message.signatures;

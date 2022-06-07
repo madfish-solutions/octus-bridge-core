@@ -752,7 +752,7 @@ describe("Vault methods tests", async function () {
         prevManagementFee.toNumber() + (fee * precision) / 2,
       );
       strictEqual(newWithdrawal.recipient, alice.pkh);
-      strictEqual(newWithdrawal.amount.toNumber(), withdrawalAmount);
+      strictEqual(newWithdrawal.amount.toNumber(), withdrawalAmount - fee);
       deepEqual(newWithdrawal.asset, {
         fa12: fa12Token.address,
       });
@@ -824,7 +824,7 @@ describe("Vault methods tests", async function () {
         prevManagementFee.toNumber() + (fee * precision) / 2,
       );
       strictEqual(newWithdrawal.recipient, alice.pkh);
-      strictEqual(newWithdrawal.amount.toNumber(), withdrawalAmount);
+      strictEqual(newWithdrawal.amount.toNumber(), withdrawalAmount - fee);
       deepEqual(newWithdrawal.asset, {
         fa2: { address: fa2Token.address, id: BigNumber(fa2Token.tokenId) },
       });
@@ -912,7 +912,7 @@ describe("Vault methods tests", async function () {
         prevManagementFee.toNumber() + (fee * precision) / 2,
       );
       strictEqual(newWithdrawal.recipient, alice.pkh);
-      strictEqual(newWithdrawal.amount.toNumber(), withdrawalAmount);
+      strictEqual(newWithdrawal.amount.toNumber(), withdrawalAmount - fee);
       notStrictEqual(newWithdrawal.asset["tez"], undefined);
 
       strictEqual(newWithdrawalId.toNumber(), 2);
@@ -981,7 +981,7 @@ describe("Vault methods tests", async function () {
         prevManagementFee.toNumber() + (fee * precision) / 2,
       );
       strictEqual(newWithdrawal.recipient, alice.pkh);
-      strictEqual(newWithdrawal.amount.toNumber(), withdrawalAmount);
+      strictEqual(newWithdrawal.amount.toNumber(), withdrawalAmount - fee);
       deepEqual(newWithdrawal.asset, {
         wrapped: {
           address: wrappedToken.address,
