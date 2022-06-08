@@ -7,6 +7,7 @@ module Errors is {
   const source_not_vault          : string = "Yup-strategy/source-not-vault";
   const zero_profit               : string = "Yup-strategy/zero-profit";
   const low_balance               : string = "Yup-strategy/low-balance";
+  const zero_transfer             : string = "Yup-strategy/zero-transfer";
   const mint_etp_404              : string = "Yup-strategy/mint-etp-404";
   const callback_balance_404      : string = "Yup-strategy/callback-balance-404";
   const get_balance_etp_404       : string = "Yup-strategy/get-balance-etp-404";

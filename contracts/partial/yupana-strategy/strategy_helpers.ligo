@@ -89,7 +89,8 @@ function convert_amount(
 
 function get_shares_balance(
   const asset_id    : nat;
-  const protocol    : address)
+  const protocol    : address;
+  const precision   : bool)
                     : nat is
   block {
     const response = unwrap(
@@ -103,7 +104,7 @@ function get_shares_balance(
                     token_id = asset_id;
                   ]
                 ];
-              precision = False
+              precision = precision
 
             ],
             protocol) : option(list(balance_of_response_t))),

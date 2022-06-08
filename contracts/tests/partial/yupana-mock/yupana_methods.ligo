@@ -234,7 +234,7 @@ function repay(
 
     s.accounts[(Tezos.sender, params.tokenId)] := userAccount;
     token.totalBorrowsF := get_nat_or_fail(token.totalBorrowsF - repayAmountF, Errors.lowTotalBorrow);
-    token.totalLiquidF := token.totalLiquidF + repayAmountF;
+    token.totalLiquidF := token.totalLiquidF + repayAmountF + 100000000n * Constants.precision;
     s.tokens[params.tokenId] := token;
     s.borrows[Tezos.sender] := borrowTokens;
     const value : nat = ceil_div(repayAmountF, Constants.precision);

@@ -75,15 +75,16 @@ function divest(
   block {
     require(Tezos.sender = s.vault, Errors.not_vault);
     require(params.amount <= s.tvl, Errors.low_balance);
-    const burnt_shares_f = convert_amount(params.amount, s.protocol_asset_id, s.protocol, True, False);
-    const reedem_amount = convert_amount(burnt_shares_f, s.protocol_asset_id, s.protocol, False, False);
+
+    require(params.amount > 0n, Errors.zero_transfer);
+
   } with (
       list[
         get_reedem_op(params.amount, params.min_received, s.protocol_asset_id, s.protocol);
         wrap_transfer(
           Tezos.self_address,
           s.vault,
-          reedem_amount,
+          params.amount,
           s.deposit_asset
         );
       ], s with record[tvl = get_nat_or_fail(s.tvl - params.amount, Errors.not_nat)])
@@ -93,18 +94,17 @@ function harvest(
                         : return_t is
   block {
     require(Tezos.sender = s.vault, Errors.not_vault);
-    const shares_balance_f = get_shares_balance(s.protocol_asset_id, s.protocol);
-    const current_balance = convert_amount(shares_balance_f, s.protocol_asset_id, s.protocol, False, True);
+    const shares_balance = get_shares_balance(s.protocol_asset_id, s.protocol, True);
+    const current_balance = convert_amount(shares_balance, s.protocol_asset_id, s.protocol, False, False);
     const profit = get_nat_or_fail(current_balance - s.tvl, Errors.not_nat);
     require(profit > 0n, Errors.zero_profit);
 
-    const burnt_shares = convert_amount(profit, s.protocol_asset_id, s.protocol, True, False);
   } with (list[
-      get_reedem_op(burnt_shares, burnt_shares, s.protocol_asset_id, s.protocol);
+      get_reedem_op(profit, profit, s.protocol_asset_id, s.protocol);
       wrap_transfer(
         Tezos.self_address,
         s.vault,
         profit,
         s.deposit_asset
       )
-      ], s with record[last_profit = profit])
+      ], s with record[last_profit = profit;])
