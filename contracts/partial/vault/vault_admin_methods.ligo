@@ -178,6 +178,7 @@ function add_strategy(
                         : return_t is
   block {
     require(Tezos.sender = s.strategist, Errors.not_strategist);
+    require_none(s.strategies[params.asset], Errors.strategy_exists);
 
     s.strategies[params.asset] := record[
       asset = params.asset;

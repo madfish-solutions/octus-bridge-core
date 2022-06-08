@@ -654,5 +654,20 @@ describe("Vault Admin tests", async function () {
       strictEqual(newStrategy.delta_f.toNumber(), deltaF);
       strictEqual(newStrategy.total_deposit.toNumber(), 0);
     });
+    it("Shouldn't add stategy if the strategy already exists", async function () {
+      await rejects(
+        vault.call("add_strategy", [
+          "fa12",
+          fa12Token.address,
+          alice.pkh,
+          0,
+          0,
+        ]),
+        err => {
+          strictEqual(err.message, "Vault/strategy-already-exists");
+          return true;
+        },
+      );
+    });
   });
 });

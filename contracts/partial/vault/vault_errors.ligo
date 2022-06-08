@@ -36,4 +36,5 @@ module Errors is {
   const invalid_withdrawal_params : string = "Vault/invalid-withdawal-params";
   const zero_fee_balance          : string = "Vault/zero-fee-balance";
   const deposit_limit             : string = "Vault/respect-deposit-limit";
+  const strategy_exists           : string = "Vault/strategy-already-exists";
   }
