@@ -1,6 +1,12 @@
 const { Tezos, signerAlice, signerBob, signerEve } = require("./utils/cli");
 const { eve, dev } = require("../scripts/sandbox/accounts");
-const { rejects, strictEqual, notStrictEqual } = require("assert");
+const {
+  rejects,
+  strictEqual,
+  notStrictEqual,
+
+  deepStrictEqual,
+} = require("assert");
 const Vault = require("./helpers/vaultInterface");
 const Token = require("./helpers/tokenInterface");
 const WrappedToken = require("./helpers/wrappedTokenInterface");
@@ -124,7 +130,6 @@ describe("Vault Admin tests", async function () {
       strictEqual(vault.storage.owner, bob.pkh);
     });
   });
-
   describe("Testing entrypoint: Set_bridge", async function () {
     it("Shouldn't set bridge if the user is not an owner", async function () {
       Tezos.setSignerProvider(signerAlice);
@@ -189,7 +194,6 @@ describe("Vault Admin tests", async function () {
       strictEqual(vault.storage.guardian, eve.pkh);
     });
   });
-
   describe("Testing entrypoint: Set_deposit_limit", async function () {
     it("Shouldn't set deposit_limit if the user is not an owner", async function () {
       Tezos.setSignerProvider(signerAlice);
@@ -536,7 +540,6 @@ describe("Vault Admin tests", async function () {
       strictEqual(meta, Buffer.from("alice").toString("hex"));
     });
   });
-
   describe("Testing entrypoint: Delegate_tez", async function () {
     it("Should allow delegate tez", async function () {
       await vault.call("delegate_tez", alice.pkh);
@@ -607,6 +610,49 @@ describe("Vault Admin tests", async function () {
         prevEveBalance +
           (prevFishFee.toNumber() + prevManagementFee.toNumber()) / precision,
       );
+    });
+  });
+  describe("Testing entrypoint: Add_strategy", async function () {
+    it("Shouldn't add stategy if the user is not an strategist", async function () {
+      Tezos.setSignerProvider(signerEve);
+      await rejects(
+        vault.call("add_strategy", [
+          "fa12",
+          fa12Token.address,
+          alice.pkh,
+          0,
+          0,
+        ]),
+        err => {
+          strictEqual(err.message, "Vault/not-strategist");
+          return true;
+        },
+      );
+    });
+    it("Should allow add new strategy", async function () {
+      Tezos.setSignerProvider(signerAlice);
+      const targetReversesF = 0.5 * 10 ** 6;
+      const deltaF = 0.2 * 10 ** 6;
+      await vault.call("add_strategy", [
+        "fa12",
+        fa12Token.address,
+        alice.pkh,
+        targetReversesF,
+        deltaF,
+      ]);
+
+      const newStrategy = await vault.storage.strategies.get({
+        fa12: fa12Token.address,
+      });
+
+      deepStrictEqual(newStrategy.asset, { fa12: fa12Token.address });
+      strictEqual(newStrategy.strategy_address, alice.pkh);
+      strictEqual(
+        newStrategy.target_reserves_rate_f.toNumber(),
+        targetReversesF,
+      );
+      strictEqual(newStrategy.delta_f.toNumber(), deltaF);
+      strictEqual(newStrategy.total_deposit.toNumber(), 0);
     });
   });
 });

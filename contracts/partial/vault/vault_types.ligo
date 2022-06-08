@@ -37,6 +37,22 @@ type withdrawal_t       is [@layout:comb] record[
 type withdrawals_t      is big_map(nat, withdrawal_t)
 type withdrawal_ids_t   is big_map(bytes, nat)
 
+type strategy_t         is [@layout:comb] record [
+  asset                   : asset_standard_t;
+  strategy_address        : address;
+  total_deposit           : nat;
+
+  (* The desirable % of all deposited assets that should be used in the strategy *)
+  target_reserves_rate_f  : nat;
+
+  (* The acceptable diff between the actual % of reserves
+    in the strategy and the real % of assets in the strategy
+    when the rebalance shouldn’t be triggered *)
+  delta_f                 : nat;
+]
+
+type strategies_t       is big_map(asset_standard_t, strategy_t)
+
 type fee_balances_map_t is big_map(asset_standard_t, fee_balances_t)
 
 type storage_t          is [@layout:comb] record[
@@ -46,6 +62,7 @@ type storage_t          is [@layout:comb] record[
   fish                    : address;
   management              : address;
   guardian                : address;
+  strategist              : address;
   fees                    : vault_fees_t;
   assets                  : assets_t;
   asset_ids               : asset_ids_t;
@@ -58,6 +75,9 @@ type storage_t          is [@layout:comb] record[
   withdrawals             : withdrawals_t;
   withdrawal_count        : nat;
   withdrawal_ids          : withdrawal_ids_t;
+
+  strategies              : strategies_t;
+  strategy_fees           : fee_balances_map_t;
 
   fee_balances            : fee_balances_map_t;
   baker_rewards           : fee_balances_t;
@@ -96,6 +116,14 @@ type withdrawal_data_t  is [@layout:comb] record[
 type claim_fee_t        is [@layout:comb] record[
   asset                   : asset_standard_t;
   recipient               : address;
+]
+
+type add_strategy_t     is [@layout:comb] record[
+  asset                   : asset_standard_t;
+  strategy_address        : address;
+
+  target_reserves_rate_f  : nat;
+  delta_f                 : nat;
 ]
 
 [@inline] const no_operations     : list(operation) = nil;

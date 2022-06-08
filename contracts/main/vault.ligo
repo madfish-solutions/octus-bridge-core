@@ -30,6 +30,7 @@ type parameter_t        is
 | Claim_baker_rewards     of address
 | Claim_fee               of claim_fee_t
 | Confirm_owner           of unit
+| Add_strategy            of add_strategy_t
 
 | Deposit                 of deposit_t
 | Withdraw                of message_t
@@ -61,6 +62,7 @@ function main(
   | Claim_baker_rewards(params)     -> claim_baker_rewards(params, s)
   | Claim_fee(params)               -> claim_fee(params, s)
   | Confirm_owner                   -> confirm_owner(s)
+  | Add_strategy(params)            -> add_strategy(params, s)
 
   | Deposit(params)                 -> deposit(params, s)
   | Withdraw(params)                -> withdraw(params, s)

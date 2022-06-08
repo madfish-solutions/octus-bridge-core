@@ -171,3 +171,19 @@ function claim_fee(
         reward,
         params.asset
       )], s)
+
+function add_strategy(
+  const params          : add_strategy_t;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    require(Tezos.sender = s.strategist, Errors.not_strategist);
+
+    s.strategies[params.asset] := record[
+      asset = params.asset;
+      strategy_address = params.strategy_address;
+      total_deposit = 0n;
+      target_reserves_rate_f = params.target_reserves_rate_f;
+      delta_f = params.delta_f;
+    ];
+  } with (Constants.no_operations, s)

@@ -6,6 +6,7 @@ module Errors is {
   const not_fish                  : string = "Vault/not-fish";
   const not_owner_or_guardian     : string = "Vault/not-owner-or-guardian";
   const not_fish_or_management    : string = "Vault/not-fish-or-management";
+  const not_strategist            : string = "Vault/not-strategist";
   const asset_undefined           : string = "Vault/asset-undefined";
   const metadata_undefined        : string = "Vault/metadata-undefined";
   const create_token_etp_404      : string = "Vault/create-token-etp-404";
