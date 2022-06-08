@@ -314,15 +314,23 @@ function set_bounty(
   } with (Constants.no_operations, s)
 
 function cancel_pending_withdrawal(
-  const pending_id      : nat;
+  const params          : cancel_pending_withdrawal_t;
   var s                 : storage_t)
                         : return_t is
   block {
-    var pending_withdrawal := unwrap(s.pending_withdrawals[pending_id], Errors.unknown_pending_withdrawal);
+    var pending_withdrawal := unwrap(s.pending_withdrawals[params.pending_id], Errors.unknown_pending_withdrawal);
     require(Tezos.sender = pending_withdrawal.recipient, Errors.not_recipient);
     require(pending_withdrawal.status = Pending(unit), Errors.pending_withdrawal_closed);
 
     pending_withdrawal.status := Canceled(unit);
 
-    s.pending_withdrawals[pending_id] := pending_withdrawal;
+    s.pending_withdrawals[params.pending_id] := pending_withdrawal;
+
+    const return_amount = pending_withdrawal.amount + pending_withdrawal.bounty + pending_withdrawal.fee;
+    s.deposits[s.deposit_count] := record[
+        recipient = params.recipient;
+        amount    = return_amount;
+        asset     = pending_withdrawal.asset
+    ];
+    s.deposit_count := s.deposit_count + 1n;
   } with (Constants.no_operations, s)

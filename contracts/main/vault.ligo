@@ -35,7 +35,7 @@ type parameter_t        is
 | Deposit_with_bounty     of deposit_with_bounty_t
 | Withdraw                of message_t
 | Set_bounty              of set_bounty_t
-| Cancel_withdrawal       of nat
+| Cancel_withdrawal       of cancel_pending_withdrawal_t
 
 | Default                 of unit
 

@@ -1425,27 +1425,37 @@ describe("Vault methods tests", async function () {
   });
   describe("Testing entrypoint: Cancel_withdrawal", async function () {
     it("Shouldn't cancel pending withdrawal if unknown pending withdrawal", async function () {
-      await rejects(vault.call("cancel_withdrawal", 5), err => {
+      await rejects(vault.call("cancel_withdrawal", [5, "0000"]), err => {
         strictEqual(err.message, "Vault/unknown-pending-withdrawal");
         return true;
       });
     });
     it("Shouldn't cancel pending withdrawal if sender not recipient", async function () {
       Tezos.setSignerProvider(signerBob);
-      await rejects(vault.call("cancel_withdrawal", 0), err => {
+      await rejects(vault.call("cancel_withdrawal", [0, "0000"]), err => {
         strictEqual(err.message, "Vault/not-recipient");
         return true;
       });
     });
     it("Should cancel pending withdrawal", async function () {
       Tezos.setSignerProvider(signerAlice);
-      await vault.call("cancel_withdrawal", 0);
+      await vault.call("cancel_withdrawal", [0, "0000"]);
       const wihdrawal = await vault.storage.pending_withdrawals.get("0");
+      const newDeposit = await vault.storage.deposits.get(
+        `${vault.storage.deposit_count.toNumber() - 1}`,
+      );
       notStrictEqual(wihdrawal.status["canceled"], undefined);
+      strictEqual(newDeposit.recipient, "0000");
+      strictEqual(
+        newDeposit.amount.toNumber(),
+        wihdrawal.amount.toNumber() +
+          wihdrawal.fee.toNumber() +
+          wihdrawal.bounty.toNumber(),
+      );
     });
     it("Shouldn't cancel pending withdrawal if pending withdrawal is closed", async function () {
       Tezos.setSignerProvider(signerAlice);
-      await rejects(vault.call("cancel_withdrawal", 0), err => {
+      await rejects(vault.call("cancel_withdrawal", [0, "0000"]), err => {
         strictEqual(err.message, "Vault/pending-withdrawal-closed");
         return true;
       });

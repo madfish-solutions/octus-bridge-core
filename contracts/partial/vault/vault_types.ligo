@@ -134,4 +134,9 @@ type set_bounty_t       is [@layout:comb] record[
   bounty                  : nat;
 ]
 
+type cancel_pending_withdrawal_t is [@layout:comb] record[
+  pending_id              : nat;
+  recipient               : bytes;
+]
+
 [@inline] const no_operations     : list(operation) = nil;
