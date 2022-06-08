@@ -96,7 +96,7 @@ function deposit_with_bounty(
     | Tez -> require(Tezos.amount / 1mutez = params.amount, Errors.amounts_mismatch)
     | _ -> skip
     ];
-
+    require(params.amount > 0n, Errors.zero_transfer);
     require(asset.tvl + params.amount <= asset.deposit_limit or asset.deposit_limit = 0n, Errors.deposit_limit);
 
     const fee = params.amount * asset.deposit_fee_f / Constants.precision;

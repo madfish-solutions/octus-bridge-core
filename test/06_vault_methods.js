@@ -1547,9 +1547,28 @@ describe("Vault methods tests", async function () {
         },
       );
     });
+    it("Shouldn't deposit if deposit zero amount", async function () {
+      await rejects(
+        vault.call("deposit_with_bounty", [
+          "001100",
+          0,
+          "fa12",
+          fa12Token.address,
+          [1],
+        ]),
+        err => {
+          strictEqual(err.message, "Vault/zero-transfer");
+          return true;
+        },
+      );
+    });
     it("Shouldn't deposit if amount less than pending withdrawal amount", async function () {
       await rejects(
-        vault.call("deposit_with_bounty", ["001100", 0, "tez", null, [1]]),
+        vault.call(
+          "deposit_with_bounty",
+          ["001100", 200, "tez", null, [1]],
+          200 / 1e6,
+        ),
         err => {
           strictEqual(
             err.message,
