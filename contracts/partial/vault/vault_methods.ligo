@@ -45,11 +45,17 @@ function deposit(
             (Tezos.get_entrypoint_opt("%burn", token_.address) : option(contract(burn_params_t))),
             Errors.burn_etp_404)
         ) # operations;
-      asset.tvl := get_nat_or_fail(asset.tvl - deposited_amount, Errors.not_nat)
+      asset := asset with record[
+          tvl = get_nat_or_fail(asset.tvl - deposited_amount, Errors.not_nat);
+          virtual_balance = get_nat_or_fail(asset.virtual_balance - deposited_amount, Errors.not_nat)
+        ]
      }
     | Tez -> {
         require(deposit_without_fee = params.amount, Errors.amounts_mismatch);
-        asset.tvl := asset.tvl + deposited_amount
+        asset := asset with record [
+            tvl += deposited_amount;
+            virtual_balance += deposited_amount
+          ]
       }
     | _ -> {
         operations := wrap_transfer(
@@ -58,7 +64,10 @@ function deposit(
           deposit_without_fee,
           asset.asset_type
         ) # operations;
-        asset.tvl := asset.tvl + deposited_amount
+        asset := asset with record [
+            tvl += deposited_amount;
+            virtual_balance += deposited_amount
+          ]
       }
     ];
     s.assets[asset_id] := asset;
@@ -120,7 +129,10 @@ function withdraw(
             Errors.mint_etp_404
           )
          ) # operations;
-      asset.tvl := asset.tvl + withdrawal_amount;
+      asset := asset with record [
+            tvl += withdrawal_amount;
+            virtual_balance += withdrawal_amount
+          ]
      }
     | _ -> {
         operations := wrap_transfer(
@@ -129,7 +141,10 @@ function withdraw(
           withdrawal_amount,
           asset.asset_type
         ) # operations;
-        asset.tvl := get_nat_or_fail(asset.tvl - params.amount, Errors.not_nat);
+        asset := asset with record[
+            tvl = get_nat_or_fail(asset.tvl - params.amount, Errors.not_nat);
+            virtual_balance = get_nat_or_fail(asset.virtual_balance - params.amount, Errors.not_nat)
+        ]
       }
     ];
 
