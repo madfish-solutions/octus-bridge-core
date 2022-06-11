@@ -10,6 +10,12 @@ const {
 const Vault = require("./helpers/vaultInterface");
 const Token = require("./helpers/tokenInterface");
 const WrappedToken = require("./helpers/wrappedTokenInterface");
+const YupanaStrategy = require("./helpers/commonInterface");
+const YupanaMock = require("./helpers/commonInterface");
+
+const yupanaStrategyStorage = require("./storage/yupanaStrategy");
+
+const yupanaMockStorage = require("./storage/yupanaMock");
 const fa12TokenStorage = require("../test/storage/FA12");
 const fa2TokenStorage = require("../test/storage/FA2");
 const wrappedTokenStorage = require("../test/storage/wrappedToken");
@@ -18,6 +24,7 @@ const vaultStorage = require("./storage/vault");
 const { alice, bob } = require("../scripts/sandbox/accounts");
 const { MichelsonMap } = require("@taquito/taquito");
 const { confirmOperation } = require("../scripts/confirmation");
+const yupanaStrategy = require("./storage/yupanaStrategy");
 
 const precision = 10 ** 6;
 
@@ -32,6 +39,37 @@ describe("Vault Admin tests", async function () {
     try {
       fa12Token = await new Token().init(fa12TokenStorage);
       fa2Token = await new Token("fa2").init(fa2TokenStorage);
+      yupana = await new YupanaMock().init(yupanaMockStorage, "yupana_mock");
+      yupanaStrategyStorage.vault = alice.pkh;
+      yupanaStrategyStorage.protocol = yupana.address;
+      yupanaStrategyStorage.deposit_asset = { fa12: fa12Token.address };
+      yupanaStrategyStorage.reward_asset = { fa12: fa12Token.address };
+      strategy = await new YupanaStrategy().init(
+        yupanaStrategyStorage,
+        "yupana_strategy",
+      );
+
+      await yupana.call("addMarket", [
+        alice.pkh,
+        "fA12",
+        fa12Token.address,
+        0.75 * precision,
+        0.4 * precision,
+        0.000009 * precision,
+        MichelsonMap.fromLiteral({
+          symbol: Buffer.from("btc", "ascii").toString("hex"),
+        }),
+        0.55 * precision,
+        0.5 * precision,
+      ]);
+      const operation1 = await Tezos.contract.transfer({
+        to: eve.pkh,
+        amount: 10,
+      });
+      await confirmOperation(Tezos, operation1.hash);
+
+      //await fa12Token.transfer(alice.pkh, strategy.address, 100 * precision);
+      await fa12Token.transfer(alice.pkh, yupana.address, 100 * precision);
 
       wrappedToken = await new WrappedToken("fa2").init(
         wrappedTokenStorage,
@@ -632,11 +670,11 @@ describe("Vault Admin tests", async function () {
     it("Should allow add new strategy", async function () {
       Tezos.setSignerProvider(signerAlice);
       const targetReversesF = 0.5 * 10 ** 6;
-      const deltaF = 0.2 * 10 ** 6;
+      const deltaF = 0.15 * 10 ** 6;
       await vault.call("add_strategy", [
         "fa12",
         fa12Token.address,
-        alice.pkh,
+        yupana.address,
         targetReversesF,
         deltaF,
       ]);
@@ -646,7 +684,7 @@ describe("Vault Admin tests", async function () {
       });
 
       deepStrictEqual(newStrategy.asset, { fa12: fa12Token.address });
-      strictEqual(newStrategy.strategy_address, alice.pkh);
+      strictEqual(newStrategy.strategy_address, yupana.address);
       strictEqual(
         newStrategy.target_reserves_rate_f.toNumber(),
         targetReversesF,
