@@ -113,15 +113,15 @@ function toggle_pause_asset(
   } with (Constants.no_operations, s)
 
 function toggle_ban_asset(
-  const asset           : asset_standard_t;
+  const params          : asset_with_unit_t;
   var s                 : storage_t)
                         : return_t is
   block {
     require(Tezos.sender = s.owner, Errors.not_owner)
   } with (Constants.no_operations,
       s with record[banned_assets = Big_map.update(
-        asset,
-        Some(not(unwrap_or(s.banned_assets[asset], False))),
+        params.asset,
+        Some(not(unwrap_or(s.banned_assets[params.asset], False))),
         s.banned_assets
       )])
 
@@ -187,4 +187,45 @@ function add_strategy(
       target_reserves_rate_f = params.target_reserves_rate_f;
       delta_f = params.delta_f;
     ];
+  } with (Constants.no_operations, s)
+
+function revoke_strategy(
+  const params          : asset_with_unit_t;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    require(Tezos.sender = s.strategist, Errors.not_strategist);
+    var strategy := unwrap(s.strategies[params.asset], Errors.strategy_undefined);
+
+    const return = if strategy.total_deposit > 0n
+      then
+        block {
+          strategy.total_deposit := 0n;
+          s.strategies[params.asset] := strategy;
+        } with (list[
+            Tezos.transaction(
+              strategy.total_deposit,
+              0mutez,
+              unwrap(
+                (Tezos.get_entrypoint_opt("%divest", strategy.strategy_address) : option(contract(nat))),
+                Errors.divest_etp_404
+              ));
+            get_harvest_op(strategy.strategy_address)
+          ], s)
+      else (Constants.no_operations, s);
+
+  } with return
+
+function handle_harvest(
+  const params          : harvest_response_t;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    const strategy = unwrap(s.strategies[params.asset], Errors.strategy_undefined);
+    require(Tezos.sender = strategy.strategy_address, Errors.not_strategist);
+
+    if params.amount > 0n
+    then s.strategy_rewards := update_fee_balances(s.strategy_rewards, s.fish, s.management, params.amount, params.asset)
+    else skip;
+
   } with (Constants.no_operations, s)

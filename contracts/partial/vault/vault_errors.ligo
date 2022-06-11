@@ -14,6 +14,9 @@ module Errors is {
   const burn_etp_404              : string = "Vault/burn-etp-404";
   const transfer_etp_404          : string = "Vault/transfer-etp-404";
   const implict_account_404       : string = "Vault/not-implict-account";
+  const handle_harvest_etp_404    : string = "Vault/handle-harvest-etp-404";
+  const harvest_etp_404           : string = "Vault/harvest_etp_404";
+  const divest_etp_404            : string = "Vault/divest_etp_404";
   const asset_paused              : string = "Vault/asset-is-paused";
   const asset_banned              : string = "Vault/asset-is-banned";
   const vault_paused              : string = "Vault/vault-is-paused";
@@ -37,4 +40,5 @@ module Errors is {
   const zero_fee_balance          : string = "Vault/zero-fee-balance";
   const deposit_limit             : string = "Vault/respect-deposit-limit";
   const strategy_exists           : string = "Vault/strategy-already-exists";
+  const strategy_undefined        : string = "Vault/strategy-undefined";
   }

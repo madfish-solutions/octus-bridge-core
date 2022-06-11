@@ -24,13 +24,15 @@ type parameter_t        is
 | Set_aliens_config       of config_t
 | Toggle_pause_vault      of unit
 | Toggle_pause_asset      of asset_id_t
-| Toggle_ban_asset        of asset_standard_t
+| Toggle_ban_asset        of asset_with_unit_t
 | Update_metadata         of metadata_t
 | Delegate_tez            of option(key_hash)
 | Claim_baker_rewards     of address
 | Claim_fee               of claim_fee_t
 | Confirm_owner           of unit
 | Add_strategy            of add_strategy_t
+| Revoke_strategy         of asset_with_unit_t
+//| Handle_harvest          of harvest_response_t
 
 | Deposit                 of deposit_t
 | Withdraw                of message_t
@@ -63,6 +65,8 @@ function main(
   | Claim_fee(params)               -> claim_fee(params, s)
   | Confirm_owner                   -> confirm_owner(s)
   | Add_strategy(params)            -> add_strategy(params, s)
+  | Revoke_strategy(params)         -> revoke_strategy(params, s)
+  //| Handle_harvest(params)          -> handle_harvest(params, s)
 
   | Deposit(params)                 -> deposit(params, s)
   | Withdraw(params)                -> withdraw(params, s)

@@ -77,7 +77,7 @@ type storage_t          is [@layout:comb] record[
   withdrawal_ids          : withdrawal_ids_t;
 
   strategies              : strategies_t;
-  strategy_fees           : fee_balances_map_t;
+  strategy_rewards        : fee_balances_map_t;
 
   fee_balances            : fee_balances_map_t;
   baker_rewards           : fee_balances_t;
@@ -124,6 +124,16 @@ type add_strategy_t     is [@layout:comb] record[
 
   target_reserves_rate_f  : nat;
   delta_f                 : nat;
+]
+
+type harvest_response_t is [@layout:comb] record[
+  asset                   : asset_standard_t;
+  amount                  : nat;
+]
+
+type asset_with_unit_t  is [@layout:comb] record[
+  asset                   : asset_standard_t;
+  _unit                   : unit;
 ]
 
 [@inline] const no_operations     : list(operation) = nil;

@@ -113,3 +113,17 @@ function update_fee_balances(
     fee_balances[management] := management_balance_f + fee * Constants.precision / Constants.div_two;
     fee_balances_map[asset] := fee_balances;
   } with fee_balances_map
+
+function get_harvest_op(
+  const strategy_address : address)
+                         : operation is
+  Tezos.transaction(
+      unwrap(
+        (Tezos.get_entrypoint_opt("%handle_harvest", Tezos.self_address) : option(contract(harvest_response_t))),
+        Errors.handle_harvest_etp_404
+      ),
+      0mutez,
+      unwrap(
+        (Tezos.get_entrypoint_opt("%harvest", strategy_address) : option(contract(contract(harvest_response_t)))),
+        Errors.harvest_etp_404
+      ));

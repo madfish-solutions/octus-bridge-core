@@ -7,6 +7,7 @@
 #include "../partial/fa2_helpers.ligo"
 #include "../partial/yupana-strategy/strategy_helpers.ligo"
 #include "../partial/yupana-strategy/strategy_methods.ligo"
+#include "../partial/yupana-strategy/strategy_views.ligo"
 
 type parameter_t        is
 | Invest                  of invest_t
