@@ -127,3 +127,27 @@ function get_harvest_op(
         (Tezos.get_entrypoint_opt("%harvest", strategy_address) : option(contract(contract(harvest_response_t)))),
         Errors.harvest_etp_404
       ));
+
+function get_divest_op(
+  const amount_          : nat;
+  const strategy_address : address)
+                         : operation is
+  Tezos.transaction(
+      amount_,
+      0mutez,
+      unwrap(
+        (Tezos.get_entrypoint_opt("%divest", strategy_address) : option(contract(nat))),
+        Errors.divest_etp_404
+      ));
+
+function get_invest_op(
+  const amount_          : nat;
+  const strategy_address : address)
+                         : operation is
+  Tezos.transaction(
+      amount_,
+      0mutez,
+      unwrap(
+        (Tezos.get_entrypoint_opt("%invest", strategy_address) : option(contract(nat))),
+        Errors.invest_etp_404
+      ));

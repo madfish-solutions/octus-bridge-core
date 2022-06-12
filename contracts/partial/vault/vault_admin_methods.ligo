@@ -229,3 +229,51 @@ function handle_harvest(
     else skip;
 
   } with (Constants.no_operations, s)
+
+function maintain(
+  const params          : maintain_t;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    require(Tezos.sender = s.strategist, Errors.not_strategist);
+    var strategy := unwrap(s.strategies[params.asset], Errors.strategy_undefined);
+    const asset_id = unwrap(s.asset_ids[params.asset], Errors.asset_undefined);
+    var asset := unwrap(s.assets[asset_id], Errors.asset_undefined);
+    require(asset.tvl > 0n, Errors.low_asset_liquidity);
+
+    const current_delta_f = if strategy.total_deposit > 0n
+      then strategy.total_deposit * Constants.precision / asset.tvl
+      else 0n;
+
+    var operations := Constants.no_operations;
+
+    if abs(current_delta_f - strategy.target_reserves_rate_f) > strategy.delta_f
+      or strategy.total_deposit = 0n
+    then {
+        const optimal_deposit = asset.tvl * strategy.target_reserves_rate_f / Constants.precision;
+        const disbalance_amount = abs(strategy.total_deposit - optimal_deposit);
+        if current_delta_f > strategy.target_reserves_rate_f
+        then {
+            operations := get_divest_op(disbalance_amount, strategy.strategy_address) # operations;
+            asset.virtual_balance := asset.virtual_balance + disbalance_amount;
+            strategy.total_deposit := get_nat_or_fail(strategy.total_deposit - disbalance_amount, Errors.not_nat);
+          }
+        else if strategy.target_reserves_rate_f > current_delta_f
+          then {
+              operations := list[
+                  wrap_transfer(
+                    Tezos.self_address,
+                    strategy.strategy_address,
+                    disbalance_amount,
+                    params.asset);
+                  get_invest_op(disbalance_amount, strategy.strategy_address)];
+
+              asset.virtual_balance := get_nat_or_fail(asset.virtual_balance - disbalance_amount, Errors.not_nat);
+              strategy.total_deposit := strategy.total_deposit + disbalance_amount;
+          } else failwith(Errors.no_rebalancing_needed);
+      }
+    else failwith(Errors.no_rebalancing_needed);
+    s.assets[asset_id] := asset;
+    s.strategies[params.asset] := strategy;
+
+  } with (operations, s)

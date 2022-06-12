@@ -1,5 +1,5 @@
 function invest(
-  const params            : invest_t;
+  const amount_           : nat;
   var s                   : storage_t)
                           : return_t is
   block {
@@ -7,7 +7,7 @@ function invest(
     const approve_op = case s.deposit_asset of [
       | Fa12(addr) ->
         Tezos.transaction(
-          (s.protocol, params.amount),
+          (s.protocol, amount_),
           0mutez,
           unwrap(
             (Tezos.get_entrypoint_opt("%approve", addr) : option(contract(approve_fa12_token_t))),
@@ -47,18 +47,12 @@ function invest(
         ]
   } with (
       list[
-        wrap_transfer(
-          Tezos.sender,
-          Tezos.self_address,
-          params.amount,
-          s.deposit_asset
-        );
         approve_op;
         Tezos.transaction(
           (record[
             tokenId     = s.protocol_asset_id;
-            amount      = params.amount;
-            minReceived = params.min_received;
+            amount      = amount_;
+            minReceived = amount_;
           ] : call_y_t),
           0mutez,
           unwrap(
@@ -66,28 +60,28 @@ function invest(
             Errors.mint_etp_404
           )
         )
-      ], s with record[tvl += params.amount])
+      ], s with record[tvl += amount_])
 
 function divest(
-  const params            : divest_t;
+  const amount_           : nat;
   var s                   : storage_t)
                           : return_t is
   block {
     require(Tezos.sender = s.vault, Errors.not_vault);
-    require(params.amount <= s.tvl, Errors.low_balance);
+    require(amount_ <= s.tvl, Errors.low_balance);
 
-    require(params.amount > 0n, Errors.zero_transfer);
+    require(amount_ > 0n, Errors.zero_transfer);
 
   } with (
       list[
-        get_reedem_op(params.amount, params.min_received, s.protocol_asset_id, s.protocol);
+        get_reedem_op(amount_, amount_, s.protocol_asset_id, s.protocol);
         wrap_transfer(
           Tezos.self_address,
           s.vault,
-          params.amount,
+          amount_,
           s.deposit_asset
         );
-      ], s with record[tvl = get_nat_or_fail(s.tvl - params.amount, Errors.not_nat)])
+      ], s with record[tvl = get_nat_or_fail(s.tvl - amount_, Errors.not_nat)])
 
 function harvest(
   const s               : storage_t)

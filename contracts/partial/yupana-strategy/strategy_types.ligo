@@ -17,13 +17,6 @@ type call_y_t           is [@layout:comb] record [
   minReceived             : nat;
 ]
 
-type invest_t           is [@layout:comb] record [
-  amount                  : nat;
-  min_received            : nat;
-]
-
-type divest_t           is invest_t
-
 type balance_view_t     is [@layout:comb] record [
   requests                : list(balance_of_request_t);
   precision               : bool;

@@ -136,4 +136,9 @@ type asset_with_unit_t  is [@layout:comb] record[
   _unit                   : unit;
 ]
 
+type maintain_t         is [@layout:comb] record[
+  asset                   : asset_standard_t;
+  _unit                   : unit;
+]
+
 [@inline] const no_operations     : list(operation) = nil;

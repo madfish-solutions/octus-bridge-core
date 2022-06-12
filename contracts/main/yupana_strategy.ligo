@@ -10,8 +10,8 @@
 #include "../partial/yupana-strategy/strategy_views.ligo"
 
 type parameter_t        is
-| Invest                  of invest_t
-| Divest                  of divest_t
+| Invest                  of nat
+| Divest                  of nat
 | Harvest                 of unit
 
 function main(

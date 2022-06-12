@@ -17,6 +17,7 @@ module Errors is {
   const handle_harvest_etp_404    : string = "Vault/handle-harvest-etp-404";
   const harvest_etp_404           : string = "Vault/harvest_etp_404";
   const divest_etp_404            : string = "Vault/divest_etp_404";
+  const invest_etp_404            : string = "Vault/invest_etp_404";
   const asset_paused              : string = "Vault/asset-is-paused";
   const asset_banned              : string = "Vault/asset-is-banned";
   const vault_paused              : string = "Vault/vault-is-paused";
@@ -41,4 +42,6 @@ module Errors is {
   const deposit_limit             : string = "Vault/respect-deposit-limit";
   const strategy_exists           : string = "Vault/strategy-already-exists";
   const strategy_undefined        : string = "Vault/strategy-undefined";
+  const low_asset_liquidity       : string = "Vault/low-asset-liquidity";
+  const no_rebalancing_needed     : string = "Vault/no-rebalancing-needed"
   }
