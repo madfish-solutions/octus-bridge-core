@@ -45,7 +45,7 @@ module.exports = {
   withdrawal_count: 0,
   withdrawal_ids: MichelsonMap.fromLiteral({}),
   strategies: MichelsonMap.fromLiteral({}),
-  strategy_fees: MichelsonMap.fromLiteral({}),
+  strategy_rewards: MichelsonMap.fromLiteral({}),
   fee_balances: MichelsonMap.fromLiteral({}),
   baker_rewards: MichelsonMap.fromLiteral({}),
   paused: false,
