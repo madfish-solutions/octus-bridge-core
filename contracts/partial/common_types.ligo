@@ -86,3 +86,8 @@ type convert_amount_t   is [@layout:comb] record [
   amount                : nat;
   precision             : bool;
 ]
+
+type harvest_response_t is [@layout:comb] record[
+  asset                   : asset_standard_t;
+  amount                  : nat;
+]

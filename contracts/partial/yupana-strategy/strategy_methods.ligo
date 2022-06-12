@@ -84,6 +84,7 @@ function divest(
       ], s with record[tvl = get_nat_or_fail(s.tvl - amount_, Errors.not_nat)])
 
 function harvest(
+  const callback        : contract(harvest_response_t);
   const s               : storage_t)
                         : return_t is
   block {
@@ -91,14 +92,25 @@ function harvest(
     const shares_balance = get_shares_balance(s.protocol_asset_id, s.protocol, True);
     const current_balance = convert_amount(shares_balance, s.protocol_asset_id, s.protocol, False, False);
     const profit = get_nat_or_fail(current_balance - s.tvl, Errors.not_nat);
-    require(profit > 0n, Errors.zero_profit);
 
-  } with (list[
-      get_reedem_op(profit, profit, s.protocol_asset_id, s.protocol);
-      wrap_transfer(
-        Tezos.self_address,
-        s.vault,
-        profit,
-        s.deposit_asset
-      )
-      ], s with record[last_profit = profit;])
+    const operations = if profit > 0n
+      then list[
+          get_reedem_op(profit, profit, s.protocol_asset_id, s.protocol);
+          wrap_transfer(
+            Tezos.self_address,
+            s.vault,
+            profit,
+            s.reward_asset
+          );
+          Tezos.transaction(
+            record[
+              asset = s.reward_asset;
+              amount = profit;
+            ],
+            0mutez,
+            callback
+          )
+        ]
+      else Constants.no_operations
+
+  } with (operations, s with record[last_profit = profit;])

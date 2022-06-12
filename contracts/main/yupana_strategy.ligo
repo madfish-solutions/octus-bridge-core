@@ -12,7 +12,7 @@
 type parameter_t        is
 | Invest                  of nat
 | Divest                  of nat
-| Harvest                 of unit
+| Harvest                 of contract(harvest_response_t)
 
 function main(
   const action             : parameter_t;
@@ -21,5 +21,5 @@ function main(
   case action of [
   | Invest(params)  -> invest(params, s)
   | Divest(params)  -> divest(params, s)
-  | Harvest         -> harvest(s)
+  | Harvest(params) -> harvest(params, s)
   ]
