@@ -204,7 +204,7 @@ function update_strategy(
   } with (Constants.no_operations, s)
 
 function revoke_strategy(
-  const params          : asset_with_unit_t;
+  const params          : revoke_strategy_t;
   var s                 : storage_t)
                         : return_t is
   block {
@@ -214,11 +214,20 @@ function revoke_strategy(
     const return = if strategy.total_deposit > 0n
       then
         block {
-          strategy.total_deposit := 0n;
-          s.strategies[params.asset] := strategy;
+          const divest_amount = strategy.total_deposit;
+          if params.delete
+          then remove params.asset from map s.strategies
+          else {
+              strategy.total_deposit := 0n;
+              s.strategies[params.asset] := strategy;
+            };
+          const asset_id = unwrap(s.asset_ids[params.asset], Errors.asset_undefined);
+          var asset := unwrap(s.assets[asset_id], Errors.asset_undefined);
+          asset.virtual_balance := asset.virtual_balance + divest_amount;
+          s.assets[asset_id] := asset;
         } with (list[
             Tezos.transaction(
-              strategy.total_deposit,
+              divest_amount,
               0mutez,
               unwrap(
                 (Tezos.get_entrypoint_opt("%divest", strategy.strategy_address) : option(contract(nat))),
@@ -226,7 +235,11 @@ function revoke_strategy(
               ));
             get_harvest_op(strategy.strategy_address)
           ], s)
-      else (Constants.no_operations, s);
+      else block {
+          if params.delete
+          then remove params.asset from map s.strategies
+          else skip;
+        } with (Constants.no_operations, s);
 
   } with return
 

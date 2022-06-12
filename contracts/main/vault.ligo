@@ -32,8 +32,8 @@ type parameter_t        is
 | Confirm_owner           of unit
 | Add_strategy            of add_strategy_t
 | Update_strategy         of update_strategy_t
-| Revoke_strategy         of asset_with_unit_t
-//| Handle_harvest          of harvest_response_t
+| Revoke_strategy         of revoke_strategy_t
+| Handle_harvest          of harvest_response_t
 | Maintain                of maintain_t
 
 | Deposit                 of deposit_t
@@ -69,7 +69,7 @@ function main(
   | Add_strategy(params)            -> add_strategy(params, s)
   | Update_strategy(params)         -> update_strategy(params, s)
   | Revoke_strategy(params)         -> revoke_strategy(params, s)
-  //| Handle_harvest(params)          -> handle_harvest(params, s)
+  | Handle_harvest(params)          -> handle_harvest(params, s)
   | Maintain(params)                -> maintain(params, s)
 
   | Deposit(params)                 -> deposit(params, s)

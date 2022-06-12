@@ -137,6 +137,11 @@ type asset_with_unit_t  is [@layout:comb] record[
   _unit                   : unit;
 ]
 
+type revoke_strategy_t  is [@layout:comb] record[
+  asset                   : asset_standard_t;
+  delete                  : bool;
+]
+
 type maintain_t         is [@layout:comb] record[
   asset                   : asset_standard_t;
   _unit                   : unit;
