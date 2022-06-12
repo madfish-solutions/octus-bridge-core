@@ -189,6 +189,20 @@ function add_strategy(
     ];
   } with (Constants.no_operations, s)
 
+function update_strategy(
+  const params          : update_strategy_t;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    require(Tezos.sender = s.strategist, Errors.not_strategist);
+    var strategy := unwrap(s.strategies[params.asset], Errors.strategy_undefined);
+    strategy := strategy with record[
+        target_reserves_rate_f = params.target_reserves_rate_f;
+        delta_f = params.delta_f;
+      ];
+    s.strategies[params.asset] := strategy;
+  } with (Constants.no_operations, s)
+
 function revoke_strategy(
   const params          : asset_with_unit_t;
   var s                 : storage_t)

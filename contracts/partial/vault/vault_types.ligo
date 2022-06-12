@@ -126,9 +126,10 @@ type add_strategy_t     is [@layout:comb] record[
   delta_f                 : nat;
 ]
 
-type harvest_response_t is [@layout:comb] record[
+type update_strategy_t  is [@layout:comb] record[
   asset                   : asset_standard_t;
-  amount                  : nat;
+  target_reserves_rate_f  : nat;
+  delta_f                 : nat;
 ]
 
 type asset_with_unit_t  is [@layout:comb] record[

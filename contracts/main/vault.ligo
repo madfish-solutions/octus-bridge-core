@@ -31,6 +31,7 @@ type parameter_t        is
 | Claim_fee               of claim_fee_t
 | Confirm_owner           of unit
 | Add_strategy            of add_strategy_t
+| Update_strategy         of update_strategy_t
 | Revoke_strategy         of asset_with_unit_t
 //| Handle_harvest          of harvest_response_t
 | Maintain                of maintain_t
@@ -66,6 +67,7 @@ function main(
   | Claim_fee(params)               -> claim_fee(params, s)
   | Confirm_owner                   -> confirm_owner(s)
   | Add_strategy(params)            -> add_strategy(params, s)
+  | Update_strategy(params)         -> update_strategy(params, s)
   | Revoke_strategy(params)         -> revoke_strategy(params, s)
   //| Handle_harvest(params)          -> handle_harvest(params, s)
   | Maintain(params)                -> maintain(params, s)
