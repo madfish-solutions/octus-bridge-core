@@ -13,6 +13,7 @@ module Constants is {
     deposit_limit   = 0n;
     tvl             = 0n;
     virtual_balance = 0n;
+    pending_fee     = 0n;
     paused          = False;
     banned          = False;
   ];

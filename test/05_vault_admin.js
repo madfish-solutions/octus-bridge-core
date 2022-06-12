@@ -46,6 +46,7 @@ describe("Vault Admin tests", async function () {
           deposit_limit: 0,
           tvl: 0,
           virtual_balance: 0,
+          pending_fee: 0,
           paused: false,
           banned: false,
         },

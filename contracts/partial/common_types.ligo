@@ -74,6 +74,7 @@ type asset_t            is [@layout:comb] record[
   deposit_limit           : nat;
   tvl                     : nat;
   virtual_balance         : nat;
+  pending_fee             : nat;
   paused                  : bool;
   banned                  : bool;
 ]
