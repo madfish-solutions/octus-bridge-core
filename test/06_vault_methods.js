@@ -90,7 +90,6 @@ describe("Vault methods tests", async function () {
           deposit_limit: 1000 * precision,
           tvl: 180 * precision,
           virtual_balance: 0,
-          pending_fee: 0,
           paused: false,
           banned: false,
         },
@@ -101,7 +100,6 @@ describe("Vault methods tests", async function () {
           deposit_limit: 0,
           tvl: 0,
           virtual_balance: 0,
-          pending_fee: 0,
           paused: false,
           banned: false,
         },
@@ -112,7 +110,6 @@ describe("Vault methods tests", async function () {
           deposit_limit: 300 * precision,
           tvl: 10 * precision,
           virtual_balance: 0,
-          pending_fee: 0,
           paused: false,
           banned: false,
         },
@@ -123,7 +120,6 @@ describe("Vault methods tests", async function () {
           deposit_limit: 0,
           tvl: 90 * precision,
           virtual_balance: 90 * precision,
-          pending_fee: 0,
           paused: false,
           banned: false,
         },
@@ -134,7 +130,6 @@ describe("Vault methods tests", async function () {
           deposit_limit: 0,
           tvl: 0,
           virtual_balance: 0,
-          pending_fee: 0,
           paused: true,
           banned: false,
         },
@@ -145,7 +140,6 @@ describe("Vault methods tests", async function () {
           deposit_limit: 0,
           tvl: 0,
           virtual_balance: 0,
-          pending_fee: 0,
           paused: false,
           banned: true,
         },
@@ -1519,7 +1513,7 @@ describe("Vault methods tests", async function () {
         return true;
       });
     });
-    it("Should cancel pending withdrawal (fee unlocked)", async function () {
+    it("Should cancel pending withdrawal", async function () {
       Tezos.setSignerProvider(signerAlice);
       const prevFeeBalances = await vault.storage.fee_balances.get({
         tez: null,
@@ -1528,7 +1522,7 @@ describe("Vault methods tests", async function () {
       const prevManagementFee = await prevFeeBalances.get(
         vault.storage.management,
       );
-
+      const prevAsset = await vault.storage.assets.get("2");
       await vault.call("cancel_withdrawal", [1, "0000"]);
       const withdrawal = await vault.storage.pending_withdrawals.get("1");
       const newDeposit = await vault.storage.deposits.get(
@@ -1540,9 +1534,22 @@ describe("Vault methods tests", async function () {
       const asset = await vault.storage.assets.get("2");
       const fishFee = await feeBalances.get(vault.storage.fish);
       const managementFee = await feeBalances.get(vault.storage.management);
-      console.log(withdrawal);
-      console.log(asset);
-      // strictEqual(asset.pending_fee.toNumber(), wihdrawal.fee.toNumber());
+
+      strictEqual(
+        asset.tvl.toNumber(),
+        prevAsset.tvl.toNumber() - withdrawal.fee.toNumber(),
+      );
+      let amt = 0;
+      if (withdrawal.fee.toNumber() <= prevAsset.virtual_balance.toNumber()) {
+        amt = withdrawal.fee.toNumber();
+      } else {
+        amt = prevAsset.virtual_balance.toNumber();
+      }
+
+      strictEqual(
+        asset.virtual_balance.toNumber(),
+        prevAsset.virtual_balance.toNumber() - amt,
+      );
       notStrictEqual(withdrawal.status["canceled"], undefined);
       strictEqual(newDeposit.recipient, "0000");
       strictEqual(
@@ -1559,41 +1566,10 @@ describe("Vault methods tests", async function () {
           (withdrawal.fee.toNumber() * precision) / 2,
       );
     });
-    it("Should cancel pending withdrawal (fee locked)", async function () {
-      Tezos.setSignerProvider(signerAlice);
-      const prevFeeBalances = await vault.storage.fee_balances.get({
-        fa12: fa12Token.address,
-      });
-      const prevFishFee = await prevFeeBalances.get(vault.storage.fish);
-      const prevManagementFee = await prevFeeBalances.get(
-        vault.storage.management,
-      );
 
-      await vault.call("cancel_withdrawal", [0, "0000"]);
-      const withdrawal = await vault.storage.pending_withdrawals.get("0");
-      const newDeposit = await vault.storage.deposits.get(
-        `${vault.storage.deposit_count.toNumber() - 1}`,
-      );
-      const feeBalances = await vault.storage.fee_balances.get({
-        fa12: fa12Token.address,
-      });
-      const asset = await vault.storage.assets.get("1");
-      const fishFee = await feeBalances.get(vault.storage.fish);
-      const managementFee = await feeBalances.get(vault.storage.management);
-
-      strictEqual(asset.pending_fee.toNumber(), withdrawal.fee.toNumber());
-      notStrictEqual(withdrawal.status["canceled"], undefined);
-      strictEqual(newDeposit.recipient, "0000");
-      strictEqual(
-        newDeposit.amount.toNumber(),
-        withdrawal.amount.toNumber() + withdrawal.bounty.toNumber(),
-      );
-      strictEqual(fishFee.toNumber(), prevFishFee.toNumber());
-      strictEqual(managementFee.toNumber(), prevManagementFee.toNumber());
-    });
     it("Shouldn't cancel pending withdrawal if pending withdrawal is closed", async function () {
       Tezos.setSignerProvider(signerAlice);
-      await rejects(vault.call("cancel_withdrawal", [0, "0000"]), err => {
+      await rejects(vault.call("cancel_withdrawal", [1, "0000"]), err => {
         strictEqual(err.message, "Vault/pending-withdrawal-closed");
         return true;
       });
@@ -1625,7 +1601,7 @@ describe("Vault methods tests", async function () {
     });
     it("Shouldn't set_bounty if pending withdrawal is closed", async function () {
       Tezos.setSignerProvider(signerAlice);
-      await rejects(vault.call("set_bounty", [0, 10 * precision]), err => {
+      await rejects(vault.call("set_bounty", [1, 10 * precision]), err => {
         strictEqual(err.message, "Vault/pending-withdrawal-closed");
         return true;
       });
@@ -1750,7 +1726,7 @@ describe("Vault methods tests", async function () {
       await rejects(
         vault.call(
           "deposit_with_bounty",
-          ["001100", 1000, "fa2", fa2Token.address, fa2Token.tokenId, [0]],
+          ["001100", 1000, "tez", null, [1]],
           1000 / 1e6,
         ),
         err => {

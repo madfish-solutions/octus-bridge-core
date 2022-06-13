@@ -113,3 +113,11 @@ function update_fee_balances(
     fee_balances[management] := management_balance_f + fee * Constants.precision / Constants.div_two;
     fee_balances_map[asset] := fee_balances;
   } with fee_balances_map
+
+[@inline] function get_nat_or_zero(
+  const value           : int)
+                        : nat is
+  case is_nat(value) of [
+  | Some(natural) -> natural
+  | None -> 0n
+  ]

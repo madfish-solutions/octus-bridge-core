@@ -338,17 +338,11 @@ function cancel_pending_withdrawal(
     then {
         const asset_id = unwrap(s.asset_ids[pending_withdrawal.asset], Errors.asset_undefined);
         var asset := unwrap(s.assets[asset_id], Errors.asset_undefined);
-
-        if asset.virtual_balance >= pending_withdrawal.fee
-        then {
-            s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, pending_withdrawal.fee, pending_withdrawal.asset);
-            s.assets[asset_id] := asset with record[
-                tvl = get_nat_or_fail(asset.tvl - pending_withdrawal.fee, Errors.not_nat);
-                virtual_balance = get_nat_or_fail(asset.virtual_balance - pending_withdrawal.fee, Errors.not_nat);
-              ]
-          }
-        else s.assets[asset_id] := asset with record[pending_fee += pending_withdrawal.fee]
+        s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, pending_withdrawal.fee, pending_withdrawal.asset);
+        s.assets[asset_id] := asset with record[
+            tvl = get_nat_or_fail(asset.tvl - pending_withdrawal.fee, Errors.not_nat);
+            virtual_balance = get_nat_or_zero(asset.virtual_balance - pending_withdrawal.fee);
+          ]
       }
     else skip;
-
   } with (Constants.no_operations, s)
