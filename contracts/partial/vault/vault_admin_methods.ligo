@@ -139,9 +139,9 @@ function claim_baker_rewards(
                         : return_t is
   block {
     var balance_f := unwrap_or(s.baker_rewards[Tezos.sender], 0n);
-
-    require(balance_f / Constants.precision > 0n, Errors.zero_fee_balance);
     const reward = balance_f / Constants.precision;
+    require(reward > 0n, Errors.zero_fee_balance);
+
     s.baker_rewards[Tezos.sender] := get_nat_or_fail(balance_f - reward * Constants.precision, Errors.not_nat);
   } with (
       list[
@@ -171,6 +171,27 @@ function claim_fee(
         reward,
         params.asset
       )], s)
+
+function claim_strategy_rewards(
+  const params          : claim_fee_t;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    var fee_balances : fee_balances_t := unwrap(s.strategy_rewards[params.asset], Errors.asset_undefined);
+    var balance_f := unwrap_or(fee_balances[Tezos.sender], 0n);
+    const reward = balance_f / Constants.precision;
+    require(reward > 0n, Errors.zero_fee_balance);
+    fee_balances[Tezos.sender] := get_nat_or_fail(balance_f - reward * Constants.precision, Errors.not_nat);
+
+    s.strategy_rewards[params.asset] := fee_balances;
+  } with (list[
+      wrap_transfer(
+        Tezos.self_address,
+        params.recipient,
+        reward,
+        params.asset
+      )], s)
+
 
 function add_strategy(
   const params          : add_strategy_t;

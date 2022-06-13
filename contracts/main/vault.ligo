@@ -29,6 +29,7 @@ type parameter_t        is
 | Delegate_tez            of option(key_hash)
 | Claim_baker_rewards     of address
 | Claim_fee               of claim_fee_t
+| Claim_strategy_rewards  of claim_fee_t
 | Confirm_owner           of unit
 | Add_strategy            of add_strategy_t
 | Update_strategy         of update_strategy_t
@@ -66,6 +67,7 @@ function main(
   | Delegate_tez(params)            -> delegate_tez(params, s)
   | Claim_baker_rewards(params)     -> claim_baker_rewards(params, s)
   | Claim_fee(params)               -> claim_fee(params, s)
+  | Claim_strategy_rewards(params)  -> claim_strategy_rewards(params, s)
   | Confirm_owner                   -> confirm_owner(s)
   | Add_strategy(params)            -> add_strategy(params, s)
   | Update_strategy(params)         -> update_strategy(params, s)

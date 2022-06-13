@@ -932,9 +932,9 @@ describe("Vault Admin tests", async function () {
         return true;
       });
     });
-    it("Shouldn't maintain if strategy undefined", async function () {
+    it("Shouldn't harvest if strategy undefined", async function () {
       Tezos.setSignerProvider(signerAlice);
-      await rejects(vault.call("maintain", ["fa12", vault.address]), err => {
+      await rejects(vault.call("harvest", ["fa12", vault.address]), err => {
         strictEqual(err.message, "Vault/strategy-undefined");
         return true;
       });
@@ -1020,6 +1020,76 @@ describe("Vault Admin tests", async function () {
       strictEqual(strategy, undefined);
       strictEqual(vaultBalance, prevVaultBalance);
       strictEqual(asset.tvl.toNumber(), asset.virtual_balance.toNumber());
+    });
+  });
+  describe("Testing entrypoint: Claim_strategy_rewards", async function () {
+    it("Shouldn't claim strategy rewards if the asset is undefined", async function () {
+      Tezos.setSignerProvider(signerEve);
+      await rejects(
+        vault.call("claim_strategy_rewards", ["fa12", alice.pkh, eve.pkh]),
+        err => {
+          strictEqual(err.message, "Vault/asset-undefined");
+          return true;
+        },
+      );
+    });
+    it("Shouldn't claim strategy rewards if fee balance is zero", async function () {
+      Tezos.setSignerProvider(signerEve);
+      await rejects(
+        vault.call("claim_strategy_rewards", [
+          "fa12",
+          fa12Token.address,
+          eve.pkh,
+        ]),
+        err => {
+          strictEqual(err.message, "Vault/zero-fee-balance");
+          return true;
+        },
+      );
+    });
+    it("Should allow claim strategy rewards (fish and management)", async function () {
+      const prevAliceBalance = await fa12Token.getBalance(alice.pkh);
+      const prevBobBalance = await fa12Token.getBalance(bob.pkh);
+
+      const prevRewards = await vault.storage.strategy_rewards.get({
+        fa12: fa12Token.address,
+      });
+      const prevFishRewards = await prevRewards.get(vault.storage.fish);
+      const prevManagementRewards = await prevRewards.get(
+        vault.storage.management,
+      );
+      Tezos.setSignerProvider(signerAlice);
+      await vault.call("claim_strategy_rewards", [
+        "fa12",
+        fa12Token.address,
+        alice.pkh,
+      ]);
+
+      Tezos.setSignerProvider(signerBob);
+      await vault.call("claim_strategy_rewards", [
+        "fa12",
+        fa12Token.address,
+        bob.pkh,
+      ]);
+      const aliceBalance = await fa12Token.getBalance(alice.pkh);
+      const bobBalance = await fa12Token.getBalance(bob.pkh);
+      const rewards = await vault.storage.strategy_rewards.get({
+        fa12: fa12Token.address,
+      });
+      const fishRewards = await rewards.get(vault.storage.fish);
+      const managementRewards = await rewards.get(vault.storage.management);
+
+      strictEqual(fishRewards.toNumber(), 0);
+      strictEqual(managementRewards.toNumber(), 0);
+      strictEqual(
+        aliceBalance,
+        prevAliceBalance + Math.floor(prevFishRewards.toNumber() / precision),
+      );
+      strictEqual(
+        bobBalance,
+        prevBobBalance +
+          Math.floor(prevManagementRewards.toNumber() / precision),
+      );
     });
   });
 });
