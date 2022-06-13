@@ -522,7 +522,6 @@ describe("Vault Admin tests", async function () {
         fa12: alice.pkh,
       });
       strictEqual(bannedAsset, true);
-      //TODO::
     });
     it("Shouldn't unban asset if the user is not an owner", async function () {
       Tezos.setSignerProvider(signerAlice);
@@ -542,7 +541,6 @@ describe("Vault Admin tests", async function () {
         fa12: alice.pkh,
       });
       strictEqual(bannedAsset, false);
-      //TODO::
     });
   });
   describe("Testing entrypoint: Update_metadata", async function () {
