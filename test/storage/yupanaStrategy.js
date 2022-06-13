@@ -5,6 +5,7 @@ module.exports = {
   vault: null,
   protocol: null,
   protocol_asset_id: 0,
+  price_feed: alice.pkh,
   deposit_asset: null,
   reward_asset: null,
   tvl: 0,

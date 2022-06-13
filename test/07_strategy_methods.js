@@ -4,6 +4,7 @@ const { rejects, strictEqual, notStrictEqual } = require("assert");
 const YupanaStrategy = require("./helpers/commonInterface");
 const YupanaMock = require("./helpers/commonInterface");
 const Token = require("./helpers/tokenInterface");
+const PriceFeed = require("./helpers/commonInterface");
 
 const fa12TokenStorage = require("../test/storage/FA12");
 
@@ -25,16 +26,18 @@ describe("Yupana-strategy tests", async function () {
   let strategy;
   let fa12Token;
   let yupana;
-
+  let priceFeed;
   before(async () => {
     Tezos.setSignerProvider(signerAlice);
     try {
+      priceFeed = await new PriceFeed().init(0, "price_feed");
       fa12Token = await new Token("fa12").init(fa12TokenStorage);
       yupana = await new YupanaMock().init(yupanaMockStorage, "yupana_mock");
       yupanaStrategyStorage.vault = alice.pkh;
       yupanaStrategyStorage.protocol = yupana.address;
       yupanaStrategyStorage.deposit_asset = { fa12: fa12Token.address };
       yupanaStrategyStorage.reward_asset = { fa12: fa12Token.address };
+      yupanaStrategyStorage.price_feed = priceFeed.address;
       strategy = await new YupanaStrategy().init(
         yupanaStrategyStorage,
         "yupana_strategy",

@@ -2,6 +2,7 @@ type storage_t          is [@layout:comb] record [
   vault                   : address;
   protocol                : address;
   protocol_asset_id       : nat;
+  price_feed              : address;
   deposit_asset           : asset_standard_t;
 	reward_asset            : asset_standard_t;
   tvl                     : nat;

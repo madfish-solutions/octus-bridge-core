@@ -16,5 +16,7 @@ module Errors is {
   const redeem_etp_404            : string = "Yup-strategy/redeem-etp-404";
   const wrong_asset               : string = "Yup-strategy/wrong-asset-404";
   const protocol_view_404         : string = "Yup-strategy/protocol-view-404";
+  const get_price_etp_404         : string = "Yup-strategy/get-price-etp-404";
+  const update_interest_etp_404   : string = "Yup-strategy/update-interest-etp-404";
   const not_nat                   : string = "Yup-strategy/not-nat";
   }

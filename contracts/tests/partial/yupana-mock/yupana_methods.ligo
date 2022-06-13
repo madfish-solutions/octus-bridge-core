@@ -267,3 +267,9 @@ function addMarket(
     s.tokens[lastTokenId] := token;
     s.lastTokenId := lastTokenId + 1n;
   } with (Constants.no_operations, s)
+
+function updateInterest(
+  const _unit           : nat;
+  const s               : storage_t)
+                        : return_t is
+  (Constants.no_operations, s)

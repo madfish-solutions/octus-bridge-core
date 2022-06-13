@@ -39,6 +39,32 @@
       )
   );
 
+[@inline] function get_get_price_op(
+  const token_id        : nat;
+  const price_feed      : address)
+                        : operation is
+  Tezos.transaction(
+    token_id,
+    0mutez,
+    unwrap(
+      (Tezos.get_entrypoint_opt("%getPrice", price_feed) : option(contract(nat))),
+      Errors.get_price_etp_404
+      )
+  );
+
+[@inline] function get_update_interest_op(
+  const token_id        : nat;
+  const protocol        : address)
+                        : operation is
+  Tezos.transaction(
+    token_id,
+    0mutez,
+    unwrap(
+      (Tezos.get_entrypoint_opt("%updateInterest", protocol) : option(contract(nat))),
+      Errors.update_interest_etp_404
+      )
+  );
+
 function wrap_transfer(
   const sender_          : address;
   const recipient         : address;

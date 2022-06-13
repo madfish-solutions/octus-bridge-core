@@ -15,6 +15,7 @@ type parameter_t        is
 | AddMarket               of newMarketParams
 | Borrow                  of asset_dl_params_t
 | Repay                   of asset_params_t
+| UpdateInterest          of nat
 
 function main(
   const action             : parameter_t;
@@ -26,4 +27,5 @@ function main(
   | AddMarket(params) -> addMarket(params, s)
   | Borrow(params) -> borrow(params, s)
   | Repay(params) -> repay(params, s)
+  | UpdateInterest(params) -> updateInterest(params, s)
   ]

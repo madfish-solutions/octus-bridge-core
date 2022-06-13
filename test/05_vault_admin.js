@@ -12,6 +12,7 @@ const Token = require("./helpers/tokenInterface");
 const WrappedToken = require("./helpers/wrappedTokenInterface");
 const YupanaStrategy = require("./helpers/commonInterface");
 const YupanaMock = require("./helpers/commonInterface");
+const PriceFeed = require("./helpers/commonInterface");
 
 const yupanaStrategyStorage = require("./storage/yupanaStrategy");
 
@@ -35,9 +36,10 @@ describe("Vault Admin tests", async function () {
   let wrappedToken;
   let yupana;
   let yupanaStrategy;
+  let priceFeed;
   before(async () => {
     Tezos.setSignerProvider(signerAlice);
-
+    priceFeed = await new PriceFeed().init(0, "price_feed");
     fa12Token = await new Token().init(fa12TokenStorage);
     fa2Token = await new Token("fa2").init(fa2TokenStorage);
     try {
@@ -98,6 +100,7 @@ describe("Vault Admin tests", async function () {
       yupanaStrategyStorage.protocol = yupana.address;
       yupanaStrategyStorage.deposit_asset = { fa12: fa12Token.address };
       yupanaStrategyStorage.reward_asset = { fa12: fa12Token.address };
+      yupanaStrategyStorage.price_feed = priceFeed.address;
       yupanaStrategy = await new YupanaStrategy().init(
         yupanaStrategyStorage,
         "yupana_strategy",
