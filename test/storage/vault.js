@@ -48,7 +48,7 @@ module.exports = {
   strategy_rewards: MichelsonMap.fromLiteral({}),
   fee_balances: MichelsonMap.fromLiteral({}),
   baker_rewards: MichelsonMap.fromLiteral({}),
-  paused: false,
+  emergency_shutdown: false,
 
   metadata: MichelsonMap.fromLiteral({
     "": Buffer.from("tezos-storage:meta", "ascii").toString("hex"),

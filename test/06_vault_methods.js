@@ -168,7 +168,7 @@ describe("Vault methods tests", async function () {
       vaultStorage.asset_ids.set({ fa12: bob.pkh }, 5);
       vaultStorage.asset_ids.set({ fa12: fa12Token_2.address }, 6);
       vaultStorage.asset_count = 7;
-      vaultStorage.paused = true;
+      vaultStorage.emergency_shutdown = true;
       vault = await new Vault().init(vaultStorage, "vault");
       await wrappedToken.call("set_vault", vault.address);
     } catch (e) {
@@ -177,15 +177,15 @@ describe("Vault methods tests", async function () {
   });
 
   describe("Testing entrypoint: Deposit", async function () {
-    it("Shouldn't deposit if vault is paused", async function () {
+    it("Shouldn't deposit if emergency shutdown is enabled", async function () {
       await rejects(
         vault.call("deposit", ["001100", 0, "fa12", alice.pkh]),
         err => {
-          strictEqual(err.message, "Vault/vault-is-paused");
+          strictEqual(err.message, "Vault/emergency-shutdown-enabled");
           return true;
         },
       );
-      await vault.call("toggle_pause_vault");
+      await vault.call("toggle_emergency_shutdown");
     });
     it("Shouldn't deposit if asset is paused", async function () {
       await rejects(
@@ -471,8 +471,8 @@ describe("Vault methods tests", async function () {
       proxy: bob.pkh,
       round: 3,
     };
-    it("Shouldn't withdraw if vault is paused", async function () {
-      await vault.call("toggle_pause_vault");
+    it("Shouldn't withdraw if emergency shutdown is enabled", async function () {
+      await vault.call("toggle_emergency_shutdown");
       const signature = await signerAlice.sign("0021");
       await rejects(
         vault.call("withdraw", {
@@ -480,11 +480,11 @@ describe("Vault methods tests", async function () {
           signatures: MichelsonMap.fromLiteral({ [alice.pk]: signature.sig }),
         }),
         err => {
-          strictEqual(err.message, "Vault/vault-is-paused");
+          strictEqual(err.message, "Vault/emergency-shutdown-enabled");
           return true;
         },
       );
-      await vault.call("toggle_pause_vault");
+      await vault.call("toggle_emergency_shutdown");
     });
     it("Shouldn't withdraw if invalid payload", async function () {
       const signature = await signerAlice.sign("0021");

@@ -83,7 +83,7 @@ type storage_t          is [@layout:comb] record[
   baker_rewards           : fee_balances_t;
 
   metadata                : metadata_t;
-  paused                  : bool;
+  emergency_shutdown      : bool;
 ]
 
 type return_t           is list (operation) * storage_t

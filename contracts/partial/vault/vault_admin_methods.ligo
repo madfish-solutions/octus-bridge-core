@@ -89,15 +89,14 @@ function set_aliens_config(
     s.asset_config.aliens := config;
   } with (Constants.no_operations, s)
 
-function toggle_pause_vault(
+function toggle_emergency_shutdown(
   const s               : storage_t)
                         : return_t is
   block {
-    if s.paused
+    if s.emergency_shutdown
     then require(Tezos.sender = s.owner, Errors.not_owner)
-    else require(Tezos.sender = s.guardian or Tezos.sender = s.owner, Errors.not_owner_or_guardian)
-
-  } with (Constants.no_operations, s with record[paused = not(s.paused)])
+    else require(Tezos.sender = s.guardian or Tezos.sender = s.owner, Errors.not_owner_or_guardian);
+  } with (Constants.no_operations, s with record[emergency_shutdown = not(s.emergency_shutdown)])
 
 function toggle_pause_asset(
   const asset_id        : asset_id_t;
@@ -191,7 +190,6 @@ function claim_strategy_rewards(
         reward,
         params.asset
       )], s)
-
 
 function add_strategy(
   const params          : add_strategy_t;
@@ -304,34 +302,39 @@ function maintain(
 
     var operations := Constants.no_operations;
 
-    if abs(current_delta_f - strategy.target_reserves_rate_f) > strategy.delta_f
-      or strategy.total_deposit = 0n
+    if s.emergency_shutdown and strategy.total_deposit > 0n
     then {
-        const optimal_deposit = asset.tvl * strategy.target_reserves_rate_f / Constants.precision;
-        const disbalance_amount = abs(strategy.total_deposit - optimal_deposit);
-        if current_delta_f > strategy.target_reserves_rate_f
-        then {
-            operations := get_divest_op(disbalance_amount, strategy.strategy_address) # operations;
-            asset.virtual_balance := asset.virtual_balance + disbalance_amount;
-            strategy.total_deposit := get_nat_or_fail(strategy.total_deposit - disbalance_amount, Errors.not_nat);
-          }
-        else if strategy.target_reserves_rate_f > current_delta_f
-          then {
-              operations := list[
-                  wrap_transfer(
-                    Tezos.self_address,
-                    strategy.strategy_address,
-                    disbalance_amount,
-                    params.asset);
-                  get_invest_op(disbalance_amount, strategy.strategy_address)];
-
-              asset.virtual_balance := get_nat_or_fail(asset.virtual_balance - disbalance_amount, Errors.not_nat);
-              strategy.total_deposit := strategy.total_deposit + disbalance_amount;
-          } else failwith(Errors.no_rebalancing_needed);
+        operations := get_divest_op(strategy.total_deposit, strategy.strategy_address) # operations;
+        asset.virtual_balance := asset.virtual_balance + strategy.total_deposit;
+        strategy.total_deposit := 0n;
       }
-    else failwith(Errors.no_rebalancing_needed);
+    else if abs(current_delta_f - strategy.target_reserves_rate_f) > strategy.delta_f
+        or strategy.total_deposit = 0n
+      then {
+          const optimal_deposit = asset.tvl * strategy.target_reserves_rate_f / Constants.precision;
+          const disbalance_amount = abs(strategy.total_deposit - optimal_deposit);
+          if current_delta_f > strategy.target_reserves_rate_f
+          then {
+              operations := get_divest_op(disbalance_amount, strategy.strategy_address) # operations;
+              asset.virtual_balance := asset.virtual_balance + disbalance_amount;
+              strategy.total_deposit := get_nat_or_fail(strategy.total_deposit - disbalance_amount, Errors.not_nat);
+            }
+          else if strategy.target_reserves_rate_f > current_delta_f
+            then {
+                operations := list[
+                    wrap_transfer(
+                      Tezos.self_address,
+                      strategy.strategy_address,
+                      disbalance_amount,
+                      params.asset);
+                    get_invest_op(disbalance_amount, strategy.strategy_address)];
+
+                asset.virtual_balance := get_nat_or_fail(asset.virtual_balance - disbalance_amount, Errors.not_nat);
+                strategy.total_deposit := strategy.total_deposit + disbalance_amount;
+            } else failwith(Errors.no_rebalancing_needed);
+        }
+      else failwith(Errors.no_rebalancing_needed);
     s.assets[asset_id] := asset;
     s.strategies[params.asset] := strategy;
 
   } with (operations, s)
-

@@ -440,36 +440,34 @@ describe("Vault Admin tests", async function () {
       strictEqual(eveBalance, prevEveBalance + 1000);
     });
   });
-  describe("Testing entrypoint: Toggle_pause_vault", async function () {
-    it("Shouldn't pausing vault if the user is not an guardian or owner", async function () {
+  describe("Testing entrypoint: Toggle_emergency_shutdown", async function () {
+    it("Shouldn't toggle emergency shutdown if the user is not an guardian or owner", async function () {
       Tezos.setSignerProvider(signerAlice);
-      await rejects(vault.call("toggle_pause_vault"), err => {
+      await rejects(vault.call("toggle_emergency_shutdown"), err => {
         strictEqual(err.message, "Vault/not-owner-or-guardian");
         return true;
       });
     });
-    it("Should allow pause vault", async function () {
+    it("Should allow enable emergency shutdown", async function () {
       Tezos.setSignerProvider(signerBob);
 
-      await vault.call("toggle_pause_vault");
+      await vault.call("toggle_emergency_shutdown");
 
-      strictEqual(vault.storage.paused, true);
-      //TODO::
+      strictEqual(vault.storage.emergency_shutdown, true);
     });
-    it("Shouldn't unpause vault if the user is not an owner", async function () {
+    it("Shouldn't disable emergency shutdow if the user is not an owner", async function () {
       Tezos.setSignerProvider(signerEve);
-      await rejects(vault.call("toggle_pause_vault"), err => {
+      await rejects(vault.call("toggle_emergency_shutdown"), err => {
         strictEqual(err.message, "Vault/not-owner");
         return true;
       });
     });
-    it("Should allow unpause vault", async function () {
+    it("Should allow disable emergency shutdow ", async function () {
       Tezos.setSignerProvider(signerBob);
 
-      await vault.call("toggle_pause_vault");
+      await vault.call("toggle_emergency_shutdown");
 
-      strictEqual(vault.storage.paused, false);
-      //TODO::
+      strictEqual(vault.storage.emergency_shutdown, false);
     });
   });
   describe("Testing entrypoint: Toggle_pause_asset", async function () {
@@ -486,7 +484,6 @@ describe("Vault Admin tests", async function () {
       await vault.call("toggle_pause_asset", 0);
       const asset = await vault.storage.assets.get("0");
       strictEqual(asset.paused, true);
-      //TODO::
     });
     it("Shouldn't unpause asset if the user is not an owner", async function () {
       Tezos.setSignerProvider(signerEve);
@@ -501,7 +498,6 @@ describe("Vault Admin tests", async function () {
       await vault.call("toggle_pause_asset", 0);
       const asset = await vault.storage.assets.get("0");
       strictEqual(asset.paused, false);
-      //TODO::
     });
   });
   describe("Testing entrypoint: Toggle_ban_asset", async function () {

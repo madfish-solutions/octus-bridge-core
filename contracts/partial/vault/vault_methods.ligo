@@ -3,7 +3,7 @@ function deposit(
   var s                : storage_t)
                        : return_t is
   block {
-    require(not(s.paused), Errors.vault_paused);
+    require(not(s.emergency_shutdown), Errors.emergency_shutdown_enabled);
 
     const result = get_or_create_asset(params.asset, (None : option(token_meta_t)), s);
     var asset := result.asset;
@@ -86,7 +86,7 @@ function withdraw(
   var s                : storage_t)
                        : return_t is
   block {
-    require(not(s.paused), Errors.vault_paused);
+    require(not(s.emergency_shutdown), Errors.emergency_shutdown_enabled);
     require_none(s.withdrawal_ids[message.payload], Errors.payload_already_seen);
     is_withdraw_valid(message, s.bridge);
 
