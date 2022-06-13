@@ -924,6 +924,60 @@ describe("Vault Admin tests", async function () {
       );
     });
   });
+  describe("Testing entrypoint: Harvest", async function () {
+    it("Shouldn't harvest if the user is not an strategist", async function () {
+      Tezos.setSignerProvider(signerEve);
+      await rejects(vault.call("harvest", ["fa12", fa12Token.address]), err => {
+        strictEqual(err.message, "Vault/not-strategist");
+        return true;
+      });
+    });
+    it("Shouldn't maintain if strategy undefined", async function () {
+      Tezos.setSignerProvider(signerAlice);
+      await rejects(vault.call("maintain", ["fa12", vault.address]), err => {
+        strictEqual(err.message, "Vault/strategy-undefined");
+        return true;
+      });
+    });
+
+    it("Should allow harvest", async function () {
+      Tezos.setSignerProvider(signerAlice);
+      await yupana.call("borrow", [0, 10 * precision, "1659708663810"]);
+
+      await fa12Token.approveToken(yupana.address, 500 * precision);
+      await yupana.call("repay", [0, 10 * precision, 10 * precision]);
+
+      const prevVaultBalance = await fa12Token.getBalance(vault.address);
+
+      const prevFishReward = 0;
+      const prevManagementReward = 0;
+      await vault.call("harvest", ["fa12", fa12Token.address]);
+      await yupanaStrategy.updateStorage();
+      const strategyRewards = await vault.storage.strategy_rewards.get({
+        fa12: fa12Token.address,
+      });
+      const fishReward = await strategyRewards.get(vault.storage.fish);
+      const managementReward = await strategyRewards.get(
+        vault.storage.management,
+      );
+      const vaultBalance = await fa12Token.getBalance(vault.address);
+
+      strictEqual(
+        vaultBalance,
+        prevVaultBalance + yupanaStrategy.storage.last_profit.toNumber(),
+      );
+      strictEqual(
+        fishReward.toNumber(),
+        prevFishReward +
+          (yupanaStrategy.storage.last_profit.toNumber() * precision) / 2,
+      );
+      strictEqual(
+        managementReward.toNumber(),
+        prevManagementReward +
+          (yupanaStrategy.storage.last_profit.toNumber() * precision) / 2,
+      );
+    });
+  });
   describe("Testing entrypoint: Revoke_strategy", async function () {
     it("Shouldn't revoke stategy if the user is not an strategist", async function () {
       Tezos.setSignerProvider(signerEve);

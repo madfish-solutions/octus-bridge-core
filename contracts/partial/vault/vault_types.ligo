@@ -142,9 +142,4 @@ type revoke_strategy_t  is [@layout:comb] record[
   delete                  : bool;
 ]
 
-type maintain_t         is [@layout:comb] record[
-  asset                   : asset_standard_t;
-  _unit                   : unit;
-]
-
 [@inline] const no_operations     : list(operation) = nil;

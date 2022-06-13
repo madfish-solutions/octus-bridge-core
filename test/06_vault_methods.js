@@ -119,7 +119,7 @@ describe("Vault methods tests", async function () {
           withdraw_fee_f: 100000,
           deposit_limit: 0,
           tvl: 90 * precision,
-          virtual_balance: 0,
+          virtual_balance: 90 * precision,
           paused: false,
           banned: false,
         },

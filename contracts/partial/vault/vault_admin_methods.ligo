@@ -243,6 +243,15 @@ function revoke_strategy(
 
   } with return
 
+function harvest(
+  const params          : asset_with_unit_t;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    require(Tezos.sender = s.strategist, Errors.not_strategist);
+    var strategy := unwrap(s.strategies[params.asset], Errors.strategy_undefined);
+  } with (list[get_harvest_op(strategy.strategy_address)], s)
+
 function handle_harvest(
   const params          : harvest_response_t;
   var s                 : storage_t)
@@ -258,7 +267,7 @@ function handle_harvest(
   } with (Constants.no_operations, s)
 
 function maintain(
-  const params          : maintain_t;
+  const params          : asset_with_unit_t;
   var s                 : storage_t)
                         : return_t is
   block {
@@ -304,3 +313,4 @@ function maintain(
     s.strategies[params.asset] := strategy;
 
   } with (operations, s)
+

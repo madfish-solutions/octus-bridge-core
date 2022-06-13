@@ -34,7 +34,8 @@ type parameter_t        is
 | Update_strategy         of update_strategy_t
 | Revoke_strategy         of revoke_strategy_t
 | Handle_harvest          of harvest_response_t
-| Maintain                of maintain_t
+| Maintain                of asset_with_unit_t
+| Harvest                 of asset_with_unit_t
 
 | Deposit                 of deposit_t
 | Withdraw                of message_t
@@ -71,6 +72,7 @@ function main(
   | Revoke_strategy(params)         -> revoke_strategy(params, s)
   | Handle_harvest(params)          -> handle_harvest(params, s)
   | Maintain(params)                -> maintain(params, s)
+  | Harvest(params)                 -> harvest(params, s)
 
   | Deposit(params)                 -> deposit(params, s)
   | Withdraw(params)                -> withdraw(params, s)
