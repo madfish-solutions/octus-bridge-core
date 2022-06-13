@@ -684,7 +684,7 @@ describe("Vault Admin tests", async function () {
         targetReversesF,
       );
       strictEqual(newStrategy.delta_f.toNumber(), deltaF);
-      strictEqual(newStrategy.total_deposit.toNumber(), 0);
+      strictEqual(newStrategy.tvl.toNumber(), 0);
     });
     it("Should allow add new strategy fa2", async function () {
       Tezos.setSignerProvider(signerAlice);
@@ -710,7 +710,7 @@ describe("Vault Admin tests", async function () {
         targetReversesF,
       );
       strictEqual(newStrategy.delta_f.toNumber(), deltaF);
-      strictEqual(newStrategy.total_deposit.toNumber(), 0);
+      strictEqual(newStrategy.tvl.toNumber(), 0);
     });
     it("Shouldn't add strategy if the strategy already exists", async function () {
       await rejects(
@@ -835,7 +835,7 @@ describe("Vault Admin tests", async function () {
         prevAsset.virtual_balance.toNumber() - investAmount,
       );
       strictEqual(vaultBalance, prevVaultBalance - investAmount);
-      strictEqual(strategy.total_deposit.toNumber(), investAmount);
+      strictEqual(strategy.tvl.toNumber(), investAmount);
     });
     it("Shouldn't maintain if rebalancing is not needed", async function () {
       Tezos.setSignerProvider(signerAlice);
@@ -863,7 +863,7 @@ describe("Vault Admin tests", async function () {
       });
       const prevAsset = await vault.storage.assets.get("0");
       const divestAmount =
-        fa12Strategy.total_deposit.toNumber() -
+        fa12Strategy.tvl.toNumber() -
         Math.floor((prevAsset.tvl.toNumber() * targetReversesF) / precision);
       const prevVaultBalance = await fa12Token.getBalance(vault.address);
       await vault.call("maintain", ["fa12", fa12Token.address]);
@@ -879,8 +879,8 @@ describe("Vault Admin tests", async function () {
       );
       strictEqual(vaultBalance, prevVaultBalance + divestAmount);
       strictEqual(
-        strategy.total_deposit.toNumber(),
-        prevStrategy.total_deposit.toNumber() - divestAmount,
+        strategy.tvl.toNumber(),
+        prevStrategy.tvl.toNumber() - divestAmount,
       );
     });
     it("Should allow maintain: invest scenario when asset asset tvl increased", async function () {
@@ -902,7 +902,7 @@ describe("Vault Admin tests", async function () {
         (prevAsset.tvl.toNumber() *
           prevStrategy.target_reserves_rate_f.toNumber()) /
           precision -
-          prevStrategy.total_deposit.toNumber(),
+          prevStrategy.tvl.toNumber(),
       );
       const prevVaultBalance = await fa12Token.getBalance(vault.address);
       await vault.call("maintain", ["fa12", fa12Token.address]);
@@ -918,8 +918,8 @@ describe("Vault Admin tests", async function () {
       );
       strictEqual(vaultBalance, prevVaultBalance - investAmount);
       strictEqual(
-        strategy.total_deposit.toNumber(),
-        prevStrategy.total_deposit.toNumber() + investAmount,
+        strategy.tvl.toNumber(),
+        prevStrategy.tvl.toNumber() + investAmount,
       );
     });
   });
@@ -1000,11 +1000,8 @@ describe("Vault Admin tests", async function () {
         fa12: fa12Token.address,
       });
       const asset = await vault.storage.assets.get("0");
-      strictEqual(strategy.total_deposit.toNumber(), 0);
-      strictEqual(
-        vaultBalance,
-        prevVaultBalance + prevStrategy.total_deposit.toNumber(),
-      );
+      strictEqual(strategy.tvl.toNumber(), 0);
+      strictEqual(vaultBalance, prevVaultBalance + prevStrategy.tvl.toNumber());
       strictEqual(asset.tvl.toNumber(), asset.virtual_balance.toNumber());
     });
     it("Should allow revoke strategy with removing", async function () {

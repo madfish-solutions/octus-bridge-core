@@ -202,7 +202,7 @@ function add_strategy(
     s.strategies[params.asset] := record[
       asset = params.asset;
       strategy_address = params.strategy_address;
-      total_deposit = 0n;
+      tvl = 0n;
       target_reserves_rate_f = params.target_reserves_rate_f;
       delta_f = params.delta_f;
     ];
@@ -230,14 +230,14 @@ function revoke_strategy(
     require(Tezos.sender = s.strategist, Errors.not_strategist);
     var strategy := unwrap(s.strategies[params.asset], Errors.strategy_undefined);
 
-    const return = if strategy.total_deposit > 0n
+    const return = if strategy.tvl > 0n
       then
         block {
-          const divest_amount = strategy.total_deposit;
+          const divest_amount = strategy.tvl;
           if params.delete
           then remove params.asset from map s.strategies
           else {
-              strategy.total_deposit := 0n;
+              strategy.tvl := 0n;
               s.strategies[params.asset] := strategy;
             };
           const asset_id = unwrap(s.asset_ids[params.asset], Errors.asset_undefined);
@@ -296,28 +296,28 @@ function maintain(
     var asset := unwrap(s.assets[asset_id], Errors.asset_undefined);
     require(asset.tvl > 0n, Errors.low_asset_liquidity);
 
-    const current_delta_f = if strategy.total_deposit > 0n
-      then strategy.total_deposit * Constants.precision / asset.tvl
+    const current_delta_f = if strategy.tvl > 0n
+      then strategy.tvl * Constants.precision / asset.tvl
       else 0n;
 
     var operations := Constants.no_operations;
 
-    if s.emergency_shutdown and strategy.total_deposit > 0n
+    if s.emergency_shutdown and strategy.tvl > 0n
     then {
-        operations := get_divest_op(strategy.total_deposit, strategy.strategy_address) # operations;
-        asset.virtual_balance := asset.virtual_balance + strategy.total_deposit;
-        strategy.total_deposit := 0n;
+        operations := get_divest_op(strategy.tvl, strategy.strategy_address) # operations;
+        asset.virtual_balance := asset.virtual_balance + strategy.tvl;
+        strategy.tvl := 0n;
       }
     else if abs(current_delta_f - strategy.target_reserves_rate_f) > strategy.delta_f
-        or strategy.total_deposit = 0n
+        or strategy.tvl = 0n
       then {
           const optimal_deposit = asset.tvl * strategy.target_reserves_rate_f / Constants.precision;
-          const disbalance_amount = abs(strategy.total_deposit - optimal_deposit);
+          const disbalance_amount = abs(strategy.tvl - optimal_deposit);
           if current_delta_f > strategy.target_reserves_rate_f
           then {
               operations := get_divest_op(disbalance_amount, strategy.strategy_address) # operations;
               asset.virtual_balance := asset.virtual_balance + disbalance_amount;
-              strategy.total_deposit := get_nat_or_fail(strategy.total_deposit - disbalance_amount, Errors.not_nat);
+              strategy.tvl := get_nat_or_fail(strategy.tvl - disbalance_amount, Errors.not_nat);
             }
           else if strategy.target_reserves_rate_f > current_delta_f
             then {
@@ -330,7 +330,7 @@ function maintain(
                     get_invest_op(disbalance_amount, strategy.strategy_address)];
 
                 asset.virtual_balance := get_nat_or_fail(asset.virtual_balance - disbalance_amount, Errors.not_nat);
-                strategy.total_deposit := strategy.total_deposit + disbalance_amount;
+                strategy.tvl := strategy.tvl + disbalance_amount;
             } else failwith(Errors.no_rebalancing_needed);
         }
       else failwith(Errors.no_rebalancing_needed);

@@ -40,7 +40,7 @@ type withdrawal_ids_t   is big_map(bytes, nat)
 type strategy_t         is [@layout:comb] record [
   asset                   : asset_standard_t;
   strategy_address        : address;
-  total_deposit           : nat;
+  tvl           : nat;
 
   (* The desirable % of all deposited assets that should be used in the strategy *)
   target_reserves_rate_f  : nat;
