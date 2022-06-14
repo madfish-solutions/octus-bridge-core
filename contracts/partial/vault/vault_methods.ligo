@@ -315,7 +315,7 @@ function cancel_pending_withdrawal(
 
     s.pending_withdrawals[params.pending_id] := pending_withdrawal;
 
-    const return_amount = pending_withdrawal.amount + pending_withdrawal.bounty;
+    const return_amount = pending_withdrawal.amount;
     s.deposits[s.deposit_count] := record[
         recipient = params.recipient;
         amount    = return_amount;
