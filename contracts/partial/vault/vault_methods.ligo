@@ -266,6 +266,11 @@ function withdraw(
             ];
             s.pending_withdrawal_ids[message.payload] := s.pending_count ;
             s.pending_count := s.pending_count + 1n;
+
+            asset := asset with record[
+                tvl = get_nat_or_fail(asset.tvl - fee, Errors.not_nat);
+                virtual_balance = get_nat_or_zero(asset.virtual_balance - fee)
+            ];
           };
       }
     ];
