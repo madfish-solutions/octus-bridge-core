@@ -98,7 +98,7 @@ describe("Vault methods tests", async function () {
           deposit_fee_f: 100000,
           withdrawal_fee_f: 100000,
           deposit_limit: 0,
-          tvl: 0,
+          tvl: 50 * precision,
           virtual_balance: 0,
           paused: false,
           banned: false,
@@ -279,7 +279,7 @@ describe("Vault methods tests", async function () {
         fa2Token.tokenId,
       );
       const prevDepositCount = vault.storage.deposit_count.toNumber();
-
+      const prevAsset = await vault.storage.assets.get("1");
       await vault.call("deposit", [
         "001100",
         depositAmount,
@@ -301,8 +301,14 @@ describe("Vault methods tests", async function () {
       const newDeposit = await vault.storage.deposits.get("1");
 
       strictEqual(vault.storage.deposit_count.toNumber(), prevDepositCount + 1);
-      strictEqual(asset.tvl.toNumber(), depositAmount - fee);
-      strictEqual(asset.virtual_balance.toNumber(), depositAmount - fee);
+      strictEqual(
+        asset.tvl.toNumber(),
+        prevAsset.tvl.toNumber() + depositAmount - fee,
+      );
+      strictEqual(
+        asset.virtual_balance.toNumber(),
+        prevAsset.virtual_balance.toNumber() + depositAmount - fee,
+      );
       strictEqual(vaultBalance, depositAmount);
       strictEqual(fishFee.toNumber(), (fee * precision) / 2);
       strictEqual(managementFee.toNumber(), (fee * precision) / 2);
@@ -1040,15 +1046,24 @@ describe("Vault methods tests", async function () {
       const newPendingWithdrawal = await vault.storage.pending_withdrawals.get(
         "0",
       );
+      const fee = Math.floor(
+        (withdrawalAmount * asset.withdrawal_fee_f.toNumber()) / precision,
+      );
       strictEqual(
         vault.storage.withdrawal_count.toNumber(),
         prevWithdrawalCount,
       );
-      strictEqual(asset.tvl.toNumber(), prevAsset.tvl.toNumber());
+      strictEqual(asset.tvl.toNumber(), prevAsset.tvl.toNumber() - fee);
       strictEqual(vaultBalance, prevVaultBalance);
       strictEqual(aliceBalance, prevAliceBalance);
-      strictEqual(fishFee.toNumber(), prevFishFee.toNumber());
-      strictEqual(managementFee.toNumber(), prevManagementFee.toNumber());
+      strictEqual(
+        fishFee.toNumber(),
+        prevFishFee.toNumber() + Math.floor((fee * precision) / 2),
+      );
+      strictEqual(
+        managementFee.toNumber(),
+        prevManagementFee.toNumber() + Math.floor((fee * precision) / 2),
+      );
       strictEqual(newWithdrawal, undefined);
       strictEqual(newWithdrawalId, undefined);
 
@@ -1097,6 +1112,7 @@ describe("Vault methods tests", async function () {
         payload: payload,
         signatures: MichelsonMap.fromLiteral({ [alice.pk]: signature.sig }),
       });
+
       const aliceBalance = await Tezos.tz
         .getBalance(alice.pkh)
         .then(balance => Math.floor(balance.toNumber()))
@@ -1119,16 +1135,25 @@ describe("Vault methods tests", async function () {
       const newPendingWithdrawal = await vault.storage.pending_withdrawals.get(
         "1",
       );
+      const fee = Math.floor(
+        (withdrawalAmount * asset.withdrawal_fee_f.toNumber()) / precision,
+      );
       strictEqual(
         vault.storage.withdrawal_count.toNumber(),
         prevWithdrawalCount,
       );
 
-      strictEqual(asset.tvl.toNumber(), prevAsset.tvl.toNumber());
+      strictEqual(asset.tvl.toNumber(), prevAsset.tvl.toNumber() - fee);
       strictEqual(vaultBalance, prevVaultBalance);
       strictEqual(aliceBalance, prevAliceBalance);
-      strictEqual(fishFee.toNumber(), prevFishFee.toNumber());
-      strictEqual(managementFee.toNumber(), prevManagementFee.toNumber());
+      strictEqual(
+        fishFee.toNumber(),
+        prevFishFee.toNumber() + Math.floor((fee * precision) / 2),
+      );
+      strictEqual(
+        managementFee.toNumber(),
+        prevManagementFee.toNumber() + Math.floor((fee * precision) / 2),
+      );
       strictEqual(newWithdrawal, undefined);
       strictEqual(newWithdrawalId, undefined);
 
@@ -1185,15 +1210,24 @@ describe("Vault methods tests", async function () {
       const newPendingWithdrawal = await vault.storage.pending_withdrawals.get(
         "2",
       );
+      const fee = Math.floor(
+        (withdrawalAmount * asset.withdrawal_fee_f.toNumber()) / precision,
+      );
       strictEqual(
         vault.storage.withdrawal_count.toNumber(),
         prevWithdrawalCount,
       );
-      strictEqual(asset.tvl.toNumber(), prevAsset.tvl.toNumber());
+      strictEqual(asset.tvl.toNumber(), prevAsset.tvl.toNumber() - fee);
       strictEqual(vaultBalance, prevVaultBalance);
       strictEqual(aliceBalance, prevAliceBalance);
-      strictEqual(fishFee.toNumber(), prevFishFee.toNumber());
-      strictEqual(managementFee.toNumber(), prevManagementFee.toNumber());
+      strictEqual(
+        fishFee.toNumber(),
+        prevFishFee.toNumber() + Math.floor((fee * precision) / 2),
+      );
+      strictEqual(
+        managementFee.toNumber(),
+        prevManagementFee.toNumber() + Math.floor((fee * precision) / 2),
+      );
       strictEqual(newWithdrawal, undefined);
       strictEqual(newWithdrawalId, undefined);
 
@@ -1249,15 +1283,24 @@ describe("Vault methods tests", async function () {
       const newPendingWithdrawal = await vault.storage.pending_withdrawals.get(
         "3",
       );
+      const fee = Math.floor(
+        (withdrawalAmount * asset.withdrawal_fee_f.toNumber()) / precision,
+      );
       strictEqual(
         vault.storage.withdrawal_count.toNumber(),
         prevWithdrawalCount,
       );
-      strictEqual(asset.tvl.toNumber(), prevAsset.tvl.toNumber());
+      strictEqual(asset.tvl.toNumber(), prevAsset.tvl.toNumber() - fee);
       strictEqual(vaultBalance, prevVaultBalance);
       strictEqual(eveBalance, prevEveBalance);
-      strictEqual(fishFee.toNumber(), prevFishFee.toNumber());
-      strictEqual(managementFee.toNumber(), prevManagementFee.toNumber());
+      strictEqual(
+        fishFee.toNumber(),
+        prevFishFee.toNumber() + Math.floor((fee * precision) / 2),
+      );
+      strictEqual(
+        managementFee.toNumber(),
+        prevManagementFee.toNumber() + Math.floor((fee * precision) / 2),
+      );
       strictEqual(newWithdrawal, undefined);
       strictEqual(newWithdrawalId, undefined);
 
@@ -1323,16 +1366,25 @@ describe("Vault methods tests", async function () {
       const newPendingWithdrawal = await vault.storage.pending_withdrawals.get(
         "4",
       );
+      const fee = Math.floor(
+        (withdrawalAmount * asset.withdrawal_fee_f.toNumber()) / precision,
+      );
       strictEqual(
         vault.storage.withdrawal_count.toNumber(),
         prevWithdrawalCount,
       );
 
-      strictEqual(asset.tvl.toNumber(), prevAsset.tvl.toNumber());
+      strictEqual(asset.tvl.toNumber(), prevAsset.tvl.toNumber() - fee);
       strictEqual(vaultBalance, prevVaultBalance);
       strictEqual(aliceBalance, prevAliceBalance);
-      strictEqual(fishFee.toNumber(), prevFishFee.toNumber());
-      strictEqual(managementFee.toNumber(), prevManagementFee.toNumber());
+      strictEqual(
+        fishFee.toNumber(),
+        prevFishFee.toNumber() + Math.floor((fee * precision) / 2),
+      );
+      strictEqual(
+        managementFee.toNumber(),
+        prevManagementFee.toNumber() + Math.floor((fee * precision) / 2),
+      );
       strictEqual(newWithdrawal, undefined);
       strictEqual(newWithdrawalId, undefined);
 
@@ -1535,36 +1587,17 @@ describe("Vault methods tests", async function () {
       const fishFee = await feeBalances.get(vault.storage.fish);
       const managementFee = await feeBalances.get(vault.storage.management);
 
-      strictEqual(
-        asset.tvl.toNumber(),
-        prevAsset.tvl.toNumber() - withdrawal.fee.toNumber(),
-      );
-      let amt = 0;
-      if (withdrawal.fee.toNumber() <= prevAsset.virtual_balance.toNumber()) {
-        amt = withdrawal.fee.toNumber();
-      } else {
-        amt = prevAsset.virtual_balance.toNumber();
-      }
+      strictEqual(asset.tvl.toNumber(), prevAsset.tvl.toNumber());
 
       strictEqual(
         asset.virtual_balance.toNumber(),
-        prevAsset.virtual_balance.toNumber() - amt,
+        prevAsset.virtual_balance.toNumber(),
       );
       notStrictEqual(withdrawal.status["canceled"], undefined);
       strictEqual(newDeposit.recipient, "0000");
-      strictEqual(
-        newDeposit.amount.toNumber(),
-        withdrawal.amount.toNumber() + withdrawal.bounty.toNumber(),
-      );
-      strictEqual(
-        fishFee.toNumber(),
-        prevFishFee.toNumber() + (withdrawal.fee.toNumber() * precision) / 2,
-      );
-      strictEqual(
-        managementFee.toNumber(),
-        prevManagementFee.toNumber() +
-          (withdrawal.fee.toNumber() * precision) / 2,
-      );
+      strictEqual(newDeposit.amount.toNumber(), withdrawal.amount.toNumber());
+      strictEqual(fishFee.toNumber(), prevFishFee.toNumber());
+      strictEqual(managementFee.toNumber(), prevManagementFee.toNumber());
     });
 
     it("Shouldn't cancel pending withdrawal if pending withdrawal is closed", async function () {
@@ -1784,9 +1817,6 @@ describe("Vault methods tests", async function () {
         "4",
       );
 
-      const withdrawalFee = pendingWithdrawal.fee.toNumber();
-      const totalFee = depositFee + withdrawalFee;
-
       notStrictEqual(pendingWithdrawal.status["completed"], undefined);
       notStrictEqual(newWithdrawal, undefined);
       strictEqual(vault.storage.deposit_count.toNumber(), prevDepositCount + 1);
@@ -1808,11 +1838,11 @@ describe("Vault methods tests", async function () {
 
       strictEqual(
         fishFee.toNumber(),
-        prevFishFee.toNumber() + (totalFee * precision) / 2,
+        prevFishFee.toNumber() + (depositFee * precision) / 2,
       );
       strictEqual(
         managementFee.toNumber(),
-        prevManagementFee.toNumber() + (totalFee * precision) / 2,
+        prevManagementFee.toNumber() + (depositFee * precision) / 2,
       );
       strictEqual(newDeposit.recipient, "001100");
       strictEqual(
@@ -1822,7 +1852,9 @@ describe("Vault methods tests", async function () {
       notStrictEqual(newDeposit.asset["tez"], undefined);
       strictEqual(
         aliceBalance,
-        prevAliceBalance + pendingWithdrawal.amount.toNumber(),
+        prevAliceBalance +
+          pendingWithdrawal.amount.toNumber() -
+          pendingWithdrawal.bounty.toNumber(),
       );
     });
     it("Should deposit with 2 pending withdrawals", async function () {
@@ -1879,10 +1911,6 @@ describe("Vault methods tests", async function () {
         "3",
       );
 
-      const totalFee =
-        depositFee +
-        pendingWithdrawal_1.fee.toNumber() +
-        pendingWithdrawal_2.fee.toNumber();
       const totalWithdrawalAmount =
         pendingWithdrawal_1.amount.toNumber() +
         pendingWithdrawal_2.amount.toNumber();
@@ -1908,11 +1936,11 @@ describe("Vault methods tests", async function () {
       );
       strictEqual(
         fishFee.toNumber(),
-        prevFishFee.toNumber() + (totalFee * precision) / 2,
+        prevFishFee.toNumber() + (depositFee * precision) / 2,
       );
       strictEqual(
         managementFee.toNumber(),
-        prevManagementFee.toNumber() + (totalFee * precision) / 2,
+        prevManagementFee.toNumber() + (depositFee * precision) / 2,
       );
       strictEqual(newDeposit.recipient, "001100");
       strictEqual(
@@ -1925,11 +1953,15 @@ describe("Vault methods tests", async function () {
       notStrictEqual(newDeposit.asset["fa12"], undefined);
       strictEqual(
         aliceBalance,
-        prevAliceBalance + pendingWithdrawal_1.amount.toNumber(),
+        prevAliceBalance +
+          pendingWithdrawal_1.amount.toNumber() -
+          pendingWithdrawal_1.bounty.toNumber(),
       );
       strictEqual(
         eveBalance,
-        prevEveBalance + pendingWithdrawal_2.amount.toNumber(),
+        prevEveBalance +
+          pendingWithdrawal_2.amount.toNumber() -
+          pendingWithdrawal_2.bounty.toNumber(),
       );
     });
   });

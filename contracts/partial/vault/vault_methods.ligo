@@ -103,7 +103,6 @@ function deposit_with_bounty(
 
     var deposited_amount := get_nat_or_fail(params.amount - fee, Errors.not_nat);
 
-    var total_fee := fee;
     var total_bounty := 0n;
     var total_withdrawal := 0n;
 
@@ -118,12 +117,11 @@ function deposit_with_bounty(
       require(deposited_amount >= total_withdrawal, Errors.amount_less_pending_amount);
 
       total_bounty := total_bounty + pending_withdrawal.bounty;
-      total_fee := total_fee + pending_withdrawal.fee;
 
       operations := wrap_transfer(
         Tezos.self_address,
         pending_withdrawal.recipient,
-        pending_withdrawal.amount,
+        get_nat_or_fail(pending_withdrawal.amount - pending_withdrawal.bounty, Errors.not_nat),
         pending_withdrawal.asset
       ) # operations;
 
@@ -142,8 +140,8 @@ function deposit_with_bounty(
       s.pending_withdrawals[withdrawal_id] := pending_withdrawal;
     };
 
-    if total_fee > 0n
-    then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, total_fee, asset.asset_type)
+    if fee > 0n
+    then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset.asset_type)
     else skip;
 
     var operations := wrap_transfer(
@@ -205,12 +203,13 @@ function withdraw(
         signatures = message.signatures;
     ];
 
+    if fee > 0n
+    then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset.asset_type)
+    else skip;
+
     var operations := result.operations;
     case asset.asset_type of [
     | Wrapped(token_) -> {
-        if fee > 0n
-        then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset.asset_type)
-        else skip;
         var mint_params : mint_params_t := list[
           record[
             token_id = token_.id;
@@ -238,9 +237,6 @@ function withdraw(
     | _ -> {
         if asset.virtual_balance >= params.amount
         then {
-            if fee > 0n
-            then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset.asset_type)
-            else skip;
             operations := wrap_transfer(
                 Tezos.self_address,
                 params.recipient,
@@ -256,14 +252,12 @@ function withdraw(
             s.withdrawal_count := s.withdrawal_count + 1n;
           }
         else {
-            const withdrawal_fee = params.amount * asset.withdrawal_fee_f / Constants.precision;
-            require(params.bounty <= get_nat_or_fail(params.amount - withdrawal_fee, Errors.not_nat), Errors.bounty_too_high);
+            require(params.bounty <= get_nat_or_fail(params.amount - fee, Errors.not_nat), Errors.bounty_too_high);
 
             s.pending_withdrawals[s.pending_count] := record[
                 deposit_id = params.deposit_id;
                 asset      = asset.asset_type;
-                amount     = get_nat_or_fail(params.amount - withdrawal_fee - params.bounty, Errors.not_nat);
-                fee        = withdrawal_fee;
+                amount     = get_nat_or_fail(params.amount - fee, Errors.not_nat);
                 recipient  = params.recipient;
                 metadata   = params.metadata;
                 bounty     = params.bounty;
@@ -272,6 +266,11 @@ function withdraw(
             ];
             s.pending_withdrawal_ids[message.payload] := s.pending_count ;
             s.pending_count := s.pending_count + 1n;
+
+            asset := asset with record[
+                tvl = get_nat_or_fail(asset.tvl - fee, Errors.not_nat);
+                virtual_balance = get_nat_or_zero(asset.virtual_balance - fee)
+            ];
           };
       }
     ];
@@ -303,13 +302,8 @@ function set_bounty(
     var pending_withdrawal := unwrap(s.pending_withdrawals[params.pending_id], Errors.unknown_pending_withdrawal);
     require(Tezos.sender = pending_withdrawal.recipient, Errors.not_recipient);
     require(pending_withdrawal.status = Pending(unit), Errors.pending_withdrawal_closed);
-    const asset_id = unwrap(s.asset_ids[pending_withdrawal.asset], Errors.asset_undefined);
-    const asset = unwrap(s.assets[asset_id], Errors.asset_undefined);
-    const fee = pending_withdrawal.amount * asset.withdrawal_fee_f / Constants.precision;
-    const amount_with_fee = get_nat_or_fail(pending_withdrawal.amount - fee, Errors.not_nat);
-    require(params.bounty <= amount_with_fee, Errors.bounty_too_high);
+    require(params.bounty <= pending_withdrawal.amount, Errors.bounty_too_high);
     pending_withdrawal.bounty := params.bounty;
-
     s.pending_withdrawals[params.pending_id] := pending_withdrawal;
   } with (Constants.no_operations, s)
 
@@ -326,23 +320,11 @@ function cancel_pending_withdrawal(
 
     s.pending_withdrawals[params.pending_id] := pending_withdrawal;
 
-    const return_amount = pending_withdrawal.amount + pending_withdrawal.bounty;
+    const return_amount = pending_withdrawal.amount;
     s.deposits[s.deposit_count] := record[
         recipient = params.recipient;
         amount    = return_amount;
         asset     = pending_withdrawal.asset
     ];
     s.deposit_count := s.deposit_count + 1n;
-
-    if pending_withdrawal.fee > 0n
-    then {
-        const asset_id = unwrap(s.asset_ids[pending_withdrawal.asset], Errors.asset_undefined);
-        var asset := unwrap(s.assets[asset_id], Errors.asset_undefined);
-        s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, pending_withdrawal.fee, pending_withdrawal.asset);
-        s.assets[asset_id] := asset with record[
-            tvl = get_nat_or_fail(asset.tvl - pending_withdrawal.fee, Errors.not_nat);
-            virtual_balance = get_nat_or_zero(asset.virtual_balance - pending_withdrawal.fee);
-          ]
-      }
-    else skip;
   } with (Constants.no_operations, s)
