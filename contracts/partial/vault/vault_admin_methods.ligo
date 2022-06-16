@@ -67,7 +67,7 @@ function set_asset_withdraw_fee(
   block {
     require(Tezos.sender = s.owner, Errors.not_owner);
     var asset := unwrap(s.assets[params.asset_id], Errors.asset_undefined);
-    asset.withdraw_fee_f := params.fee_f;
+    asset.withdrawal_fee_f := params.fee_f;
     s.assets[params.asset_id] := asset;
   } with (Constants.no_operations, s)
 

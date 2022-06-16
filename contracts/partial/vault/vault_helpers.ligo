@@ -22,7 +22,7 @@ function get_or_create_asset(
         case asset_type of [
         | Wrapped(token_) -> {
             asset.deposit_fee_f  := s.fees.aliens.deposit_f;
-            asset.withdraw_fee_f := s.fees.aliens.withdraw_f;
+            asset.withdrawal_fee_f := s.fees.aliens.withdraw_f;
 
             const meta = unwrap(metadata, Errors.metadata_undefined);
 
@@ -37,7 +37,7 @@ function get_or_create_asset(
               }
         | _ -> {
             asset.deposit_fee_f  := s.fees.native.deposit_f;
-            asset.withdraw_fee_f := s.fees.native.withdraw_f;
+            asset.withdrawal_fee_f := s.fees.native.withdraw_f;
               }
         ];
         s.assets[asset_id] := asset;
@@ -113,3 +113,11 @@ function update_fee_balances(
     fee_balances[management] := management_balance_f + fee * Constants.precision / Constants.div_two;
     fee_balances_map[asset] := fee_balances;
   } with fee_balances_map
+
+[@inline] function get_nat_or_zero(
+  const value           : int)
+                        : nat is
+  case is_nat(value) of [
+  | Some(natural) -> natural
+  | None -> 0n
+  ]
