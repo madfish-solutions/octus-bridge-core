@@ -296,7 +296,7 @@ function maintain(
     var asset := unwrap(s.assets[asset_id], Errors.asset_undefined);
     require(asset.tvl > 0n, Errors.low_asset_liquidity);
 
-    const current_delta_f = if strategy.tvl > 0n
+    const current_rate_f = if strategy.tvl > 0n
       then strategy.tvl * Constants.precision / asset.tvl
       else 0n;
 
@@ -308,18 +308,18 @@ function maintain(
         asset.virtual_balance := asset.virtual_balance + strategy.tvl;
         strategy.tvl := 0n;
       }
-    else if abs(current_delta_f - strategy.target_reserves_rate_f) > strategy.delta_f
+    else if abs(current_rate_f - strategy.target_reserves_rate_f) > strategy.delta_f
         or strategy.tvl = 0n
       then {
           const optimal_deposit = asset.tvl * strategy.target_reserves_rate_f / Constants.precision;
           const disbalance_amount = abs(strategy.tvl - optimal_deposit);
-          if current_delta_f > strategy.target_reserves_rate_f
+          if current_rate_f > strategy.target_reserves_rate_f
           then {
               operations := get_divest_op(disbalance_amount, strategy.strategy_address) # operations;
               asset.virtual_balance := asset.virtual_balance + disbalance_amount;
               strategy.tvl := get_nat_or_fail(strategy.tvl - disbalance_amount, Errors.not_nat);
             }
-          else if strategy.target_reserves_rate_f > current_delta_f
+          else if strategy.target_reserves_rate_f > current_rate_f
             then {
                 operations := list[
                     wrap_transfer(
