@@ -2,6 +2,7 @@ const { MichelsonMap } = require("@taquito/michelson-encoder");
 const { alice } = require("../../scripts/sandbox/accounts");
 
 module.exports = {
+  owner: alice.pkh,
   vault: null,
   protocol: null,
   protocol_asset_id: 0,
