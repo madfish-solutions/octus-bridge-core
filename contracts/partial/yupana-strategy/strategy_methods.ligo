@@ -4,50 +4,8 @@ function invest(
                           : return_t is
   block {
     require(Tezos.sender = s.vault, Errors.not_vault);
-    const approve_op = case s.deposit_asset of [
-      | Fa12(addr) ->
-        Tezos.transaction(
-          (s.protocol, amount_),
-          0mutez,
-          unwrap(
-            (Tezos.get_entrypoint_opt("%approve", addr) : option(contract(approve_fa12_token_t))),
-            Errors.approve_etp_404)
-          )
-      | Tez -> failwith(Errors.wrong_asset)
-      | Fa2(token) ->
-        Tezos.transaction(
-          list[
-            Add_operator(
-              record[
-                owner    = Tezos.self_address;
-                operator = s.protocol;
-                token_id = token.id;
-              ])
-          ],
-          0mutez,
-          unwrap(
-            (Tezos.get_entrypoint_opt("%update_operators", token.address) : option(contract(approve_fa2_token_t))),
-            Errors.approve_etp_404)
-          )
-      | Wrapped(token) ->
-        Tezos.transaction(
-          list[
-            Add_operator(
-              record[
-                owner    = Tezos.self_address;
-                operator = s.protocol;
-                token_id = token.id;
-              ])
-          ],
-          0mutez,
-          unwrap(
-            (Tezos.get_entrypoint_opt("%update_operators", token.address) : option(contract(approve_fa2_token_t))),
-            Errors.approve_etp_404)
-          )
-        ]
-  } with (
-      list[
-        approve_op;
+
+    var operations := list[
         get_get_price_op(s.protocol_asset_id, s.price_feed);
         get_update_interest_op(s.protocol_asset_id, s.protocol);
         Tezos.transaction(
@@ -61,8 +19,21 @@ function invest(
             (Tezos.get_entrypoint_opt("%mint", s.protocol) : option(contract(call_y_t))),
             Errors.mint_etp_404
           )
-        )
-      ], s with record[tvl += amount_])
+        );
+      ];
+
+    case s.deposit_asset of [
+      | Fa12(addr) -> operations := Tezos.transaction(
+            (s.protocol, amount_),
+            0mutez,
+            unwrap(
+              (Tezos.get_entrypoint_opt("%approve", addr) : option(contract(approve_fa12_token_t))),
+              Errors.approve_etp_404)
+            ) # operations
+      | Tez -> failwith(Errors.wrong_asset)
+      | _ -> skip
+      ];
+  } with (operations, s with record[tvl += amount_])
 
 function divest(
   const amount_           : nat;

@@ -7,12 +7,14 @@
 #include "../partial/fa2_helpers.ligo"
 #include "../partial/yupana-strategy/strategy_helpers.ligo"
 #include "../partial/yupana-strategy/strategy_methods.ligo"
+#include "../partial/yupana-strategy/strategy_admin_methods.ligo"
 #include "../partial/yupana-strategy/strategy_views.ligo"
 
 type parameter_t        is
 | Invest                  of nat
 | Divest                  of nat
 | Harvest                 of contract(harvest_response_t)
+| Update_operator         of bool
 
 function main(
   const action             : parameter_t;
@@ -22,4 +24,5 @@ function main(
   | Invest(params)  -> invest(params, s)
   | Divest(params)  -> divest(params, s)
   | Harvest(params) -> harvest(params, s)
+  | Update_operator(params) -> update_operator(params, s)
   ]
