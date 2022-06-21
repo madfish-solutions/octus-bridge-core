@@ -38,6 +38,7 @@ describe("Yupana-strategy tests", async function () {
       yupanaStrategyStorage.deposit_asset = { fa12: fa12Token.address };
       yupanaStrategyStorage.reward_asset = { fa12: fa12Token.address };
       yupanaStrategyStorage.price_feed = priceFeed.address;
+      yupanaStrategyStorage.protocol_asset_id = 0;
       strategy = await new YupanaStrategy().init(
         yupanaStrategyStorage,
         "yupana_strategy",

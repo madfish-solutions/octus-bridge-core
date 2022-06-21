@@ -155,6 +155,7 @@ describe("Vault Admin tests", async function () {
       yupanaStrategyStorage.reward_asset = {
         fa2: { address: fa2Token.address, id: fa2Token.tokenId },
       };
+      yupanaStrategyStorage.protocol_asset_id = 1;
       yupanaStrategyStorage.price_feed = priceFeed.address;
       yupanaStrategyFa2 = await new YupanaStrategy().init(
         yupanaStrategyStorage,
@@ -196,6 +197,12 @@ describe("Vault Admin tests", async function () {
 
       //await fa12Token.transfer(alice.pkh, strategy.address, 100 * precision);
       await fa12Token.transfer(alice.pkh, yupana.address, 100 * precision);
+
+      const s = fa2Token.storage.allowances.get({
+        spender: yupanaStrategyFa2.address,
+        value: 0,
+      });
+      console.log(s);
     } catch (e) {
       console.log(e);
     }
@@ -807,10 +814,9 @@ describe("Vault Admin tests", async function () {
         fa2Token.tokenId,
       ]);
       const st = await vault.storage.strategies.get("1");
-      console.log(st);
-      console.log(yupanaStrategyFa12.address, yupanaStrategyFa2.address);
+
       await rejects(vault.call("maintain", [1]), err => {
-        strictEqual(err.message, "Va");
+        strictEqual(err.message, "FA2_NOT_OPERATOR");
         return true;
       });
     });
@@ -924,6 +930,7 @@ describe("Vault Admin tests", async function () {
       );
     });
     it("Should allow maintain: invest scenario fa2", async function () {
+      await yupanaStrategyFa2.call("update_operator", true);
       const prevStrategy = await vault.storage.strategies.get("1");
       const prevAsset = await vault.storage.assets.get("1");
       const investAmount = Math.floor(
@@ -943,6 +950,12 @@ describe("Vault Admin tests", async function () {
       );
       strictEqual(vaultBalance, prevVaultBalance - investAmount);
       strictEqual(strategy.tvl.toNumber(), investAmount);
+
+      await yupanaStrategyFa2.call("update_operator", false);
+      const ledger = await fa2Token.storage.account_info.get(
+        yupanaStrategyFa2.address,
+      );
+      deepStrictEqual(ledger.permits, []);
     });
   });
   describe("Testing entrypoint: Harvest", async function () {
@@ -973,7 +986,7 @@ describe("Vault Admin tests", async function () {
       const prevFishReward = 0;
       const prevManagementReward = 0;
       await vault.call("harvest", [0]);
-      await yupanaStrategy.updateStorage();
+      await yupanaStrategyFa12.updateStorage();
       const strategyRewards = await vault.storage.strategy_rewards.get("0");
       const fishReward = await strategyRewards.get(vault.storage.fish);
       const managementReward = await strategyRewards.get(
@@ -983,17 +996,17 @@ describe("Vault Admin tests", async function () {
 
       strictEqual(
         vaultBalance,
-        prevVaultBalance + yupanaStrategy.storage.last_profit.toNumber(),
+        prevVaultBalance + yupanaStrategyFa12.storage.last_profit.toNumber(),
       );
       strictEqual(
         fishReward.toNumber(),
         prevFishReward +
-          (yupanaStrategy.storage.last_profit.toNumber() * precision) / 2,
+          (yupanaStrategyFa12.storage.last_profit.toNumber() * precision) / 2,
       );
       strictEqual(
         managementReward.toNumber(),
         prevManagementReward +
-          (yupanaStrategy.storage.last_profit.toNumber() * precision) / 2,
+          (yupanaStrategyFa12.storage.last_profit.toNumber() * precision) / 2,
       );
     });
   });
