@@ -1,5 +1,6 @@
 type storage_t          is [@layout:comb] record [
   owner                   : address;
+  pending_owner           : option(address);
   vault                   : address;
   protocol                : address;
   protocol_asset_id       : nat;

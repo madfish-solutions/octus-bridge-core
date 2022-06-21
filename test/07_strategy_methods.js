@@ -155,4 +155,36 @@ describe("Yupana-strategy tests", async function () {
       strictEqual(yupanaBalance, prevYupanaBalance - 500 * precision);
     });
   });
+  describe("Testing entrypoint: Set_owner", async function () {
+    it("Shouldn't seting owner if the user is not an owner", async function () {
+      Tezos.setSignerProvider(signerBob);
+      await rejects(strategy.call("set_owner", bob.pkh), err => {
+        strictEqual(err.message, "Yup-strategy/not-owner");
+        return true;
+      });
+    });
+    it("Should allow start transfer ownership", async function () {
+      Tezos.setSignerProvider(signerAlice);
+
+      await strategy.call("set_owner", bob.pkh);
+
+      strictEqual(strategy.storage.pending_owner, bob.pkh);
+    });
+  });
+  describe("Testing entrypoint: Confirm_owner", async function () {
+    it("Shouldn't confirm owner if the user is not an pending owner", async function () {
+      Tezos.setSignerProvider(signerAlice);
+      await rejects(strategy.call("confirm_owner", bob.pkh), err => {
+        strictEqual(err.message, "Yup-strategy/not-pending-owner");
+        return true;
+      });
+    });
+    it("Should allow confirm transfer ownership", async function () {
+      Tezos.setSignerProvider(signerBob);
+
+      await strategy.call("confirm_owner", bob.pkh);
+
+      strictEqual(strategy.storage.owner, bob.pkh);
+    });
+  });
 });
