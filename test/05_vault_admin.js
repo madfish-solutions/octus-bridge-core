@@ -59,7 +59,7 @@ describe("Vault Admin tests", async function () {
         0: {
           asset_type: { fa12: fa12Token.address },
           deposit_fee_f: 0,
-          withdraw_fee_f: 0,
+          withdrawal_fee_f: 0,
           deposit_limit: 0,
           tvl: 0,
           virtual_balance: 0,
@@ -69,7 +69,7 @@ describe("Vault Admin tests", async function () {
         1: {
           asset_type: { fa2: { address: fa2Token.address, id: 0 } },
           deposit_fee_f: 0,
-          withdraw_fee_f: 0,
+          withdrawal_fee_f: 0,
           deposit_limit: 0,
           tvl: 0,
           virtual_balance: 0,
@@ -79,7 +79,7 @@ describe("Vault Admin tests", async function () {
         2: {
           asset_type: { tez: null },
           deposit_fee_f: 0,
-          withdraw_fee_f: 0,
+          withdrawal_fee_f: 0,
           deposit_limit: 0,
           tvl: 0,
           virtual_balance: 0,
@@ -364,7 +364,7 @@ describe("Vault Admin tests", async function () {
 
       await vault.call("set_asset_withdraw_fee", [0, 1000000]);
       const asset = await vault.storage.assets.get("0");
-      strictEqual(asset.withdraw_fee_f.toNumber(), 1000000);
+      strictEqual(asset.withdrawal_fee_f.toNumber(), 1000000);
       await vault.call("set_asset_withdraw_fee", [0, 0]);
     });
   });

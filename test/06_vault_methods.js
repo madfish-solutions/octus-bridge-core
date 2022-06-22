@@ -322,7 +322,7 @@ describe("Vault methods tests", async function () {
       Tezos.setSignerProvider(signerAlice);
       const depositAmount = 200 * precision;
       const prevDepositCount = vault.storage.deposit_count.toNumber();
-
+      const prevAsset = await vault.storage.assets.get("2");
       await vault.call(
         "deposit",
         ["001100", depositAmount, "tez"],
@@ -981,14 +981,11 @@ describe("Vault methods tests", async function () {
       const prevAliceBalance = await fa2Token.getBalance(alice.pkh);
       const prevVaultBalance = await fa2Token.getBalance(vault.address);
       const prevAsset = await vault.storage.assets.get("1");
-      const prevFeeBalances = await vault.storage.fee_balances.get({
-        fa2: { address: fa2Token.address, id: 0 },
-      });
+      const prevFeeBalances = await vault.storage.fee_balances.get("1");
       const prevFishFee = await prevFeeBalances.get(vault.storage.fish);
       const prevManagementFee = await prevFeeBalances.get(
         vault.storage.management,
       );
-
       await vault.call("withdraw", {
         payload: payload,
         signatures: MichelsonMap.fromLiteral({ [alice.pk]: signature.sig }),
@@ -997,9 +994,7 @@ describe("Vault methods tests", async function () {
       const asset = await vault.storage.assets.get("1");
       const vaultBalance = await fa2Token.getBalance(vault.address);
 
-      const feeBalances = await vault.storage.fee_balances.get({
-        fa2: { address: fa2Token.address, id: 0 },
-      });
+      const feeBalances = await vault.storage.fee_balances.get("1");
       const fishFee = await feeBalances.get(vault.storage.fish);
       const managementFee = await feeBalances.get(vault.storage.management);
 
@@ -1063,9 +1058,7 @@ describe("Vault methods tests", async function () {
         .then(balance => Math.floor(balance.toNumber()))
         .catch(error => console.log(JSON.stringify(error)));
       const prevAsset = await vault.storage.assets.get("2");
-      const prevFeeBalances = await vault.storage.fee_balances.get({
-        tez: null,
-      });
+      const prevFeeBalances = await vault.storage.fee_balances.get("2");
       const prevFishFee = await prevFeeBalances.get(vault.storage.fish);
       const prevManagementFee = await prevFeeBalances.get(
         vault.storage.management,
@@ -1086,9 +1079,7 @@ describe("Vault methods tests", async function () {
         .then(balance => Math.floor(balance.toNumber()))
         .catch(error => console.log(JSON.stringify(error)));
 
-      const feeBalances = await vault.storage.fee_balances.get({
-        tez: null,
-      });
+      const feeBalances = await vault.storage.fee_balances.get("2");
       const fishFee = await feeBalances.get(vault.storage.fish);
       const managementFee = await feeBalances.get(vault.storage.management);
 
@@ -1143,9 +1134,7 @@ describe("Vault methods tests", async function () {
       const prevAliceBalance = await fa12Token.getBalance(alice.pkh);
       const prevVaultBalance = await fa12Token.getBalance(vault.address);
       const prevAsset = await vault.storage.assets.get("0");
-      const prevFeeBalances = await vault.storage.fee_balances.get({
-        fa12: fa12Token.address,
-      });
+      const prevFeeBalances = await vault.storage.fee_balances.get("0");
       const prevFishFee = await prevFeeBalances.get(vault.storage.fish);
       const prevManagementFee = await prevFeeBalances.get(
         vault.storage.management,
@@ -1159,9 +1148,7 @@ describe("Vault methods tests", async function () {
       const asset = await vault.storage.assets.get("0");
       const vaultBalance = await fa12Token.getBalance(vault.address);
 
-      const feeBalances = await vault.storage.fee_balances.get({
-        fa12: fa12Token.address,
-      });
+      const feeBalances = await vault.storage.fee_balances.get("0");
       const fishFee = await feeBalances.get(vault.storage.fish);
       const managementFee = await feeBalances.get(vault.storage.management);
 
@@ -1216,9 +1203,7 @@ describe("Vault methods tests", async function () {
       const prevEveBalance = await fa12Token.getBalance(eve.pkh);
       const prevVaultBalance = await fa12Token.getBalance(vault.address);
       const prevAsset = await vault.storage.assets.get("0");
-      const prevFeeBalances = await vault.storage.fee_balances.get({
-        fa12: fa12Token.address,
-      });
+      const prevFeeBalances = await vault.storage.fee_balances.get("0");
       const prevFishFee = await prevFeeBalances.get(vault.storage.fish);
       const prevManagementFee = await prevFeeBalances.get(
         vault.storage.management,
@@ -1232,9 +1217,7 @@ describe("Vault methods tests", async function () {
       const asset = await vault.storage.assets.get("0");
       const vaultBalance = await fa12Token.getBalance(vault.address);
 
-      const feeBalances = await vault.storage.fee_balances.get({
-        fa12: fa12Token.address,
-      });
+      const feeBalances = await vault.storage.fee_balances.get("0");
       const fishFee = await feeBalances.get(vault.storage.fish);
       const managementFee = await feeBalances.get(vault.storage.management);
 
@@ -1295,9 +1278,7 @@ describe("Vault methods tests", async function () {
         .then(balance => Math.floor(balance.toNumber()))
         .catch(error => console.log(JSON.stringify(error)));
       const prevAsset = await vault.storage.assets.get("2");
-      const prevFeeBalances = await vault.storage.fee_balances.get({
-        tez: null,
-      });
+      const prevFeeBalances = await vault.storage.fee_balances.get("2");
       const prevFishFee = await prevFeeBalances.get(vault.storage.fish);
       const prevManagementFee = await prevFeeBalances.get(
         vault.storage.management,
@@ -1317,9 +1298,7 @@ describe("Vault methods tests", async function () {
         .then(balance => Math.floor(balance.toNumber()))
         .catch(error => console.log(JSON.stringify(error)));
 
-      const feeBalances = await vault.storage.fee_balances.get({
-        tez: null,
-      });
+      const feeBalances = await vault.storage.fee_balances.get("2");
       const fishFee = await feeBalances.get(vault.storage.fish);
       const managementFee = await feeBalances.get(vault.storage.management);
 
@@ -1530,9 +1509,7 @@ describe("Vault methods tests", async function () {
     });
     it("Should cancel pending withdrawal", async function () {
       Tezos.setSignerProvider(signerAlice);
-      const prevFeeBalances = await vault.storage.fee_balances.get({
-        tez: null,
-      });
+      const prevFeeBalances = await vault.storage.fee_balances.get("2");
       const prevFishFee = await prevFeeBalances.get(vault.storage.fish);
       const prevManagementFee = await prevFeeBalances.get(
         vault.storage.management,
@@ -1543,9 +1520,7 @@ describe("Vault methods tests", async function () {
       const newDeposit = await vault.storage.deposits.get(
         `${vault.storage.deposit_count.toNumber() - 1}`,
       );
-      const feeBalances = await vault.storage.fee_balances.get({
-        tez: null,
-      });
+      const feeBalances = await vault.storage.fee_balances.get("2");
       const asset = await vault.storage.assets.get("2");
       const fishFee = await feeBalances.get(vault.storage.fish);
       const managementFee = await feeBalances.get(vault.storage.management);
@@ -1610,32 +1585,20 @@ describe("Vault methods tests", async function () {
     });
   });
   describe("Testing entrypoint: Deposit_with_bounty", async function () {
-    it("Shouldn't deposit if vault is paused", async function () {
-      await vault.call("toggle_pause_vault");
+    it("Shouldn't deposit if emergency shutdown is enabled", async function () {
+      await vault.call("toggle_emergency_shutdown");
       await rejects(
-        vault.call("deposit_with_bounty", [
-          "001100",
-          0,
-          "fa12",
-          alice.pkh,
-          [1],
-        ]),
+        vault.call("deposit_with_bounty", ["001100", 0, 0, [1]]),
         err => {
-          strictEqual(err.message, "Vault/vault-is-paused");
+          strictEqual(err.message, "Vault/emergency-shutdown-enabled");
           return true;
         },
       );
-      await vault.call("toggle_pause_vault");
+      await vault.call("toggle_emergency_shutdown");
     });
     it("Shouldn't deposit if assets do not match", async function () {
       await rejects(
-        vault.call("deposit_with_bounty", [
-          "001100",
-          100 * precision,
-          "fa12",
-          fa12Token.address,
-          [1],
-        ]),
+        vault.call("deposit_with_bounty", ["001100", 100 * precision, 0, [1]]),
         err => {
           strictEqual(err.message, "Vault/assets-do-not-match");
           return true;
@@ -1644,13 +1607,7 @@ describe("Vault methods tests", async function () {
     });
     it("Shouldn't deposit if asset is paused", async function () {
       await rejects(
-        vault.call("deposit_with_bounty", [
-          "001100",
-          100 * precision,
-          "fa12",
-          alice.pkh,
-          [1],
-        ]),
+        vault.call("deposit_with_bounty", ["001100", 100 * precision, 4, [1]]),
         err => {
           strictEqual(err.message, "Vault/asset-is-paused");
           return true;
@@ -1661,7 +1618,7 @@ describe("Vault methods tests", async function () {
       await rejects(
         vault.call(
           "deposit_with_bounty",
-          ["001100", 250 * precision, "tez", null, [1]],
+          ["001100", 250 * precision, 2, [1]],
           (250 * precision) / 1e6,
         ),
         err => {
@@ -1672,13 +1629,7 @@ describe("Vault methods tests", async function () {
     });
     it("Shouldn't deposit if deposit zero amount", async function () {
       await rejects(
-        vault.call("deposit_with_bounty", [
-          "001100",
-          0,
-          "fa12",
-          fa12Token.address,
-          [1],
-        ]),
+        vault.call("deposit_with_bounty", ["001100", 0, 0, [1]]),
         err => {
           strictEqual(err.message, "Vault/zero-transfer");
           return true;
@@ -1687,13 +1638,7 @@ describe("Vault methods tests", async function () {
     });
     it("Shouldn't deposit if amount less than pending withdrawal amount", async function () {
       await rejects(
-        vault.call("deposit_with_bounty", [
-          "001100",
-          200,
-          "fa12",
-          fa12Token.address,
-          [2],
-        ]),
+        vault.call("deposit_with_bounty", ["001100", 200, 0, [2]]),
         err => {
           strictEqual(
             err.message,
@@ -1705,13 +1650,7 @@ describe("Vault methods tests", async function () {
     });
     it("Shouldn't deposit if asset is banned", async function () {
       await rejects(
-        vault.call("deposit_with_bounty", [
-          "001100",
-          100 * precision,
-          "fa12",
-          bob.pkh,
-          [1],
-        ]),
+        vault.call("deposit_with_bounty", ["001100", 100 * precision, 5, [1]]),
         err => {
           strictEqual(err.message, "Vault/asset-is-banned");
           return true;
@@ -1720,11 +1659,7 @@ describe("Vault methods tests", async function () {
     });
     it("Shouldn't deposit if pending withdrawal is closed", async function () {
       await rejects(
-        vault.call(
-          "deposit_with_bounty",
-          ["001100", 1000, "tez", null, [1]],
-          1000 / 1e6,
-        ),
+        vault.call("deposit_with_bounty", ["001100", 1000, 2, [1]], 1000 / 1e6),
         err => {
           strictEqual(err.message, "Vault/pending-withdrawal-closed");
           return true;
@@ -1741,16 +1676,14 @@ describe("Vault methods tests", async function () {
         .then(balance => Math.floor(balance.toNumber()))
         .catch(error => console.log(JSON.stringify(error)));
       const prevAsset = await vault.storage.assets.get("2");
-      const prevFeeBalances = await vault.storage.fee_balances.get({
-        tez: null,
-      });
+      const prevFeeBalances = await vault.storage.fee_balances.get("2");
       const prevFishFee = await prevFeeBalances.get(vault.storage.fish);
       const prevManagementFee = await prevFeeBalances.get(
         vault.storage.management,
       );
       await vault.call(
         "deposit_with_bounty",
-        ["001100", depositAmount, "tez", null, [4]],
+        ["001100", depositAmount, 2, [4]],
         depositAmount / 1e6,
       );
 
@@ -1764,9 +1697,7 @@ describe("Vault methods tests", async function () {
         (depositAmount * asset.deposit_fee_f.toNumber()) / precision,
       );
 
-      const feeBalances = await vault.storage.fee_balances.get({
-        tez: null,
-      });
+      const feeBalances = await vault.storage.fee_balances.get("2");
       const fishFee = await feeBalances.get(vault.storage.fish);
       const managementFee = await feeBalances.get(vault.storage.management);
 
@@ -1830,9 +1761,7 @@ describe("Vault methods tests", async function () {
       const prevAliceBalance = await fa12Token.getBalance(alice.pkh);
       const prevEveBalance = await fa12Token.getBalance(eve.pkh);
       const prevAsset = await vault.storage.assets.get("0");
-      const prevFeeBalances = await vault.storage.fee_balances.get({
-        fa12: fa12Token.address,
-      });
+      const prevFeeBalances = await vault.storage.fee_balances.get("0");
       const prevFishFee = await prevFeeBalances.get(vault.storage.fish);
       const prevManagementFee = await prevFeeBalances.get(
         vault.storage.management,
@@ -1840,8 +1769,7 @@ describe("Vault methods tests", async function () {
       await vault.call("deposit_with_bounty", [
         "001100",
         depositAmount,
-        "fa12",
-        fa12Token.address,
+        0,
         [2, 3],
       ]);
 
@@ -1852,9 +1780,7 @@ describe("Vault methods tests", async function () {
         (depositAmount * asset.deposit_fee_f.toNumber()) / precision,
       );
 
-      const feeBalances = await vault.storage.fee_balances.get({
-        fa12: fa12Token.address,
-      });
+      const feeBalances = await vault.storage.fee_balances.get("0");
       const fishFee = await feeBalances.get(vault.storage.fish);
       const managementFee = await feeBalances.get(vault.storage.management);
 

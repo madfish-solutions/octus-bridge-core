@@ -26,7 +26,7 @@ type deposit_t          is [@layout:comb] record[
 type deposit_with_bounty_t is [@layout:comb] record[
   recipient                  : bytes;
   amount                     : nat;
-  asset                      : asset_standard_t;
+  asset_id                   : asset_id_t;
   pending_withdrawal_ids     : set(nat);
 ]
 
@@ -165,6 +165,7 @@ type update_strategy_t  is [@layout:comb] record[
 type revoke_strategy_t  is [@layout:comb] record[
   asset_id                : asset_id_t;
   delete                  : bool;
+]
 
 type set_bounty_t       is [@layout:comb] record[
   pending_id              : nat;
