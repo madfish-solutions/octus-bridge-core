@@ -27,7 +27,7 @@ function deposit(
     const deposited_amount = get_nat_or_fail(deposit_without_fee - fee, Errors.not_nat);
 
     if fee > 0n
-    then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset.asset_type)
+    then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset_id)
     else skip;
 
     var operations := result.operations;
@@ -108,7 +108,7 @@ function withdraw(
     const withdrawal_amount = get_nat_or_fail(params.amount - fee, Errors.not_nat);
 
     if fee > 0n
-    then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset.asset_type)
+    then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset_id)
     else skip;
 
     var operations := result.operations;

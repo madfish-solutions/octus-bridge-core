@@ -103,15 +103,15 @@ function update_fee_balances(
   const fish            : address;
   const management      : address;
   const fee             : nat;
-  const asset           : asset_standard_t)
+  const asset_id        : asset_id_t)
                         : fee_balances_map_t is
   block {
-    var fee_balances := unwrap_or(fee_balances_map[asset], Constants.fee_balances_mock);
+    var fee_balances := unwrap_or(fee_balances_map[asset_id], Constants.fee_balances_mock);
     const fish_balance_f = unwrap_or(fee_balances[fish], 0n);
     const management_balance_f = unwrap_or(fee_balances[management], 0n);
     fee_balances[fish] := fish_balance_f + fee * Constants.precision / Constants.div_two;
     fee_balances[management] := management_balance_f + fee * Constants.precision / Constants.div_two;
-    fee_balances_map[asset] := fee_balances;
+    fee_balances_map[asset_id] := fee_balances;
   } with fee_balances_map
 
 function get_harvest_op(

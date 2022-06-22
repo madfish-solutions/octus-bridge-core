@@ -23,7 +23,7 @@ type parameter_t        is
 | Set_native_config       of config_t
 | Set_aliens_config       of config_t
 | Toggle_pause_asset      of asset_id_t
-| Toggle_ban_asset        of asset_with_unit_t
+| Toggle_ban_asset        of asset_standard_t
 | Toggle_emergency_shutdown of unit
 | Update_metadata         of metadata_t
 | Delegate_tez            of option(key_hash)
@@ -35,8 +35,8 @@ type parameter_t        is
 | Update_strategy         of update_strategy_t
 | Revoke_strategy         of revoke_strategy_t
 | Handle_harvest          of harvest_response_t
-| Maintain                of asset_with_unit_t
-| Harvest                 of asset_with_unit_t
+| Maintain                of asset_id_t
+| Harvest                 of asset_id_t
 
 | Deposit                 of deposit_t
 | Withdraw                of message_t

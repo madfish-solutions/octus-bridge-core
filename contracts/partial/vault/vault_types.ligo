@@ -51,9 +51,9 @@ type strategy_t         is [@layout:comb] record [
   delta_f                 : nat;
 ]
 
-type strategies_t       is big_map(asset_standard_t, strategy_t)
+type strategies_t       is big_map(asset_id_t, strategy_t)
 
-type fee_balances_map_t is big_map(asset_standard_t, fee_balances_t)
+type fee_balances_map_t is big_map(asset_id_t, fee_balances_t)
 
 type storage_t          is [@layout:comb] record[
   owner                   : address;
@@ -114,12 +114,12 @@ type withdrawal_data_t  is [@layout:comb] record[
 ]
 
 type claim_fee_t        is [@layout:comb] record[
-  asset                   : asset_standard_t;
+  asset_id                : asset_id_t;
   recipient               : address;
 ]
 
 type add_strategy_t     is [@layout:comb] record[
-  asset                   : asset_standard_t;
+  asset_id                : asset_id_t;
   strategy_address        : address;
 
   target_reserves_rate_f  : nat;
@@ -127,18 +127,13 @@ type add_strategy_t     is [@layout:comb] record[
 ]
 
 type update_strategy_t  is [@layout:comb] record[
-  asset                   : asset_standard_t;
+  asset_id                : asset_id_t;
   target_reserves_rate_f  : nat;
   delta_f                 : nat;
 ]
 
-type asset_with_unit_t  is [@layout:comb] record[
-  asset                   : asset_standard_t;
-  _unit                   : unit;
-]
-
 type revoke_strategy_t  is [@layout:comb] record[
-  asset                   : asset_standard_t;
+  asset_id                : asset_id_t;
   delete                  : bool;
 ]
 

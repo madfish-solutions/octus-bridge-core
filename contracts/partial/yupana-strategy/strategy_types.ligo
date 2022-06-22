@@ -1,4 +1,6 @@
 type storage_t          is [@layout:comb] record [
+  owner                   : address;
+  pending_owner           : option(address);
   vault                   : address;
   protocol                : address;
   protocol_asset_id       : nat;
@@ -22,3 +24,4 @@ type balance_view_t     is [@layout:comb] record [
   requests                : list(balance_of_request_t);
   precision               : bool;
 ]
+
