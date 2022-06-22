@@ -9,7 +9,7 @@ module Constants is {
   const asset_mock        : asset_t = record[
     asset_type      = Fa12(zero_address);
     deposit_fee_f   = 0n;
-    withdraw_fee_f  = 0n;
+    withdrawal_fee_f  = 0n;
     deposit_limit   = 0n;
     tvl             = 0n;
     virtual_balance = 0n;

@@ -39,7 +39,10 @@ type parameter_t        is
 | Harvest                 of asset_id_t
 
 | Deposit                 of deposit_t
+| Deposit_with_bounty     of deposit_with_bounty_t
 | Withdraw                of message_t
+| Set_bounty              of set_bounty_t
+| Cancel_withdrawal       of cancel_pending_withdrawal_t
 
 | Default                 of unit
 
@@ -77,7 +80,10 @@ function main(
   | Harvest(params)                 -> harvest(params, s)
 
   | Deposit(params)                 -> deposit(params, s)
+  | Deposit_with_bounty(params)     -> deposit_with_bounty(params, s)
   | Withdraw(params)                -> withdraw(params, s)
+  | Set_bounty(params)              -> set_bounty(params, s)
+  | Cancel_withdrawal(params)       -> cancel_pending_withdrawal(params, s)
 
   | Default                         -> default(s)
 

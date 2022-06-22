@@ -70,7 +70,7 @@ type config_t           is [@layout:comb] record[
 type asset_t            is [@layout:comb] record[
   asset_type              : asset_standard_t;
   deposit_fee_f           : nat;
-  withdraw_fee_f          : nat;
+  withdrawal_fee_f        : nat;
   deposit_limit           : nat;
   tvl                     : nat;
   virtual_balance         : nat;
