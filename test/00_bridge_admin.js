@@ -132,7 +132,6 @@ describe("Bridge-core Admin tests", async function () {
       });
     });
     it("Should toggle pausing bridge (pause/unpause)", async function () {
-      // TODO:: Add check for other dependent entrypoints
       Tezos.setSignerProvider(signerBob);
 
       await bridge.call("toggle_pause_bridge");
@@ -152,7 +151,6 @@ describe("Bridge-core Admin tests", async function () {
       });
     });
     it("Should toggle ban relay (ban/unban)", async function () {
-      // TODO:: Add check for other dependent entrypoints
       Tezos.setSignerProvider(signerBob);
 
       await bridge.call("toggle_ban_relay", bob.pk);
@@ -177,7 +175,6 @@ describe("Bridge-core Admin tests", async function () {
       });
     });
     it("Should force starting new round", async function () {
-      // TODO:: Add check for other dependent entrypoints
       Tezos.setSignerProvider(signerBob);
       const newRound = {
         endTime: String(Date.now() + 1000),

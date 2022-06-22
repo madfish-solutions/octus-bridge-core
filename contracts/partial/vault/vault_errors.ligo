@@ -6,6 +6,7 @@ module Errors is {
   const not_fish                    : string = "Vault/not-fish";
   const not_owner_or_guardian       : string = "Vault/not-owner-or-guardian";
   const not_fish_or_management      : string = "Vault/not-fish-or-management";
+  const not_strategist              : string = "Vault/not-strategist";
   const asset_undefined             : string = "Vault/asset-undefined";
   const metadata_undefined          : string = "Vault/metadata-undefined";
   const create_token_etp_404        : string = "Vault/create-token-etp-404";
@@ -13,9 +14,13 @@ module Errors is {
   const burn_etp_404                : string = "Vault/burn-etp-404";
   const transfer_etp_404            : string = "Vault/transfer-etp-404";
   const implict_account_404         : string = "Vault/not-implict-account";
+  const handle_harvest_etp_404      : string = "Vault/handle-harvest-etp-404";
+  const harvest_etp_404             : string = "Vault/harvest_etp_404";
+  const divest_etp_404              : string = "Vault/divest_etp_404";
+  const invest_etp_404              : string = "Vault/invest_etp_404";
   const asset_paused                : string = "Vault/asset-is-paused";
   const asset_banned                : string = "Vault/asset-is-banned";
-  const vault_paused                : string = "Vault/vault-is-paused";
+  const emergency_shutdown_enabled  : string = "Vault/emergency-shutdown-enabled";
   const zero_transfer               : string = "Vault/zero-transfer";
   const not_nat                     : string = "Vault/not-nat";
   const amounts_mismatch            : string = "Vault/amounts-mismatch";
@@ -35,6 +40,10 @@ module Errors is {
   const invalid_withdrawal_params   : string = "Vault/invalid-withdawal-params";
   const zero_fee_balance            : string = "Vault/zero-fee-balance";
   const deposit_limit               : string = "Vault/respect-deposit-limit";
+  const strategy_exists             : string = "Vault/strategy-already-exists";
+  const strategy_undefined          : string = "Vault/strategy-undefined";
+  const low_asset_liquidity         : string = "Vault/low-asset-liquidity";
+  const no_rebalancing_needed       : string = "Vault/no-rebalancing-needed"
   const unknown_pending_withdrawal  : string = "Vault/unknown-pending-withdrawal";
   const not_recipient               : string = "Vault/not-recipient";
   const pending_withdrawal_closed   : string = "Vault/pending-withdrawal-closed";

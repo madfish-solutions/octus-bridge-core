@@ -103,16 +103,54 @@ function update_fee_balances(
   const fish            : address;
   const management      : address;
   const fee             : nat;
-  const asset           : asset_standard_t)
+  const asset_id        : asset_id_t)
                         : fee_balances_map_t is
   block {
-    var fee_balances := unwrap_or(fee_balances_map[asset], Constants.fee_balances_mock);
+    var fee_balances := unwrap_or(fee_balances_map[asset_id], Constants.fee_balances_mock);
     const fish_balance_f = unwrap_or(fee_balances[fish], 0n);
     const management_balance_f = unwrap_or(fee_balances[management], 0n);
     fee_balances[fish] := fish_balance_f + fee * Constants.precision / Constants.div_two;
     fee_balances[management] := management_balance_f + fee * Constants.precision / Constants.div_two;
-    fee_balances_map[asset] := fee_balances;
+    fee_balances_map[asset_id] := fee_balances;
   } with fee_balances_map
+
+function get_harvest_op(
+  const strategy_address : address)
+                         : operation is
+  Tezos.transaction(
+      unwrap(
+        (Tezos.get_entrypoint_opt("%handle_harvest", Tezos.self_address) : option(contract(harvest_response_t))),
+        Errors.handle_harvest_etp_404
+      ),
+      0mutez,
+      unwrap(
+        (Tezos.get_entrypoint_opt("%harvest", strategy_address) : option(contract(contract(harvest_response_t)))),
+        Errors.harvest_etp_404
+      ));
+
+function get_divest_op(
+  const amount_          : nat;
+  const strategy_address : address)
+                         : operation is
+  Tezos.transaction(
+      amount_,
+      0mutez,
+      unwrap(
+        (Tezos.get_entrypoint_opt("%divest", strategy_address) : option(contract(nat))),
+        Errors.divest_etp_404
+      ));
+
+function get_invest_op(
+  const amount_          : nat;
+  const strategy_address : address)
+                         : operation is
+  Tezos.transaction(
+      amount_,
+      0mutez,
+      unwrap(
+        (Tezos.get_entrypoint_opt("%invest", strategy_address) : option(contract(nat))),
+        Errors.invest_etp_404
+      ));
 
 [@inline] function get_nat_or_zero(
   const value           : int)

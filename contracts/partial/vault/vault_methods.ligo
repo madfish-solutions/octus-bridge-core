@@ -3,7 +3,7 @@ function deposit(
   var s                : storage_t)
                        : return_t is
   block {
-    require(not(s.paused), Errors.vault_paused);
+    require(not(s.emergency_shutdown), Errors.emergency_shutdown_enabled);
 
     const result = get_or_create_asset(params.asset, (None : option(token_meta_t)), s);
     var asset := result.asset;
@@ -27,7 +27,7 @@ function deposit(
     const deposited_amount = get_nat_or_fail(params.amount - fee, Errors.not_nat);
 
     if fee > 0n
-    then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset.asset_type)
+    then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset_id)
     else skip;
 
     var operations := result.operations;
@@ -48,13 +48,14 @@ function deposit(
       asset := asset with record[
           tvl = get_nat_or_fail(asset.tvl - deposited_amount, Errors.not_nat);
           virtual_balance = get_nat_or_fail(asset.virtual_balance - deposited_amount, Errors.not_nat)
-        ];
-
+        ]
      }
-    | Tez -> asset := asset with record[
-        tvl = asset.tvl + deposited_amount;
-        virtual_balance = asset.virtual_balance + deposited_amount
-      ]
+    | Tez -> {
+        asset := asset with record [
+            tvl += deposited_amount;
+            virtual_balance += deposited_amount
+          ]
+      }
     | _ -> {
         operations := wrap_transfer(
           Tezos.sender,
@@ -62,10 +63,10 @@ function deposit(
           params.amount,
           asset.asset_type
         ) # operations;
-        asset := asset with record[
-            tvl = asset.tvl + deposited_amount;
-            virtual_balance = asset.virtual_balance + deposited_amount
-          ];
+        asset := asset with record [
+            tvl += deposited_amount;
+            virtual_balance += deposited_amount
+          ]
       }
     ];
     s.assets[asset_id] := asset;
@@ -84,10 +85,9 @@ function deposit_with_bounty(
   var s                : storage_t)
                        : return_t is
   block {
-    require(not(s.paused), Errors.vault_paused);
+    require(not(s.emergency_shutdown), Errors.emergency_shutdown_enabled);
 
-    const asset_id = unwrap(s.asset_ids[params.asset], Errors.asset_undefined);
-    var asset := unwrap(s.assets[asset_id], Errors.asset_undefined);
+    var asset := unwrap(s.assets[params.asset_id], Errors.asset_undefined);
 
     require(not(asset.paused), Errors.asset_paused);
     require(not(asset.banned), Errors.asset_banned);
@@ -110,7 +110,7 @@ function deposit_with_bounty(
     for withdrawal_id in set params.pending_withdrawal_ids {
       var pending_withdrawal := unwrap(s.pending_withdrawals[withdrawal_id], Errors.unknown_pending_withdrawal);
 
-      require(pending_withdrawal.asset = params.asset, Errors.assets_do_not_match);
+      require(pending_withdrawal.asset = asset.asset_type, Errors.assets_do_not_match);
       require(pending_withdrawal.status = Pending(unit), Errors.pending_withdrawal_closed);
 
       total_withdrawal := total_withdrawal + pending_withdrawal.amount;
@@ -141,7 +141,7 @@ function deposit_with_bounty(
     };
 
     if fee > 0n
-    then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset.asset_type)
+    then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, params.asset_id)
     else skip;
 
     var operations := wrap_transfer(
@@ -163,7 +163,7 @@ function deposit_with_bounty(
         virtual_balance = get_nat_or_fail(asset.virtual_balance + deposited_amount - total_withdrawal, Errors.not_nat)
     ];
 
-    s.assets[asset_id] := asset;
+    s.assets[params.asset_id] := asset;
 
   } with (operations, s)
 
@@ -172,7 +172,7 @@ function withdraw(
   var s                : storage_t)
                        : return_t is
   block {
-    require(not(s.paused), Errors.vault_paused);
+    require(not(s.emergency_shutdown), Errors.emergency_shutdown_enabled);
     require_none(s.withdrawal_ids[message.payload], Errors.payload_already_seen);
     require_none(s.pending_withdrawal_ids[message.payload], Errors.payload_already_seen);
     is_withdraw_valid(message, s.bridge);
@@ -204,7 +204,7 @@ function withdraw(
     ];
 
     if fee > 0n
-    then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset.asset_type)
+    then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset_id)
     else skip;
 
     var operations := result.operations;
@@ -217,6 +217,7 @@ function withdraw(
             amount = withdrawal_amount
           ];
         ];
+
         operations := Tezos.transaction(
             mint_params,
             0mutez,

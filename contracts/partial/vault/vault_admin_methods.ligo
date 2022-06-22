@@ -89,15 +89,14 @@ function set_aliens_config(
     s.asset_config.aliens := config;
   } with (Constants.no_operations, s)
 
-function toggle_pause_vault(
+function toggle_emergency_shutdown(
   const s               : storage_t)
                         : return_t is
   block {
-    if s.paused
+    if s.emergency_shutdown
     then require(Tezos.sender = s.owner, Errors.not_owner)
-    else require(Tezos.sender = s.guardian or Tezos.sender = s.owner, Errors.not_owner_or_guardian)
-
-  } with (Constants.no_operations, s with record[paused = not(s.paused)])
+    else require(Tezos.sender = s.guardian or Tezos.sender = s.owner, Errors.not_owner_or_guardian);
+  } with (Constants.no_operations, s with record[emergency_shutdown = not(s.emergency_shutdown)])
 
 function toggle_pause_asset(
   const asset_id        : asset_id_t;
@@ -120,9 +119,9 @@ function toggle_ban_asset(
     require(Tezos.sender = s.owner, Errors.not_owner)
   } with (Constants.no_operations,
       s with record[banned_assets = Big_map.update(
-        asset,
-        Some(not(unwrap_or(s.banned_assets[asset], False))),
-        s.banned_assets
+          asset,
+          Some(not(unwrap_or(s.banned_assets[asset], False))),
+          s.banned_assets
       )])
 
 function delegate_tez(
@@ -139,9 +138,9 @@ function claim_baker_rewards(
                         : return_t is
   block {
     var balance_f := unwrap_or(s.baker_rewards[Tezos.sender], 0n);
-
-    require(balance_f / Constants.precision > 0n, Errors.zero_fee_balance);
     const reward = balance_f / Constants.precision;
+    require(reward > 0n, Errors.zero_fee_balance);
+
     s.baker_rewards[Tezos.sender] := get_nat_or_fail(balance_f - reward * Constants.precision, Errors.not_nat);
   } with (
       list[
@@ -157,17 +156,187 @@ function claim_fee(
   var s                 : storage_t)
                         : return_t is
   block {
-    var fee_balances : fee_balances_t := unwrap(s.fee_balances[params.asset], Errors.asset_undefined);
+    const asset = unwrap(s.assets[params.asset_id], Errors.asset_undefined);
+    var fee_balances : fee_balances_t := unwrap(s.fee_balances[params.asset_id], Errors.asset_undefined);
     var balance_f := unwrap_or(fee_balances[Tezos.sender], 0n);
-
     require(balance_f / Constants.precision > 0n, Errors.zero_fee_balance);
     const reward = balance_f / Constants.precision;
     fee_balances[Tezos.sender] := get_nat_or_fail(balance_f - reward * Constants.precision, Errors.not_nat);
-    s.fee_balances[params.asset] := fee_balances;
+    s.fee_balances[params.asset_id] := fee_balances;
   } with (list[
       wrap_transfer(
         Tezos.self_address,
         params.recipient,
         reward,
-        params.asset
+        asset.asset_type
       )], s)
+
+function claim_strategy_rewards(
+  const params          : claim_fee_t;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    const asset = unwrap(s.assets[params.asset_id], Errors.asset_undefined);
+    var fee_balances : fee_balances_t := unwrap(s.strategy_rewards[params.asset_id], Errors.asset_undefined);
+    var balance_f := unwrap_or(fee_balances[Tezos.sender], 0n);
+    const reward = balance_f / Constants.precision;
+    require(reward > 0n, Errors.zero_fee_balance);
+    fee_balances[Tezos.sender] := get_nat_or_fail(balance_f - reward * Constants.precision, Errors.not_nat);
+
+    s.strategy_rewards[params.asset_id] := fee_balances;
+  } with (list[
+      wrap_transfer(
+        Tezos.self_address,
+        params.recipient,
+        reward,
+        asset.asset_type
+      )], s)
+
+function add_strategy(
+  const params          : add_strategy_t;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    require(Tezos.sender = s.strategist, Errors.not_strategist);
+    const asset = unwrap(s.assets[params.asset_id], Errors.asset_undefined);
+    require_none(s.strategies[params.asset_id], Errors.strategy_exists);
+
+    s.strategies[params.asset_id] := record[
+      asset = asset.asset_type;
+      strategy_address = params.strategy_address;
+      tvl = 0n;
+      target_reserves_rate_f = params.target_reserves_rate_f;
+      delta_f = params.delta_f;
+    ];
+  } with (Constants.no_operations, s)
+
+function update_strategy(
+  const params          : update_strategy_t;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    require(Tezos.sender = s.strategist, Errors.not_strategist);
+    var strategy := unwrap(s.strategies[params.asset_id], Errors.strategy_undefined);
+    strategy := strategy with record[
+        target_reserves_rate_f = params.target_reserves_rate_f;
+        delta_f = params.delta_f;
+      ];
+    s.strategies[params.asset_id] := strategy;
+  } with (Constants.no_operations, s)
+
+function revoke_strategy(
+  const params          : revoke_strategy_t;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    require(Tezos.sender = s.strategist, Errors.not_strategist);
+    var asset := unwrap(s.assets[params.asset_id], Errors.asset_undefined);
+    var strategy := unwrap(s.strategies[params.asset_id], Errors.strategy_undefined);
+
+    const return = if strategy.tvl > 0n
+      then
+        block {
+          const divest_amount = strategy.tvl;
+          if params.delete
+          then remove params.asset_id from map s.strategies
+          else {
+              strategy.tvl := 0n;
+              s.strategies[params.asset_id] := strategy;
+            };
+          asset.virtual_balance := asset.virtual_balance + divest_amount;
+          s.assets[params.asset_id] := asset;
+        } with (list[
+            Tezos.transaction(
+              divest_amount,
+              0mutez,
+              unwrap(
+                (Tezos.get_entrypoint_opt("%divest", strategy.strategy_address) : option(contract(nat))),
+                Errors.divest_etp_404
+              ));
+            get_harvest_op(strategy.strategy_address)
+          ], s)
+      else block {
+          if params.delete
+          then remove params.asset_id from map s.strategies
+          else skip;
+        } with (Constants.no_operations, s);
+
+  } with return
+
+function harvest(
+  const asset_id        : asset_id_t;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    require(Tezos.sender = s.strategist, Errors.not_strategist);
+    var strategy := unwrap(s.strategies[asset_id], Errors.strategy_undefined);
+  } with (list[get_harvest_op(strategy.strategy_address)], s)
+
+function handle_harvest(
+  const params          : harvest_response_t;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    const asset_id = unwrap(s.asset_ids[params.asset], Errors.asset_undefined);
+    const strategy = unwrap(s.strategies[asset_id], Errors.strategy_undefined);
+    require(Tezos.sender = strategy.strategy_address, Errors.not_strategist);
+
+    if params.amount > 0n
+    then s.strategy_rewards := update_fee_balances(s.strategy_rewards, s.fish, s.management, params.amount, asset_id)
+    else skip;
+
+  } with (Constants.no_operations, s)
+
+function maintain(
+  const asset_id        : nat;
+  var s                 : storage_t)
+                        : return_t is
+  block {
+    require(Tezos.sender = s.strategist, Errors.not_strategist);
+    var asset := unwrap(s.assets[asset_id], Errors.asset_undefined);
+    var strategy := unwrap(s.strategies[asset_id], Errors.strategy_undefined);
+
+    require(asset.tvl > 0n, Errors.low_asset_liquidity);
+
+    const current_rate_f = if strategy.tvl > 0n
+      then strategy.tvl * Constants.precision / asset.tvl
+      else 0n;
+
+    var operations := Constants.no_operations;
+
+    if s.emergency_shutdown and strategy.tvl > 0n
+    then {
+        operations := get_divest_op(strategy.tvl, strategy.strategy_address) # operations;
+        asset.virtual_balance := asset.virtual_balance + strategy.tvl;
+        strategy.tvl := 0n;
+      }
+    else if abs(current_rate_f - strategy.target_reserves_rate_f) > strategy.delta_f
+        or strategy.tvl = 0n
+      then {
+          const optimal_deposit = asset.tvl * strategy.target_reserves_rate_f / Constants.precision;
+          const disbalance_amount = abs(strategy.tvl - optimal_deposit);
+          if current_rate_f > strategy.target_reserves_rate_f
+          then {
+              operations := get_divest_op(disbalance_amount, strategy.strategy_address) # operations;
+              asset.virtual_balance := asset.virtual_balance + disbalance_amount;
+              strategy.tvl := get_nat_or_fail(strategy.tvl - disbalance_amount, Errors.not_nat);
+            }
+          else if strategy.target_reserves_rate_f > current_rate_f
+            then {
+                operations := list[
+                    wrap_transfer(
+                      Tezos.self_address,
+                      strategy.strategy_address,
+                      disbalance_amount,
+                      asset.asset_type);
+                    get_invest_op(disbalance_amount, strategy.strategy_address)];
+
+                asset.virtual_balance := get_nat_or_fail(asset.virtual_balance - disbalance_amount, Errors.not_nat);
+                strategy.tvl := strategy.tvl + disbalance_amount;
+            } else failwith(Errors.no_rebalancing_needed);
+        }
+      else failwith(Errors.no_rebalancing_needed);
+    s.assets[asset_id] := asset;
+    s.strategies[asset_id] := strategy;
+
+  } with (operations, s)

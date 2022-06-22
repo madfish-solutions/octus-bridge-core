@@ -22,14 +22,21 @@ type parameter_t        is
 | Set_asset_withdraw_fee  of fee_per_asset_t
 | Set_native_config       of config_t
 | Set_aliens_config       of config_t
-| Toggle_pause_vault      of unit
 | Toggle_pause_asset      of asset_id_t
 | Toggle_ban_asset        of asset_standard_t
+| Toggle_emergency_shutdown of unit
 | Update_metadata         of metadata_t
 | Delegate_tez            of option(key_hash)
 | Claim_baker_rewards     of address
 | Claim_fee               of claim_fee_t
+| Claim_strategy_rewards  of claim_fee_t
 | Confirm_owner           of unit
+| Add_strategy            of add_strategy_t
+| Update_strategy         of update_strategy_t
+| Revoke_strategy         of revoke_strategy_t
+| Handle_harvest          of harvest_response_t
+| Maintain                of asset_id_t
+| Harvest                 of asset_id_t
 
 | Deposit                 of deposit_t
 | Deposit_with_bounty     of deposit_with_bounty_t
@@ -56,14 +63,21 @@ function main(
   | Set_asset_withdraw_fee(params)  -> set_asset_withdraw_fee(params, s)
   | Set_native_config(params)       -> set_native_config(params, s)
   | Set_aliens_config(params)       -> set_aliens_config(params, s)
-  | Toggle_pause_vault              -> toggle_pause_vault(s)
   | Toggle_pause_asset(params)      -> toggle_pause_asset(params, s)
   | Toggle_ban_asset(params)        -> toggle_ban_asset(params, s)
+  | Toggle_emergency_shutdown       -> toggle_emergency_shutdown(s)
   | Update_metadata(params)         -> update_metadata(params, s)
   | Delegate_tez(params)            -> delegate_tez(params, s)
   | Claim_baker_rewards(params)     -> claim_baker_rewards(params, s)
   | Claim_fee(params)               -> claim_fee(params, s)
+  | Claim_strategy_rewards(params)  -> claim_strategy_rewards(params, s)
   | Confirm_owner                   -> confirm_owner(s)
+  | Add_strategy(params)            -> add_strategy(params, s)
+  | Update_strategy(params)         -> update_strategy(params, s)
+  | Revoke_strategy(params)         -> revoke_strategy(params, s)
+  | Handle_harvest(params)          -> handle_harvest(params, s)
+  | Maintain(params)                -> maintain(params, s)
+  | Harvest(params)                 -> harvest(params, s)
 
   | Deposit(params)                 -> deposit(params, s)
   | Deposit_with_bounty(params)     -> deposit_with_bounty(params, s)

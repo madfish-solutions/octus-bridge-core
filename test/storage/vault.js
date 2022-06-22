@@ -31,6 +31,7 @@ module.exports = {
   fish: alice.pkh,
   management: alice.pkh,
   guardian: alice.pkh,
+  strategist: alice.pkh,
   deposit_limit: 10000,
   fees: fees,
   assets: MichelsonMap.fromLiteral({}),
@@ -43,12 +44,14 @@ module.exports = {
   withdrawals: MichelsonMap.fromLiteral({}),
   withdrawal_count: 0,
   withdrawal_ids: MichelsonMap.fromLiteral({}),
+  strategies: MichelsonMap.fromLiteral({}),
+  strategy_rewards: MichelsonMap.fromLiteral({}),
   pending_withdrawals: MichelsonMap.fromLiteral({}),
   pending_count: 0,
   pending_withdrawal_ids: MichelsonMap.fromLiteral({}),
   fee_balances: MichelsonMap.fromLiteral({}),
   baker_rewards: MichelsonMap.fromLiteral({}),
-  paused: false,
+  emergency_shutdown: false,
 
   metadata: MichelsonMap.fromLiteral({
     "": Buffer.from("tezos-storage:meta", "ascii").toString("hex"),
