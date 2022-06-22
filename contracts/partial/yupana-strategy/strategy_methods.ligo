@@ -65,8 +65,9 @@ function harvest(
   block {
     require(Tezos.sender = s.vault, Errors.not_vault);
     const shares_balance = get_shares_balance(s.protocol_asset_id, s.protocol, True);
-    const current_balance = convert_amount(shares_balance, s.protocol_asset_id, s.protocol, False, False);
-    const profit = get_nat_or_fail(current_balance - s.tvl, Errors.not_nat);
+    const tvl_shares = convert_amount(s.tvl, s.protocol_asset_id, s.protocol, True, False);
+    const profit_shares = get_nat_or_fail(shares_balance - tvl_shares, Errors.not_nat);
+    const profit = convert_amount(profit_shares, s.protocol_asset_id, s.protocol, False, True);
 
     const operations = if profit > 0n
       then list[

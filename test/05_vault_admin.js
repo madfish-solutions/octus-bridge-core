@@ -197,12 +197,6 @@ describe("Vault Admin tests", async function () {
 
       //await fa12Token.transfer(alice.pkh, strategy.address, 100 * precision);
       await fa12Token.transfer(alice.pkh, yupana.address, 100 * precision);
-
-      const s = fa2Token.storage.allowances.get({
-        spender: yupanaStrategyFa2.address,
-        value: 0,
-      });
-      console.log(s);
     } catch (e) {
       console.log(e);
     }
@@ -1023,11 +1017,17 @@ describe("Vault Admin tests", async function () {
       const prevVaultBalance = await fa12Token.getBalance(vault.address);
       const prevStrategy = await vault.storage.strategies.get("0");
       await vault.call("revoke_strategy", [0, false]);
+      await yupanaStrategyFa12.updateStorage();
       const vaultBalance = await fa12Token.getBalance(vault.address);
       const strategy = await vault.storage.strategies.get("0");
       const asset = await vault.storage.assets.get("0");
       strictEqual(strategy.tvl.toNumber(), 0);
-      strictEqual(vaultBalance, prevVaultBalance + prevStrategy.tvl.toNumber());
+      strictEqual(
+        vaultBalance,
+        prevVaultBalance +
+          prevStrategy.tvl.toNumber() +
+          yupanaStrategyFa12.storage.last_profit.toNumber(),
+      );
       strictEqual(asset.tvl.toNumber(), asset.virtual_balance.toNumber());
     });
     it("Should allow revoke strategy with removing", async function () {
@@ -1066,6 +1066,7 @@ describe("Vault Admin tests", async function () {
 
       const prevRewards = await vault.storage.strategy_rewards.get("0");
       const prevFishRewards = await prevRewards.get(vault.storage.fish);
+
       const prevManagementRewards = await prevRewards.get(
         vault.storage.management,
       );
@@ -1079,9 +1080,16 @@ describe("Vault Admin tests", async function () {
       const rewards = await vault.storage.strategy_rewards.get("0");
       const fishRewards = await rewards.get(vault.storage.fish);
       const managementRewards = await rewards.get(vault.storage.management);
-
-      strictEqual(fishRewards.toNumber(), 0);
-      strictEqual(managementRewards.toNumber(), 0);
+      const actualReward =
+        Math.floor(prevFishRewards.toNumber() / precision) * precision;
+      strictEqual(
+        fishRewards.toNumber(),
+        prevFishRewards.toNumber() - actualReward,
+      );
+      strictEqual(
+        managementRewards.toNumber(),
+        prevManagementRewards.toNumber() - actualReward,
+      );
       strictEqual(
         aliceBalance,
         prevAliceBalance + Math.floor(prevFishRewards.toNumber() / precision),
