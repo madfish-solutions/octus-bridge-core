@@ -186,7 +186,7 @@ const compileLambdas = async (
         `${ligo} compile expression pascaligo 'Setup_func(record [index=${lambda.index}n; func=Bytes.pack(${lambda.name})])' --michelson-format json --init-file $PWD/${contract} --protocol ithaca`,
         { maxBuffer: 4024 * 8048 },
       ).toString();
-      res.push(JSON.parse(michelson).args[0].args[0]);
+      res.push(JSON.parse(michelson).args[0]);
       console.log(
         lambda.index + ". " + lambda.name + " successfully compiled.",
       );
