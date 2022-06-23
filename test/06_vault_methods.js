@@ -81,8 +81,8 @@ describe("Vault methods tests", async function () {
       });
       bridge = await new BridgeCore().init(bridgeStorage, "bridge_core");
 
-      vaultStorage.bridge = bridge.address;
-      vaultStorage.assets = MichelsonMap.fromLiteral({
+      vaultStorage.storage.bridge = bridge.address;
+      vaultStorage.storage.assets = MichelsonMap.fromLiteral({
         0: {
           asset_type: { fa12: fa12Token.address },
           deposit_fee_f: 100000,
@@ -155,22 +155,22 @@ describe("Vault methods tests", async function () {
           banned: false,
         },
       });
-      vaultStorage.asset_ids.set({ fa12: fa12Token.address }, 0);
-      vaultStorage.asset_ids.set(
+      vaultStorage.storage.asset_ids.set({ fa12: fa12Token.address }, 0);
+      vaultStorage.storage.asset_ids.set(
         { fa2: { address: fa2Token.address, id: 0 } },
         1,
       );
-      vaultStorage.asset_ids.set({ tez: null }, 2);
-      vaultStorage.asset_ids.set(
+      vaultStorage.storage.asset_ids.set({ tez: null }, 2);
+      vaultStorage.storage.asset_ids.set(
         { wrapped: { address: wrappedToken.address, id: 0 } },
         3,
       );
-      vaultStorage.asset_ids.set({ fa12: alice.pkh }, 4);
-      vaultStorage.asset_ids.set({ fa12: bob.pkh }, 5);
-      vaultStorage.asset_ids.set({ fa12: fa12Token_2.address }, 6);
-      vaultStorage.asset_count = 7;
-      vaultStorage.emergency_shutdown = true;
-      vaultStorage.fee_balances = MichelsonMap.fromLiteral({});
+      vaultStorage.storage.asset_ids.set({ fa12: alice.pkh }, 4);
+      vaultStorage.storage.asset_ids.set({ fa12: bob.pkh }, 5);
+      vaultStorage.storage.asset_ids.set({ fa12: fa12Token_2.address }, 6);
+      vaultStorage.storage.asset_count = 7;
+      vaultStorage.storage.emergency_shutdown = true;
+      vaultStorage.storage.fee_balances = MichelsonMap.fromLiteral({});
       vault = await new Vault().init(vaultStorage, "vault");
       await vault.setLambdas();
       await wrappedToken.call("set_vault", vault.address);
