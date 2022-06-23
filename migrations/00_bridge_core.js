@@ -7,7 +7,7 @@ module.exports = async tezos => {
   const sender = await tezos.signer.publicKeyHash();
   storage.owner = sender;
 
-  if (env.network === "mainnet") {
+  if (env.network !== "development") {
     storage.configuration_wid = env.networks[env.network].configurationWid;
     storage.configuration_wid = env.networks[env.network].configurationAddress;
   }
