@@ -1,7 +1,12 @@
 require("dotenv").config();
 
 const yargs = require("yargs");
-const { compile, compileTest, runMigrations } = require("./helpers");
+const {
+  compile,
+  compileTest,
+  runMigrations,
+  compileLambdas,
+} = require("./helpers");
 
 const argv = yargs
   .command(
@@ -35,6 +40,26 @@ const argv = yargs
     },
     async argv => {
       compileTest(argv.contract, argv.type);
+    },
+  )
+  .command(
+    "compile-lambda [json] [contract]",
+    "compile lambdas for the specified contract",
+    {
+      json: {
+        description:
+          "input file relative path (with lambdas indexes and names)",
+        alias: "j",
+        type: "string",
+      },
+      contract: {
+        description: "input file realtive path (with lambdas Ligo code)",
+        alias: "c",
+        type: "string",
+      },
+    },
+    async argv => {
+      compileLambdas(argv.json, argv.contract);
     },
   )
   .command(

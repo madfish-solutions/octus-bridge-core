@@ -103,7 +103,7 @@ type storage_t          is [@layout:comb] record[
 
   strategies              : strategies_t;
   strategy_rewards        : fee_balances_map_t;
-  
+
   pending_withdrawals     : pending_withdrawals_t;
   pending_count           : nat;
   pending_withdrawal_ids  : withdrawal_ids_t;
@@ -176,5 +176,66 @@ type cancel_pending_withdrawal_t is [@layout:comb] record[
   pending_id              : nat;
   recipient               : bytes;
 ]
+
+type action_t           is
+| Set_owner               of address
+| Set_bridge              of address
+| Set_management          of address
+| Set_fish                of address
+| Set_guardian            of address
+| Set_deposit_limit       of set_deposit_limit_t
+| Set_fees                of vault_fees_t
+| Set_asset_deposit_fee   of fee_per_asset_t
+| Set_asset_withdraw_fee  of fee_per_asset_t
+| Set_native_config       of config_t
+| Set_aliens_config       of config_t
+| Toggle_pause_asset      of asset_id_t
+| Toggle_ban_asset        of asset_standard_t
+| Toggle_emergency_shutdown of unit
+| Update_metadata         of metadata_t
+| Delegate_tez            of option(key_hash)
+| Claim_baker_rewards     of address
+| Claim_fee               of claim_fee_t
+| Claim_strategy_rewards  of claim_fee_t
+| Confirm_owner           of unit
+| Add_strategy            of add_strategy_t
+| Update_strategy         of update_strategy_t
+| Revoke_strategy         of revoke_strategy_t
+| Handle_harvest          of harvest_response_t
+| Maintain                of asset_id_t
+| Harvest                 of asset_id_t
+
+| Deposit                 of deposit_t
+| Deposit_with_bounty     of deposit_with_bounty_t
+| Withdraw                of message_t
+| Set_bounty              of set_bounty_t
+| Cancel_withdrawal       of cancel_pending_withdrawal_t
+
+| Default                 of unit
+
+type vault_func_t       is (action_t * storage_t) -> return_t
+
+type full_storage_t     is [@layout:comb] record [
+  storage                 : storage_t;
+  farm_lambdas            : big_map(nat, bytes);
+]
+
+type full_storage_t     is [@layout:comb] record [
+  storage                 : storage_t;
+  vault_lambdas           : big_map(nat, bytes);
+]
+
+type full_return_t      is (list(operation) * full_storage_t)
+
+type setup_func_t       is [@layout:comb] record [
+  index                   : nat;
+  func                    : bytes;
+]
+
+type full_action_t      is
+| Use                     of action_t
+| Setup_func              of setup_func_t
+
+[@inline] const vault_methods_max_index : nat = 32n;
 
 [@inline] const no_operations     : list(operation) = nil;

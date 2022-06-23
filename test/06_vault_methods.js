@@ -172,6 +172,7 @@ describe("Vault methods tests", async function () {
       vaultStorage.emergency_shutdown = true;
       vaultStorage.fee_balances = MichelsonMap.fromLiteral({});
       vault = await new Vault().init(vaultStorage, "vault");
+      await vault.setLambdas();
       await wrappedToken.call("set_vault", vault.address);
     } catch (e) {
       console.log(e);
