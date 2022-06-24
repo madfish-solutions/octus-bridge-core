@@ -160,7 +160,7 @@ const compileLambdas = async (
     }
 
     fs.writeFileSync(
-      `${env.buildsDir}/lambdas/farm_lambdas.json`,
+      `${env.buildsDir}/lambdas/vault_lambdas.json`,
       JSON.stringify(res),
     );
   } catch (e) {
