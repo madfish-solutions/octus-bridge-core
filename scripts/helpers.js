@@ -146,7 +146,7 @@ const compileLambdas = async (
 
     const michelson = execSync(
       `${ligo} compile expression pascaligo '${list}' --michelson-format json --init-file $PWD/${contract} --protocol ithaca`,
-      { maxBuffer: 1024 * 500 },
+      { maxBuffer: 2024 * 4000 },
     ).toString();
 
     const michelsonsJson = JSON.parse(michelson);

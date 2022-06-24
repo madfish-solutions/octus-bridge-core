@@ -31,7 +31,7 @@ function create_token(
   var s                 : storage_t)
                         : return_t is
   block {
-    require(Tezos.sender = s.owner, Errors.not_owner);
+    require(Tezos.sender = s.vault, Errors.not_vault);
 
     s.token_metadata[s.token_count] := record [
       token_id = s.token_count;
