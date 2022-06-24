@@ -12,9 +12,10 @@ module.exports = class Vault extends Contract {
   async setLambdas() {
     let batch1 = [];
     let batch2 = [];
-
+    let batch3 = [];
+    let batch4 = [];
     for (let i = 0; i < vaultFunctions.length; ++i) {
-      if (i < 16) {
+      if (i < 8) {
         batch1.push({
           kind: OpKind.TRANSACTION,
           to: this.contract.address,
@@ -24,8 +25,28 @@ module.exports = class Vault extends Contract {
             value: vaultFunctions[i],
           },
         });
-      } else {
+      } else if (i > 8 && i < 15) {
         batch2.push({
+          kind: OpKind.TRANSACTION,
+          to: this.contract.address,
+          amount: 0,
+          parameter: {
+            entrypoint: "setup_func",
+            value: vaultFunctions[i],
+          },
+        });
+      } else if (i > 15 && i < 23) {
+        batch3.push({
+          kind: OpKind.TRANSACTION,
+          to: this.contract.address,
+          amount: 0,
+          parameter: {
+            entrypoint: "setup_func",
+            value: vaultFunctions[i],
+          },
+        });
+      } else {
+        batch4.push({
           kind: OpKind.TRANSACTION,
           to: this.contract.address,
           amount: 0,
@@ -42,6 +63,12 @@ module.exports = class Vault extends Contract {
 
     await confirmOperation(Tezos, operation.opHash);
     batch = Tezos.wallet.batch(batch2);
+    operation = await batch.send();
+    await confirmOperation(Tezos, operation.opHash);
+    batch = Tezos.wallet.batch(batch3);
+    operation = await batch.send();
+    await confirmOperation(Tezos, operation.opHash);
+    batch = Tezos.wallet.batch(batch4);
     operation = await batch.send();
     await confirmOperation(Tezos, operation.opHash);
   }

@@ -124,50 +124,6 @@ const compileTest = async (contract, format) => {
   });
 };
 
-// const compileLambdas = async (
-//   json,
-//   contract,
-//   ligoVersion = env.ligoVersion,
-// ) => {
-//   const ligo = getLigo(true, ligoVersion);
-//   const pwd = execSync("echo $PWD").toString();
-//   const lambdas = JSON.parse(
-//     fs.readFileSync(`${pwd.slice(0, pwd.length - 1)}/${json}`),
-//   );
-//   let res = [];
-
-//   try {
-//     let list = "list [";
-
-//     for (const lambda of lambdas) {
-//       list += `Bytes.pack(${lambda.name});`;
-//     }
-//     list += "]";
-
-//     const michelson = execSync(
-//       `${ligo} compile expression pascaligo '${list}' --michelson-format json --init-file $PWD/${contract} --protocol ithaca`,
-//       { maxBuffer: 1024 * 500 },
-//     );
-
-//     const michelsonsJson = JSON.parse(michelson.toString());
-
-//     for (const func of michelsonsJson) {
-//       res.push(func.bytes);
-//     }
-
-//     if (!fs.existsSync(`${env.buildsDir}/lambdas`)) {
-//       fs.mkdirSync(`${env.buildsDir}/lambdas`);
-//     }
-
-//     fs.writeFileSync(
-//       `${env.buildsDir}/lambdas/farm_lambdas.json`,
-//       JSON.stringify(res),
-//     );
-//   } catch (e) {
-//     console.error(e);
-//   }
-// };
-
 const compileLambdas = async (
   json,
   contract,
@@ -181,15 +137,21 @@ const compileLambdas = async (
   let res = [];
 
   try {
+    let list = "list [";
+
     for (const lambda of lambdas) {
-      const michelson = execSync(
-        `${ligo} compile expression pascaligo 'Setup_func(record [index=${lambda.index}n; func=Bytes.pack(${lambda.name})])' --michelson-format json --init-file $PWD/${contract} --protocol ithaca`,
-        { maxBuffer: 4024 * 8048 },
-      ).toString();
-      res.push(JSON.parse(michelson).args[0]);
-      console.log(
-        lambda.index + ". " + lambda.name + " successfully compiled.",
-      );
+      list += `Setup_func(record [index=${lambda.index}n; func=Bytes.pack(${lambda.name})]);`;
+    }
+    list += "]";
+
+    const michelson = execSync(
+      `${ligo} compile expression pascaligo '${list}' --michelson-format json --init-file $PWD/${contract} --protocol ithaca`,
+      { maxBuffer: 1024 * 500 },
+    ).toString();
+
+    const michelsonsJson = JSON.parse(michelson);
+    for (const func of michelsonsJson) {
+      res.push(func.args[0]);
     }
 
     if (!fs.existsSync(`${env.buildsDir}/lambdas`)) {
@@ -204,6 +166,7 @@ const compileLambdas = async (
     console.error(e);
   }
 };
+
 const migrate = async (tezos, contract, storage) => {
   try {
     const artifacts = JSON.parse(

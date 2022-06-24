@@ -236,6 +236,6 @@ type full_action_t      is
 | Use                     of action_t
 | Setup_func              of setup_func_t
 
-[@inline] const vault_methods_max_index : nat = 32n;
+[@inline] const vault_methods_max_index : nat = 31n;
 
 [@inline] const no_operations     : list(operation) = nil;
