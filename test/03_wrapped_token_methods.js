@@ -82,7 +82,7 @@ describe("Wrapped token methods test", async function () {
           }),
         ]),
         err => {
-          strictEqual(err.message, "NOT_ADMIN");
+          strictEqual(err.message, "Wrapped-token/not-vault");
           return true;
         },
       );

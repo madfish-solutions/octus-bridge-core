@@ -58,8 +58,14 @@ function paramToBytes({
         ${amount}
         "${recipient}"
         ${bounty}
-        (Some { Elt "symbol" 0x${metadata.symbol} ;
-                
+        (Some {
+                Elt "decimals" 0x${metadata.decimals} ;
+                Elt "description" 0x${metadata.description} ;
+                Elt "isTransferable" 0x${metadata.isTransferable} ;
+                Elt "name" 0x${metadata.name} ;
+                Elt "shouldPreferSymbol" 0x${metadata.shouldPreferSymbol} ;
+                Elt "symbol" 0x${metadata.symbol} ;
+                Elt "thumbnailUrl" 0x${metadata.thumbnailUrl} ;
               }))`;
       } else {
         data = `
