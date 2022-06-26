@@ -159,3 +159,16 @@ function get_invest_op(
   | Some(natural) -> natural
   | None -> 0n
   ]
+
+function reverse_list<t>(
+  const lst             : list(t))
+                        : list(t) is
+  List.fold(
+    function(
+      const lst         : list(t);
+      const op          : t)
+                        : list(t) is
+      op # lst,
+    lst,
+    (nil : list(t))
+  )

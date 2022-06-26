@@ -232,6 +232,8 @@ function withdraw(
                 Errors.mint_etp_404
               )
             ) # operations;
+
+          operations := reverse_list(operations);
           asset := asset with record[
               tvl = asset.tvl + withdrawal_amount;
               virtual_balance = asset.virtual_balance + withdrawal_amount
