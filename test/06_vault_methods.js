@@ -673,9 +673,33 @@ describe("Vault methods tests", async function () {
         },
       );
     });
+    it("Shouldn't withdraw if wrong event config", async function () {
+      payload_1.eventData = packWithdrawal({
+        depositId: "00",
+        amount: 1000000,
+        recipient: alice.pkh,
+        assetType: "FA12",
+        assetAddress: fa12Token.address,
+      });
+      payload_1.round = 1;
+      const payload = packPayload(payload_1);
+      const signature = await signerAlice.sign(payload);
+      await rejects(
+        vault.call("withdraw", {
+          payload: payload,
+          signatures: MichelsonMap.fromLiteral({ [alice.pk]: signature.sig }),
+        }),
+        err => {
+          strictEqual(err.message, "Vault/wrong-event-configuration");
+          return true;
+        },
+      );
+    });
     it("Should withdraw fa12 asset", async function () {
       const withdrawalAmount = 30 * precision;
 
+      payload_1.confAddr = 20102010;
+      payload_1.confWid = 2;
       payload_1.eventData = packWithdrawal({
         depositId: "00",
         amount: withdrawalAmount,
@@ -895,7 +919,8 @@ describe("Vault methods tests", async function () {
     });
     it("Should withdraw wrapped asset", async function () {
       const withdrawalAmount = 90 * precision;
-
+      payload_1.confAddr = 10101010;
+      payload_1.confWid = 1;
       payload_1.eventData = packWithdrawal({
         depositId: "03",
         amount: withdrawalAmount,
@@ -964,7 +989,8 @@ describe("Vault methods tests", async function () {
     });
     it("Should create pending withdrawal fa2 asset", async function () {
       const withdrawalAmount = 90 * precision;
-
+      payload_1.confAddr = 20102010;
+      payload_1.confWid = 2;
       payload_1.eventData = packWithdrawal({
         depositId: "01",
         amount: withdrawalAmount,
@@ -1037,7 +1063,8 @@ describe("Vault methods tests", async function () {
       await confirmOperation(Tezos, operation.hash);
       Tezos.setSignerProvider(signerEve);
       const withdrawalAmount = 250 * precision;
-
+      payload_1.confAddr = 20102010;
+      payload_1.confWid = 2;
       payload_1.eventData = packWithdrawal({
         depositId: "02",
         amount: withdrawalAmount,
@@ -1117,7 +1144,8 @@ describe("Vault methods tests", async function () {
     });
     it("Should create pending withdrawal fa12 asset from Alice", async function () {
       const withdrawalAmount = 90 * precision;
-
+      payload_1.confAddr = 20102010;
+      payload_1.confWid = 2;
       payload_1.eventData = packWithdrawal({
         depositId: "06",
         amount: withdrawalAmount,
@@ -1187,7 +1215,8 @@ describe("Vault methods tests", async function () {
     });
     it("Should create pending withdrawal fa12 asset from Eve", async function () {
       const withdrawalAmount = 90 * precision;
-
+      payload_1.confAddr = 20102010;
+      payload_1.confWid = 2;
       payload_1.eventData = packWithdrawal({
         depositId: "06",
         amount: withdrawalAmount,
@@ -1257,7 +1286,8 @@ describe("Vault methods tests", async function () {
     it("Should create pending withdrawal tez asset from Eve", async function () {
       Tezos.setSignerProvider(signerEve);
       const withdrawalAmount = 100 * precision;
-
+      payload_1.confAddr = 20102010;
+      payload_1.confWid = 2;
       payload_1.eventData = packWithdrawal({
         depositId: "02",
         amount: withdrawalAmount,
@@ -1336,6 +1366,8 @@ describe("Vault methods tests", async function () {
     });
     it("Shouldn't create pending withdrawal if payload already seen", async function () {
       const withdrawalAmount = 90 * precision;
+      payload_1.confAddr = 20102010;
+      payload_1.confWid = 2;
       payload_1.eventData = packWithdrawal({
         depositId: "01",
         amount: withdrawalAmount,
@@ -1361,6 +1393,8 @@ describe("Vault methods tests", async function () {
     });
     it("Shouldn't withdraw if payload already seen", async function () {
       const withdrawalAmount = 90 * precision;
+      payload_1.confAddr = 10101010;
+      payload_1.confWid = 1;
       payload_1.eventData = packWithdrawal({
         depositId: "03",
         amount: withdrawalAmount,
@@ -1418,7 +1452,8 @@ describe("Vault methods tests", async function () {
         isTransferable: Buffer.from("1111", "ascii").toString(),
         shouldPreferSymbol: Buffer.from("0000", "ascii").toString(),
       });
-
+      payload_1.confAddr = 10101010;
+      payload_1.confWid = 1;
       payload_1.eventData = packWithdrawal({
         depositId: "04",
         amount: withdrawalAmount,

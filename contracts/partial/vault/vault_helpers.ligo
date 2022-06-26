@@ -21,8 +21,8 @@ function get_or_create_asset(
         asset.asset_type := asset_type;
         case asset_type of [
         | Wrapped(token_) -> {
-            asset.deposit_fee_f  := s.fees.aliens.deposit_f;
-            asset.withdrawal_fee_f := s.fees.aliens.withdraw_f;
+            asset.deposit_fee_f  := s.fees.native.deposit_f;
+            asset.withdrawal_fee_f := s.fees.native.withdraw_f;
 
             const meta = unwrap(metadata, Errors.metadata_undefined);
 
@@ -34,11 +34,11 @@ function get_or_create_asset(
                   Errors.create_token_etp_404
                 )
             ) # operations;
-              }
+          }
         | _ -> {
-            asset.deposit_fee_f  := s.fees.native.deposit_f;
-            asset.withdrawal_fee_f := s.fees.native.withdraw_f;
-              }
+            asset.deposit_fee_f  := s.fees.aliens.deposit_f;
+            asset.withdrawal_fee_f := s.fees.aliens.withdraw_f;
+          }
         ];
         s.assets[asset_id] := asset;
       }
