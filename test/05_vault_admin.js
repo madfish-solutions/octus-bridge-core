@@ -55,7 +55,7 @@ describe("Vault Admin tests", async function () {
         }),
       );
 
-      vaultStorage.assets = MichelsonMap.fromLiteral({
+      vaultStorage.storage.assets = MichelsonMap.fromLiteral({
         0: {
           asset_type: { fa12: fa12Token.address },
           deposit_fee_f: 0,
@@ -100,38 +100,27 @@ describe("Vault Admin tests", async function () {
           banned: false,
         },
       });
-      vaultStorage.asset_ids.set({ fa12: fa12Token.address }, 0);
-      vaultStorage.asset_ids.set(
+      vaultStorage.storage.asset_ids.set({ fa12: fa12Token.address }, 0);
+      vaultStorage.storage.asset_ids.set(
         { fa2: { address: fa2Token.address, id: fa2Token.tokenId } },
         1,
       );
-      vaultStorage.fish = alice.pkh;
-      vaultStorage.management = bob.pkh;
+      vaultStorage.storage.fish = alice.pkh;
+      vaultStorage.storage.management = bob.pkh;
 
       const feeBalances = MichelsonMap.fromLiteral({
         [alice.pkh]: 500 * precision,
         [bob.pkh]: 500 * precision,
       });
-      vaultStorage.fee_balances = MichelsonMap.fromLiteral({
+      vaultStorage.storage.fee_balances = MichelsonMap.fromLiteral({
         0: feeBalances,
         1: feeBalances,
         2: feeBalances,
         3: feeBalances,
       });
-      // vaultStorage.fee_balances.set({ fa12: fa12Token.address }, feeBalances);
-      // vaultStorage.fee_balances.set(
-      //   { fa2: { address: fa2Token.address, id: fa2Token.tokenId } },
-      //   feeBalances,
-      // );
-      // vaultStorage.fee_balances.set({ tez: null }, feeBalances);
-      // vaultStorage.fee_balances.set(
-      //   {
-      //     wrapped: { address: wrappedToken.address, id: wrappedToken.tokenId },
-      //   },
-      //   feeBalances,
-      // );
 
       vault = await new Vault().init(vaultStorage, "vault");
+      await vault.setLambdas();
 
       await wrappedToken.call("mint", [
         [{ token_id: 0, recipient: vault.address, amount: 1000 * precision }],

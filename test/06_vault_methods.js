@@ -81,8 +81,8 @@ describe("Vault methods tests", async function () {
       });
       bridge = await new BridgeCore().init(bridgeStorage, "bridge_core");
 
-      vaultStorage.bridge = bridge.address;
-      vaultStorage.assets = MichelsonMap.fromLiteral({
+      vaultStorage.storage.bridge = bridge.address;
+      vaultStorage.storage.assets = MichelsonMap.fromLiteral({
         0: {
           asset_type: { fa12: fa12Token.address },
           deposit_fee_f: 100000,
@@ -155,23 +155,24 @@ describe("Vault methods tests", async function () {
           banned: false,
         },
       });
-      vaultStorage.asset_ids.set({ fa12: fa12Token.address }, 0);
-      vaultStorage.asset_ids.set(
+      vaultStorage.storage.asset_ids.set({ fa12: fa12Token.address }, 0);
+      vaultStorage.storage.asset_ids.set(
         { fa2: { address: fa2Token.address, id: 0 } },
         1,
       );
-      vaultStorage.asset_ids.set({ tez: null }, 2);
-      vaultStorage.asset_ids.set(
+      vaultStorage.storage.asset_ids.set({ tez: null }, 2);
+      vaultStorage.storage.asset_ids.set(
         { wrapped: { address: wrappedToken.address, id: 0 } },
         3,
       );
-      vaultStorage.asset_ids.set({ fa12: alice.pkh }, 4);
-      vaultStorage.asset_ids.set({ fa12: bob.pkh }, 5);
-      vaultStorage.asset_ids.set({ fa12: fa12Token_2.address }, 6);
-      vaultStorage.asset_count = 7;
-      vaultStorage.emergency_shutdown = true;
-      vaultStorage.fee_balances = MichelsonMap.fromLiteral({});
+      vaultStorage.storage.asset_ids.set({ fa12: alice.pkh }, 4);
+      vaultStorage.storage.asset_ids.set({ fa12: bob.pkh }, 5);
+      vaultStorage.storage.asset_ids.set({ fa12: fa12Token_2.address }, 6);
+      vaultStorage.storage.asset_count = 7;
+      vaultStorage.storage.emergency_shutdown = true;
+      vaultStorage.storage.fee_balances = MichelsonMap.fromLiteral({});
       vault = await new Vault().init(vaultStorage, "vault");
+      await vault.setLambdas();
       await wrappedToken.call("set_vault", vault.address);
     } catch (e) {
       console.log(e);
@@ -1406,92 +1407,79 @@ describe("Vault methods tests", async function () {
         },
       );
     });
-    // it("Should withdraw unknown wrapped asset", async function () {
-    //   const withdrawalAmount = 90 * precision;
-    //   const map = MichelsonMap.fromLiteral({
-    //     symbol: Buffer.from("0000", "ascii").toString(),
-    //     name: Buffer.from("0000", "ascii").toString(),
-    //     decimals: Buffer.from("0000", "ascii").toString(),
-    //     description: Buffer.from("0000", "ascii").toString(),
-    //     thumbnailUrl: Buffer.from("0000", "ascii").toString(),
-    //     isTransferable: Buffer.from("1111", "ascii").toString(),
-    //     shouldPreferSymbol: Buffer.from("0000", "ascii").toString(),
-    //   });
-    //   console.log(map);
-    //   payload_1.eventData = packWithdrawal({
-    //     depositId: "04",
-    //     amount: withdrawalAmount,
-    //     recipient: alice.pkh,
-    //     assetType: "WRAPPED",
-    //     assetAddress: wrappedToken.address,
-    //     assetId: 1,
-    //     metadata: {
-    //       symbol: Buffer.from("0000", "ascii").toString(),
-    //       name: Buffer.from("0000", "ascii").toString(),
-    //       decimals: Buffer.from("0000", "ascii").toString(),
-    //       description: Buffer.from("0000", "ascii").toString(),
-    //       thumbnailUrl: Buffer.from("0000", "ascii").toString(),
-    //       isTransferable: Buffer.from("1111", "ascii").toString(),
-    //       shouldPreferSymbol: Buffer.from("0000", "ascii").toString(),
-    //     },
-    //   });
-    //   payload_1.round = 1;
-    //   const payload = packPayload(payload_1);
-    //   const signature = await signerAlice.sign(payload);
+    it("Should withdraw unknown wrapped asset", async function () {
+      const withdrawalAmount = 90 * precision;
+      const map = MichelsonMap.fromLiteral({
+        symbol: Buffer.from("0000", "ascii").toString(),
+        name: Buffer.from("0000", "ascii").toString(),
+        decimals: Buffer.from("0000", "ascii").toString(),
+        description: Buffer.from("0000", "ascii").toString(),
+        thumbnailUrl: Buffer.from("0000", "ascii").toString(),
+        isTransferable: Buffer.from("1111", "ascii").toString(),
+        shouldPreferSymbol: Buffer.from("0000", "ascii").toString(),
+      });
 
-    //   const prevWithdrawalCount = vault.storage.withdrawal_count.toNumber();
-    //   const prevAliceBalance = await wrappedToken.getWBalance(alice.pkh, 1);
+      payload_1.eventData = packWithdrawal({
+        depositId: "04",
+        amount: withdrawalAmount,
+        recipient: alice.pkh,
+        assetType: "WRAPPED",
+        assetAddress: wrappedToken.address,
+        assetId: 1,
+        metadata: {
+          symbol: Buffer.from("0000", "ascii").toString(),
+          name: Buffer.from("0000", "ascii").toString(),
+          decimals: Buffer.from("0000", "ascii").toString(),
+          description: Buffer.from("0000", "ascii").toString(),
+          thumbnailUrl: Buffer.from("0000", "ascii").toString(),
+          isTransferable: Buffer.from("1111", "ascii").toString(),
+          shouldPreferSymbol: Buffer.from("0000", "ascii").toString(),
+        },
+      });
+      payload_1.round = 1;
+      const payload = packPayload(payload_1);
+      const signature = await signerAlice.sign(payload);
 
-    //   const prevAsset = await vault.storage.assets.get("4");
-    //   const prevFeeBalances = await vault.storage.fee_balances.get("4");
+      const prevWithdrawalCount = vault.storage.withdrawal_count.toNumber();
+      const prevAliceBalance = await wrappedToken.getWBalance(alice.pkh, 1);
+      await vault.call("withdraw", {
+        payload: payload,
+        signatures: MichelsonMap.fromLiteral({ [alice.pk]: signature.sig }),
+      });
 
-    //   await vault.call("withdraw", {
-    //     payload: payload,
-    //     signatures: MichelsonMap.fromLiteral({ [alice.pk]: signature.sig }),
-    //   });
-    //   const aliceBalance = await wrappedToken.getWBalance(alice.pkh, 1);
-    //   const asset = await vault.storage.assets.get("4");
+      const aliceBalance = await wrappedToken.getWBalance(alice.pkh, 1);
+      const newAssetId = vault.storage.asset_count.toNumber() - 1;
+      const asset = await vault.storage.assets.get(`${newAssetId}`);
 
-    //   const fee = Math.floor(
-    //     (withdrawalAmount * asset.withdrawal_fee_f.toNumber()) / precision,
-    //   );
+      const fee = Math.floor(
+        (withdrawalAmount * asset.withdrawal_fee_f.toNumber()) / precision,
+      );
 
-    //   const feeBalances = await vault.storage.fee_balances.get("4");
+      const feeBalances = await vault.storage.fee_balances.get(newAssetId);
+      const fishFee = await feeBalances.get(vault.storage.fish);
+      const managementFee = await feeBalances.get(vault.storage.management);
+      const newWithdrawalId = await vault.storage.withdrawal_ids.get(payload);
+      const newWithdrawal = await vault.storage.withdrawals.get(
+        `${newWithdrawalId}`,
+      );
 
-    //   const newWithdrawal = await vault.storage.withdrawals.get("4");
-    //   const newWithdrawalId = await vault.storage.withdrawal_ids.get(payload);
-    //   const newWrappedToken = await wrappedToken.storage.token_metadata.get(
-    //     "1",
-    //   );
-    //   notStrictEqual(newWrappedToken, undefined);
-    //   strictEqual(
-    //     vault.storage.withdrawal_count.toNumber(),
-    //     prevWithdrawalCount + 1,
-    //   );
-    //   strictEqual(
-    //     asset.tvl.toNumber(),
-    //     prevAsset.tvl.toNumber() + (withdrawalAmount - fee),
-    //   );
-    //   strictEqual(aliceBalance, prevAliceBalance + (withdrawalAmount - fee));
-    //   strictEqual(
-    //     feeBalances.fish_f.toNumber(),
-    //     prevFeeBalances.fish_f.toNumber() + (fee * precision) / 2,
-    //   );
-    //   strictEqual(
-    //     feeBalances.management_f.toNumber(),
-    //     prevFeeBalances.management_f.toNumber() + (fee * precision) / 2,
-    //   );
-    //   strictEqual(newWithdrawal.recipient, alice.pkh);
-    //   strictEqual(newWithdrawal.amount.toNumber(), withdrawalAmount);
-    //   deepEqual(newWithdrawal.asset, {
-    //     wrapped: {
-    //       address: wrappedToken.address,
-    //       id: BigNumber(wrappedToken.tokenId),
-    //     },
-    //   });
-
-    //   strictEqual(newWithdrawalId.toNumber(), 3);
-    // });
+      const newWrappedToken = await wrappedToken.storage.token_metadata.get(
+        "1",
+      );
+      notStrictEqual(newWrappedToken, undefined);
+      strictEqual(
+        vault.storage.withdrawal_count.toNumber(),
+        prevWithdrawalCount + 1,
+      );
+      strictEqual(asset.tvl.toNumber(), withdrawalAmount - fee);
+      strictEqual(aliceBalance, prevAliceBalance + (withdrawalAmount - fee));
+      strictEqual(fishFee.toNumber(), (fee * precision) / 2);
+      strictEqual(managementFee.toNumber(), (fee * precision) / 2);
+      strictEqual(newWithdrawal.recipient, alice.pkh);
+      strictEqual(newWithdrawal.amount.toNumber(), withdrawalAmount - fee);
+      strictEqual(newWithdrawal.asset.wrapped.address, wrappedToken.address);
+      strictEqual(newWithdrawal.asset.wrapped.id.toNumber(), 1);
+    });
   });
   describe("Testing entrypoint: Cancel_withdrawal", async function () {
     it("Shouldn't cancel pending withdrawal if unknown pending withdrawal", async function () {

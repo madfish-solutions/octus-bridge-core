@@ -1,331 +1,65 @@
-function deposit(
-  const params         : deposit_t;
-  var s                : storage_t)
-                       : return_t is
+[@inline] function call_vault(
+  const action          : action_t;
+  var s                 : full_storage_t)
+                        : full_return_t is
   block {
-    require(not(s.emergency_shutdown), Errors.emergency_shutdown_enabled);
+    const id : nat = case action of [
+      | Set_owner(_)               -> 0n
+      | Set_bridge(_)              -> 1n
+      | Set_management(_)          -> 2n
+      | Set_fish(_)                -> 3n
+      | Set_guardian(_)            -> 4n
+      | Set_deposit_limit(_)       -> 5n
+      | Set_fees(_)                -> 6n
+      | Set_asset_deposit_fee(_)   -> 7n
+      | Set_asset_withdraw_fee(_)  -> 8n
+      | Set_native_config(_)       -> 9n
+      | Set_aliens_config(_)       -> 10n
+      | Toggle_pause_asset(_)      -> 11n
+      | Toggle_ban_asset(_)        -> 12n
+      | Toggle_emergency_shutdown(_) -> 13n
+      | Update_metadata(_)         -> 14n
+      | Delegate_tez(_)            -> 15n
+      | Claim_baker_rewards(_)     -> 16n
+      | Claim_fee(_)               -> 17n
+      | Claim_strategy_rewards(_)  -> 18n
+      | Confirm_owner(_)           -> 19n
+      | Add_strategy(_)            -> 20n
+      | Update_strategy(_)         -> 21n
+      | Revoke_strategy(_)         -> 22n
+      | Handle_harvest(_)          -> 23n
+      | Maintain(_)                -> 24n
+      | Harvest(_)                 -> 25n
 
-    const result = get_or_create_asset(params.asset, (None : option(token_meta_t)), s);
-    var asset := result.asset;
-    const asset_id = result.asset_id;
-    s := result.storage;
+      | Deposit(_)                 -> 26n
+      | Deposit_with_bounty(_)     -> 27n
+      | Withdraw(_)                -> 28n
+      | Set_bounty(_)              -> 29n
+      | Cancel_withdrawal(_)       -> 30n
 
-    require(not(asset.paused), Errors.asset_paused);
-    require(not(asset.banned), Errors.asset_banned);
-
-    case asset.asset_type of [
-    | Tez -> require(Tezos.amount / 1mutez = params.amount, Errors.amounts_mismatch)
-    | _ -> skip
+      | Default(_)                 -> 31n
     ];
 
-    require(asset.tvl + params.amount <= asset.deposit_limit or asset.deposit_limit = 0n, Errors.deposit_limit);
+    const lambda_bytes : bytes = unwrap(s.vault_lambdas[id], Errors.func_not_set);
 
-    require(params.amount > 0n, Errors.zero_transfer);
-
-    const fee = params.amount * asset.deposit_fee_f / Constants.precision;
-
-    const deposited_amount = get_nat_or_fail(params.amount - fee, Errors.not_nat);
-
-    if fee > 0n
-    then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset_id)
-    else skip;
-
-    var operations := result.operations;
-    case asset.asset_type of [
-    | Wrapped(token_) -> {
-      const burn_params : burn_params_t = record[
-        token_id = token_.id;
-        account = Tezos.sender;
-        amount = params.amount
+    const res : return_t =
+      case (Bytes.unpack(lambda_bytes) : option(vault_func_t)) of [
+      | Some(func) -> func(action, s.storage)
+      | None    -> failwith(Errors.not_unpack_lambda)
       ];
-      operations := Tezos.transaction(
-          burn_params,
-          0mutez,
-          unwrap(
-            (Tezos.get_entrypoint_opt("%burn", token_.address) : option(contract(burn_params_t))),
-            Errors.burn_etp_404)
-        ) # operations;
-      asset := asset with record[
-          tvl = get_nat_or_fail(asset.tvl - deposited_amount, Errors.not_nat);
-          virtual_balance = get_nat_or_fail(asset.virtual_balance - deposited_amount, Errors.not_nat)
-        ]
-     }
-    | Tez -> {
-        asset := asset with record [
-            tvl += deposited_amount;
-            virtual_balance += deposited_amount
-          ]
-      }
-    | _ -> {
-        operations := wrap_transfer(
-          Tezos.sender,
-          Tezos.self_address,
-          params.amount,
-          asset.asset_type
-        ) # operations;
-        asset := asset with record [
-            tvl += deposited_amount;
-            virtual_balance += deposited_amount
-          ]
-      }
-    ];
-    s.assets[asset_id] := asset;
 
-    s.deposits[s.deposit_count] := record[
-        recipient = params.recipient;
-        amount    = deposited_amount;
-        asset     = asset.asset_type;
-    ];
-    s.deposit_count := s.deposit_count + 1n;
+    s.storage := res.1;
+  } with (res.0, s)
 
-  } with (operations, s)
-
-function deposit_with_bounty(
-  const params         : deposit_with_bounty_t;
-  var s                : storage_t)
-                       : return_t is
+[@inline] function setup_func(
+  const params          : setup_func_t;
+  var s                 : full_storage_t)
+                        : full_return_t is
   block {
-    require(not(s.emergency_shutdown), Errors.emergency_shutdown_enabled);
-
-    var asset := unwrap(s.assets[params.asset_id], Errors.asset_undefined);
-
-    require(not(asset.paused), Errors.asset_paused);
-    require(not(asset.banned), Errors.asset_banned);
-
-    case asset.asset_type of [
-    | Tez -> require(Tezos.amount / 1mutez = params.amount, Errors.amounts_mismatch)
-    | _ -> skip
-    ];
-    require(params.amount > 0n, Errors.zero_transfer);
-    require(asset.tvl + params.amount <= asset.deposit_limit or asset.deposit_limit = 0n, Errors.deposit_limit);
-
-    const fee = params.amount * asset.deposit_fee_f / Constants.precision;
-
-    var deposited_amount := get_nat_or_fail(params.amount - fee, Errors.not_nat);
-
-    var total_bounty := 0n;
-    var total_withdrawal := 0n;
-
-    var operations := Constants.no_operations;
-    for withdrawal_id in set params.pending_withdrawal_ids {
-      var pending_withdrawal := unwrap(s.pending_withdrawals[withdrawal_id], Errors.unknown_pending_withdrawal);
-
-      require(pending_withdrawal.asset = asset.asset_type, Errors.assets_do_not_match);
-      require(pending_withdrawal.status = Pending(unit), Errors.pending_withdrawal_closed);
-
-      total_withdrawal := total_withdrawal + pending_withdrawal.amount;
-      require(deposited_amount >= total_withdrawal, Errors.amount_less_pending_amount);
-
-      total_bounty := total_bounty + pending_withdrawal.bounty;
-
-      operations := wrap_transfer(
-        Tezos.self_address,
-        pending_withdrawal.recipient,
-        get_nat_or_fail(pending_withdrawal.amount - pending_withdrawal.bounty, Errors.not_nat),
-        pending_withdrawal.asset
-      ) # operations;
-
-      s.withdrawals[s.withdrawal_count] := record[
-        deposit_id = pending_withdrawal.deposit_id;
-        asset      = pending_withdrawal.asset;
-        amount     = pending_withdrawal.amount;
-        recipient  = pending_withdrawal.recipient;
-        metadata   = pending_withdrawal.metadata;
-        signatures = pending_withdrawal.message.signatures;
-      ];
-      s.withdrawal_ids[pending_withdrawal.message.payload] := s.withdrawal_count;
-      s.withdrawal_count := s.withdrawal_count + 1n;
-
-      pending_withdrawal.status := Completed(unit);
-      s.pending_withdrawals[withdrawal_id] := pending_withdrawal;
-    };
-
-    if fee > 0n
-    then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, params.asset_id)
-    else skip;
-
-    var operations := wrap_transfer(
-      Tezos.sender,
-      Tezos.self_address,
-      params.amount,
-      asset.asset_type
-    ) # operations;
-
-    s.deposits[s.deposit_count] := record[
-        recipient = params.recipient;
-        amount    = deposited_amount + total_bounty;
-        asset     = asset.asset_type;
-    ];
-    s.deposit_count := s.deposit_count + 1n;
-
-    asset := asset with record[
-        tvl = get_nat_or_fail(asset.tvl + deposited_amount - total_withdrawal, Errors.not_nat);
-        virtual_balance = get_nat_or_fail(asset.virtual_balance + deposited_amount - total_withdrawal, Errors.not_nat)
-    ];
-
-    s.assets[params.asset_id] := asset;
-
-  } with (operations, s)
-
-function withdraw(
-  const message        : message_t;
-  var s                : storage_t)
-                       : return_t is
-  block {
-    require(not(s.emergency_shutdown), Errors.emergency_shutdown_enabled);
-    require_none(s.withdrawal_ids[message.payload], Errors.payload_already_seen);
-    require_none(s.pending_withdrawal_ids[message.payload], Errors.payload_already_seen);
-    is_withdraw_valid(message, s.bridge);
-
-    const payload = unwrap((Bytes.unpack(message.payload) : option(payload_t)), Errors.invalid_payload);
-    const params = unwrap((Bytes.unpack(payload.event_data) : option(withdrawal_data_t)), Errors.invalid_withdrawal_params);
-
-    const result = get_or_create_asset(params.asset, params.metadata, s);
-    var asset := result.asset;
-    const asset_id = result.asset_id;
-    s := result.storage;
-
-    require(not(asset.paused), Errors.asset_paused);
-    require(not(asset.banned), Errors.asset_banned);
-
-    require(params.amount > 0n, Errors.zero_transfer);
-
-    const fee = params.amount * asset.withdrawal_fee_f / Constants.precision;
-
-    const withdrawal_amount = get_nat_or_fail(params.amount - fee, Errors.not_nat);
-
-    const new_withdrawal = record[
-        deposit_id = params.deposit_id;
-        asset      = asset.asset_type;
-        amount     = withdrawal_amount;
-        recipient  = params.recipient;
-        metadata   = params.metadata;
-        signatures = message.signatures;
-    ];
-
-    if fee > 0n
-    then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset_id)
-    else skip;
-
-    var operations := result.operations;
-    case asset.asset_type of [
-    | Wrapped(token_) -> {
-        var mint_params : mint_params_t := list[
-          record[
-            token_id = token_.id;
-            recipient = params.recipient;
-            amount = withdrawal_amount
-          ];
-        ];
-
-        operations := Tezos.transaction(
-            mint_params,
-            0mutez,
-            unwrap(
-              (Tezos.get_entrypoint_opt("%mint", token_.address) : option(contract(mint_params_t))),
-              Errors.mint_etp_404
-            )
-          ) # operations;
-        asset := asset with record[
-            tvl = asset.tvl + withdrawal_amount;
-            virtual_balance = asset.virtual_balance + withdrawal_amount
-          ];
-
-        s.withdrawals[s.withdrawal_count] := new_withdrawal;
-        s.withdrawal_ids[message.payload] := s.withdrawal_count;
-        s.withdrawal_count := s.withdrawal_count + 1n;
-      }
-    | _ -> {
-        if asset.virtual_balance >= params.amount
-        then {
-            operations := wrap_transfer(
-                Tezos.self_address,
-                params.recipient,
-                withdrawal_amount,
-                asset.asset_type
-              ) # operations;
-            asset := asset with record[
-                tvl = get_nat_or_fail(asset.tvl - params.amount, Errors.not_nat);
-                virtual_balance = get_nat_or_fail(asset.virtual_balance - params.amount, Errors.not_nat)
-            ];
-            s.withdrawals[s.withdrawal_count] := new_withdrawal;
-            s.withdrawal_ids[message.payload] := s.withdrawal_count;
-            s.withdrawal_count := s.withdrawal_count + 1n;
-          }
-        else {
-            require(params.bounty <= get_nat_or_fail(params.amount - fee, Errors.not_nat), Errors.bounty_too_high);
-
-            s.pending_withdrawals[s.pending_count] := record[
-                deposit_id = params.deposit_id;
-                asset      = asset.asset_type;
-                amount     = get_nat_or_fail(params.amount - fee, Errors.not_nat);
-                recipient  = params.recipient;
-                metadata   = params.metadata;
-                bounty     = params.bounty;
-                message    = message;
-                status     = Pending(unit);
-            ];
-            s.pending_withdrawal_ids[message.payload] := s.pending_count ;
-            s.pending_count := s.pending_count + 1n;
-
-            asset := asset with record[
-                tvl = get_nat_or_fail(asset.tvl - fee, Errors.not_nat);
-                virtual_balance = get_nat_or_zero(asset.virtual_balance - fee)
-            ];
-          };
-      }
-    ];
-
-    s.assets[asset_id] := asset;
-
-  } with (operations, s)
-
-function default(
-  var s                 : storage_t)
-                        : return_t is
-  block {
-    const reward_f = (Tezos.amount / 1mutez) * Constants.precision;
-    if reward_f > 0n
-    then {
-      const fish_balance_f = unwrap_or(s.baker_rewards[s.fish], 0n);
-      const management_balance_f = unwrap_or(s.baker_rewards[s.management], 0n);
-      s.baker_rewards[s.fish] := fish_balance_f + reward_f / Constants.div_two;
-      s.baker_rewards[s.management] := management_balance_f + reward_f / Constants.div_two;
-    } else skip
-
+    require(params.index <= vault_methods_max_index, Errors.wrong_index);
+    case s.vault_lambdas[params.index] of [
+    | Some(_) -> failwith(Errors.func_seted)
+    | None    -> s.vault_lambdas[params.index] := params.func
+    ]
   } with (Constants.no_operations, s)
 
-function set_bounty(
-  const params          : set_bounty_t;
-  var s                 : storage_t)
-                        : return_t is
-  block {
-    var pending_withdrawal := unwrap(s.pending_withdrawals[params.pending_id], Errors.unknown_pending_withdrawal);
-    require(Tezos.sender = pending_withdrawal.recipient, Errors.not_recipient);
-    require(pending_withdrawal.status = Pending(unit), Errors.pending_withdrawal_closed);
-    require(params.bounty <= pending_withdrawal.amount, Errors.bounty_too_high);
-    pending_withdrawal.bounty := params.bounty;
-    s.pending_withdrawals[params.pending_id] := pending_withdrawal;
-  } with (Constants.no_operations, s)
-
-function cancel_pending_withdrawal(
-  const params          : cancel_pending_withdrawal_t;
-  var s                 : storage_t)
-                        : return_t is
-  block {
-    var pending_withdrawal := unwrap(s.pending_withdrawals[params.pending_id], Errors.unknown_pending_withdrawal);
-    require(Tezos.sender = pending_withdrawal.recipient, Errors.not_recipient);
-    require(pending_withdrawal.status = Pending(unit), Errors.pending_withdrawal_closed);
-
-    pending_withdrawal.status := Canceled(unit);
-
-    s.pending_withdrawals[params.pending_id] := pending_withdrawal;
-
-    const return_amount = pending_withdrawal.amount;
-    s.deposits[s.deposit_count] := record[
-        recipient = params.recipient;
-        amount    = return_amount;
-        asset     = pending_withdrawal.asset
-    ];
-    s.deposit_count := s.deposit_count + 1n;
-  } with (Constants.no_operations, s)

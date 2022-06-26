@@ -124,6 +124,49 @@ const compileTest = async (contract, format) => {
   });
 };
 
+const compileLambdas = async (
+  json,
+  contract,
+  ligoVersion = env.ligoVersion,
+) => {
+  const ligo = getLigo(true, ligoVersion);
+  const pwd = execSync("echo $PWD").toString();
+  const lambdas = JSON.parse(
+    fs.readFileSync(`${pwd.slice(0, pwd.length - 1)}/${json}`),
+  );
+  let res = [];
+
+  try {
+    let list = "list [";
+
+    for (const lambda of lambdas) {
+      list += `Setup_func(record [index=${lambda.index}n; func=Bytes.pack(${lambda.name})]);`;
+    }
+    list += "]";
+
+    const michelson = execSync(
+      `${ligo} compile expression pascaligo '${list}' --michelson-format json --init-file $PWD/${contract} --protocol ithaca`,
+      { maxBuffer: 2024 * 4000 },
+    ).toString();
+
+    const michelsonsJson = JSON.parse(michelson);
+    for (const func of michelsonsJson) {
+      res.push(func.args[0]);
+    }
+
+    if (!fs.existsSync(`${env.buildsDir}/lambdas`)) {
+      fs.mkdirSync(`${env.buildsDir}/lambdas`);
+    }
+
+    fs.writeFileSync(
+      `${env.buildsDir}/lambdas/vault_lambdas.json`,
+      JSON.stringify(res),
+    );
+  } catch (e) {
+    console.error(e);
+  }
+};
+
 const migrate = async (tezos, contract, storage) => {
   try {
     const artifacts = JSON.parse(
@@ -207,5 +250,6 @@ module.exports = {
   compileTest,
   migrate,
   runMigrations,
+  compileLambdas,
   env,
 };

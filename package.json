@@ -17,7 +17,8 @@
   },
   "scripts": {
     "clean": "rm -rf ./builds",
-    "compile": "yarn clean && node scripts/cli.js compile && node scripts/cli.js compileTest",
+    "compile-vault-lambdas": "node scripts/cli.js compile-lambda -j storage/json/vaultFunctions.json -c contracts/main/vault.ligo",
+    "compile": "yarn clean && node scripts/cli.js compile && node scripts/cli.js compileTest && yarn compile-vault-lambdas",
     "migrate": "yarn compile && node scripts/cli.js migrate",
     "test": "mocha --bail",
     "start-sandbox": "docker run --rm --name dev-sandbox -e flextesa_node_cors_origin='*' -e block_time=1 --detach -p 8732:20000 oxheadalpha/flextesa:latest ithacabox start",
