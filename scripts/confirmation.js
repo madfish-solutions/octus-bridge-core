@@ -1,7 +1,9 @@
 const { OpKind } = require("@taquito/taquito");
+const env = require("../env");
+const networkConfig = env.networks[env.network];
 
-const SYNC_INTERVAL = 500;
-const CONFIRM_TIMEOUT = 5000;
+const SYNC_INTERVAL = networkConfig.syncInterval;
+const CONFIRM_TIMEOUT = networkConfig.confirmTimeout;
 
 async function confirmOperation(
   tezos,
