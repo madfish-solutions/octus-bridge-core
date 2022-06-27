@@ -70,7 +70,7 @@ type config_t           is [@layout:comb] record[
 type asset_t            is [@layout:comb] record[
   asset_type              : asset_standard_t;
   deposit_fee_f           : nat;
-  withdraw_fee_f          : nat;
+  withdrawal_fee_f        : nat;
   deposit_limit           : nat;
   tvl                     : nat;
   virtual_balance         : nat;
@@ -78,7 +78,16 @@ type asset_t            is [@layout:comb] record[
   banned                  : bool;
 ]
 
-type fee_balances_t     is [@layout:comb] record[
-  fish_f                  : nat;
-  management_f            : nat;
+type fee_balances_t     is map(address, nat)
+
+type convert_amount_t   is [@layout:comb] record [
+  toShares              : bool;
+  tokenId               : nat;
+  amount                : nat;
+  precision             : bool;
+]
+
+type harvest_response_t is [@layout:comb] record[
+  asset                   : asset_standard_t;
+  amount                  : nat;
 ]

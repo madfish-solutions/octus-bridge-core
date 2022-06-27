@@ -1,169 +1,65 @@
-function deposit(
-  const params         : deposit_t;
-  var s                : storage_t)
-                       : return_t is
+[@inline] function call_vault(
+  const action          : action_t;
+  var s                 : full_storage_t)
+                        : full_return_t is
   block {
-    require(not(s.paused), Errors.vault_paused);
+    const id : nat = case action of [
+      | Set_owner(_)               -> 0n
+      | Set_bridge(_)              -> 1n
+      | Set_management(_)          -> 2n
+      | Set_fish(_)                -> 3n
+      | Set_guardian(_)            -> 4n
+      | Set_deposit_limit(_)       -> 5n
+      | Set_fees(_)                -> 6n
+      | Set_asset_deposit_fee(_)   -> 7n
+      | Set_asset_withdraw_fee(_)  -> 8n
+      | Set_native_config(_)       -> 9n
+      | Set_aliens_config(_)       -> 10n
+      | Toggle_pause_asset(_)      -> 11n
+      | Toggle_ban_asset(_)        -> 12n
+      | Toggle_emergency_shutdown(_) -> 13n
+      | Update_metadata(_)         -> 14n
+      | Delegate_tez(_)            -> 15n
+      | Claim_baker_rewards(_)     -> 16n
+      | Claim_fee(_)               -> 17n
+      | Claim_strategy_rewards(_)  -> 18n
+      | Confirm_owner(_)           -> 19n
+      | Add_strategy(_)            -> 20n
+      | Update_strategy(_)         -> 21n
+      | Revoke_strategy(_)         -> 22n
+      | Handle_harvest(_)          -> 23n
+      | Maintain(_)                -> 24n
+      | Harvest(_)                 -> 25n
 
-    const result = get_or_create_asset(params.asset, (None : option(token_meta_t)), s);
-    var asset := result.asset;
-    const asset_id = result.asset_id;
-    s := result.storage;
+      | Deposit(_)                 -> 26n
+      | Deposit_with_bounty(_)     -> 27n
+      | Withdraw(_)                -> 28n
+      | Set_bounty(_)              -> 29n
+      | Cancel_withdrawal(_)       -> 30n
 
-    require(not(asset.paused), Errors.asset_paused);
-    require(not(asset.banned), Errors.asset_banned);
-
-    const deposit_without_fee = case asset.asset_type of [
-    | Tez -> Tezos.amount / 1mutez
-    | _ -> params.amount
+      | Default(_)                 -> 31n
     ];
 
-    require(asset.tvl + deposit_without_fee <= asset.deposit_limit or asset.deposit_limit = 0n, Errors.deposit_limit);
+    const lambda_bytes : bytes = unwrap(s.vault_lambdas[id], Errors.func_not_set);
 
-    require(deposit_without_fee > 0n, Errors.zero_transfer);
-
-    const fee = params.amount * asset.deposit_fee_f / Constants.precision;
-
-    const deposited_amount = get_nat_or_fail(deposit_without_fee - fee, Errors.not_nat);
-
-    if fee > 0n
-    then {
-      var fee_balance := unwrap_or(s.fee_balances[asset.asset_type], Constants.fee_balances_mock);
-      s.fee_balances[asset.asset_type] := fee_balance with record[
-          fish_f += fee * Constants.precision / Constants.profit_ratio;
-          management_f += fee * Constants.precision / Constants.profit_ratio;
+    const res : return_t =
+      case (Bytes.unpack(lambda_bytes) : option(vault_func_t)) of [
+      | Some(func) -> func(action, s.storage)
+      | None    -> failwith(Errors.not_unpack_lambda)
       ];
-    } else skip;
 
-    var operations := result.operations;
-    case asset.asset_type of [
-    | Wrapped(token_) -> {
-      const burn_params : burn_params_t = record[
-        token_id = token_.id;
-        account = Tezos.sender;
-        amount = deposit_without_fee
-      ];
-      operations := Tezos.transaction(
-          burn_params,
-          0mutez,
-          unwrap(
-            (Tezos.get_entrypoint_opt("%burn", token_.address) : option(contract(burn_params_t))),
-            Errors.burn_etp_404)
-        ) # operations;
-      asset.tvl := get_nat_or_fail(asset.tvl - deposited_amount, Errors.not_nat)
-     }
-    | Tez -> asset.tvl := asset.tvl + deposited_amount
-    | _ -> {
-        operations := wrap_transfer(
-          Tezos.sender,
-          Tezos.self_address,
-          deposit_without_fee,
-          asset.asset_type
-        ) # operations;
-        asset.tvl := asset.tvl + deposited_amount
-      }
-    ];
-    s.assets[asset_id] := asset;
+    s.storage := res.1;
+  } with (res.0, s)
 
-    s.deposits[s.deposit_count] := record[
-        recipient = params.recipient;
-        amount    = deposited_amount;
-        asset     = asset.asset_type;
-    ];
-    s.deposit_count := s.deposit_count + 1n;
-
-  } with (operations, s)
-
-function withdraw(
-  const message        : message_t;
-  var s                : storage_t)
-                       : return_t is
+[@inline] function setup_func(
+  const params          : setup_func_t;
+  var s                 : full_storage_t)
+                        : full_return_t is
   block {
-    require(not(s.paused), Errors.vault_paused);
-    require_none(s.withdrawal_ids[message.payload], Errors.payload_already_seen);
-    is_withdraw_valid(message, s.bridge);
-
-    const payload = unwrap((Bytes.unpack(message.payload) : option(payload_t)), Errors.invalid_payload);
-    const params = unwrap((Bytes.unpack(payload.event_data) : option(withdrawal_data_t)), Errors.invalid_withdrawal_params);
-
-    const result = get_or_create_asset(params.asset, params.metadata, s);
-    var asset := result.asset;
-    const asset_id = result.asset_id;
-    s := result.storage;
-
-    require(not(asset.paused), Errors.asset_paused);
-    require(not(asset.banned), Errors.asset_banned);
-
-    require(params.amount > 0n, Errors.zero_transfer);
-
-    const fee = params.amount * asset.withdraw_fee_f / Constants.precision;
-
-    const withdrawal_amount = get_nat_or_fail(params.amount - fee, Errors.not_nat);
-
-    if fee > 0n
-    then {
-      var fee_balance := unwrap_or(s.fee_balances[asset.asset_type], Constants.fee_balances_mock);
-      s.fee_balances[asset.asset_type] := fee_balance with record[
-          fish_f += fee * Constants.precision / Constants.profit_ratio;
-          management_f += fee * Constants.precision / Constants.profit_ratio;
-      ];
-    } else skip;
-
-    var operations := result.operations;
-    case asset.asset_type of [
-    | Wrapped(token_) -> {
-      var mint_params : mint_params_t := list[
-        record[
-          token_id = token_.id;
-          recipient = params.recipient;
-          amount = withdrawal_amount
-        ];
-      ];
-      operations := Tezos.transaction(
-          mint_params,
-          0mutez,
-          unwrap(
-            (Tezos.get_entrypoint_opt("%mint", token_.address) : option(contract(mint_params_t))),
-            Errors.mint_etp_404
-          )
-         ) # operations;
-      asset.tvl := asset.tvl + withdrawal_amount;
-     }
-    | _ -> {
-        operations := wrap_transfer(
-          Tezos.self_address,
-          params.recipient,
-          withdrawal_amount,
-          asset.asset_type
-        ) # operations;
-        asset.tvl := get_nat_or_fail(asset.tvl - params.amount, Errors.not_nat);
-      }
-    ];
-
-    s.assets[asset_id] := asset;
-
-    s.withdrawals[s.withdrawal_count] := record[
-        deposit_id = params.deposit_id;
-        asset      = asset.asset_type;
-        amount     = params.amount;
-        recipient  = params.recipient;
-        metadata   = params.metadata;
-        signatures = message.signatures;
-    ];
-    s.withdrawal_ids[message.payload] := s.withdrawal_count;
-    s.withdrawal_count := s.withdrawal_count + 1n;
-
-  } with (operations, s)
-
-function default(
-  var s                 : storage_t)
-                        : return_t is
-  block {
-    const reward_f = (Tezos.amount / 1mutez) * Constants.precision;
-    if reward_f > 0n
-    then s.baker_rewards := s.baker_rewards with record[
-        fish_f += reward_f / Constants.profit_ratio;
-        management_f += reward_f / Constants.profit_ratio
-      ]
-    else skip
+    require(params.index <= vault_methods_max_index, Errors.wrong_index);
+    case s.vault_lambdas[params.index] of [
+    | Some(_) -> failwith(Errors.func_seted)
+    | None    -> s.vault_lambdas[params.index] := params.func
+    ]
   } with (Constants.no_operations, s)
+

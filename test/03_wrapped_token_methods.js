@@ -15,6 +15,7 @@ describe("Wrapped token methods test", async function () {
         wrappedStorage,
         "wrapped_token",
       );
+      const balance = await token.getWBalance(bob.pkh, 0);
     } catch (e) {
       console.log(e);
     }
@@ -81,7 +82,7 @@ describe("Wrapped token methods test", async function () {
           }),
         ]),
         err => {
-          strictEqual(err.message, "NOT_ADMIN");
+          strictEqual(err.message, "Wrapped-token/not-vault");
           return true;
         },
       );

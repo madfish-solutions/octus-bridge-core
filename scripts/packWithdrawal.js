@@ -7,6 +7,7 @@ function paramToBytes({
   assetType,
   assetAddress,
   assetId = 0,
+  bounty = 0,
   metadata = null,
 }) {
   const parser = new Parser();
@@ -18,6 +19,7 @@ function paramToBytes({
         (or (unit %tez) (pair %wrapped (address %address) (nat %id))))
       (nat %amount)
       (address %recipient)
+      (nat %bounty)
       (option %metadata (map string bytes)))`;
   let data;
   switch (assetType) {
@@ -27,6 +29,7 @@ function paramToBytes({
         (Left (Left "${assetAddress}"))
         ${amount}
         "${recipient}"
+        ${bounty}
         None)`;
       break;
     case "FA2":
@@ -35,6 +38,7 @@ function paramToBytes({
         (Left (Right (Pair "${assetAddress}" ${assetId})))
         ${amount}
         "${recipient}"
+        ${bounty}
         None)`;
       break;
     case "TEZ":
@@ -43,6 +47,7 @@ function paramToBytes({
       (Right (Left Unit))
       ${amount}
       "${recipient}"
+      ${bounty}
       None)`;
       break;
     case "WRAPPED":
@@ -52,13 +57,15 @@ function paramToBytes({
         (Right (Right (Pair "${assetAddress}" ${assetId})))
         ${amount}
         "${recipient}"
-        (Some { Elt "symbol" 0x${metadata.symbol} ;
-                Elt "name" 0x${metadata.name} ;
+        ${bounty}
+        (Some {
                 Elt "decimals" 0x${metadata.decimals} ;
                 Elt "description" 0x${metadata.description} ;
-                Elt "thumbnailUrl" 0x${metadata.thumbnailUrl} ;
                 Elt "isTransferable" 0x${metadata.isTransferable} ;
-                Elt "shouldPreferSymbol" 0x${metadata.shouldPreferSymbol}
+                Elt "name" 0x${metadata.name} ;
+                Elt "shouldPreferSymbol" 0x${metadata.shouldPreferSymbol} ;
+                Elt "symbol" 0x${metadata.symbol} ;
+                Elt "thumbnailUrl" 0x${metadata.thumbnailUrl} ;
               }))`;
       } else {
         data = `
@@ -66,6 +73,7 @@ function paramToBytes({
         (Right (Right (Pair "${assetAddress}" ${assetId})))
         ${amount}
         "${recipient}"
+        ${bounty}
         None)`;
       }
       break;

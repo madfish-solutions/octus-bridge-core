@@ -21,8 +21,8 @@ function get_or_create_asset(
         asset.asset_type := asset_type;
         case asset_type of [
         | Wrapped(token_) -> {
-            asset.deposit_fee_f  := s.fees.aliens.deposit_f;
-            asset.withdraw_fee_f := s.fees.aliens.withdraw_f;
+            asset.deposit_fee_f  := s.fees.native.deposit_f;
+            asset.withdrawal_fee_f := s.fees.native.withdraw_f;
 
             const meta = unwrap(metadata, Errors.metadata_undefined);
 
@@ -34,11 +34,11 @@ function get_or_create_asset(
                   Errors.create_token_etp_404
                 )
             ) # operations;
-              }
+          }
         | _ -> {
-            asset.deposit_fee_f  := s.fees.native.deposit_f;
-            asset.withdraw_fee_f := s.fees.native.withdraw_f;
-              }
+            asset.deposit_fee_f  := s.fees.aliens.deposit_f;
+            asset.withdrawal_fee_f := s.fees.aliens.withdraw_f;
+          }
         ];
         s.assets[asset_id] := asset;
       }
@@ -97,3 +97,78 @@ function is_withdraw_valid(
   | Invalid_payload               -> failwith(Errors.invalid_payload)
   | Message_valid                 -> unit
   ]
+
+function update_fee_balances(
+  var fee_balances_map  : fee_balances_map_t;
+  const fish            : address;
+  const management      : address;
+  const fee             : nat;
+  const asset_id        : asset_id_t)
+                        : fee_balances_map_t is
+  block {
+    var fee_balances := unwrap_or(fee_balances_map[asset_id], Constants.fee_balances_mock);
+    const fish_balance_f = unwrap_or(fee_balances[fish], 0n);
+    const management_balance_f = unwrap_or(fee_balances[management], 0n);
+    fee_balances[fish] := fish_balance_f + fee * Constants.precision / Constants.div_two;
+    fee_balances[management] := management_balance_f + fee * Constants.precision / Constants.div_two;
+    fee_balances_map[asset_id] := fee_balances;
+  } with fee_balances_map
+
+function get_harvest_op(
+  const strategy_address : address)
+                         : operation is
+  Tezos.transaction(
+      unwrap(
+        (Tezos.get_entrypoint_opt("%handle_harvest", Tezos.self_address) : option(contract(harvest_response_t))),
+        Errors.handle_harvest_etp_404
+      ),
+      0mutez,
+      unwrap(
+        (Tezos.get_entrypoint_opt("%harvest", strategy_address) : option(contract(contract(harvest_response_t)))),
+        Errors.harvest_etp_404
+      ));
+
+function get_divest_op(
+  const amount_          : nat;
+  const strategy_address : address)
+                         : operation is
+  Tezos.transaction(
+      amount_,
+      0mutez,
+      unwrap(
+        (Tezos.get_entrypoint_opt("%divest", strategy_address) : option(contract(nat))),
+        Errors.divest_etp_404
+      ));
+
+function get_invest_op(
+  const amount_          : nat;
+  const strategy_address : address)
+                         : operation is
+  Tezos.transaction(
+      amount_,
+      0mutez,
+      unwrap(
+        (Tezos.get_entrypoint_opt("%invest", strategy_address) : option(contract(nat))),
+        Errors.invest_etp_404
+      ));
+
+[@inline] function get_nat_or_zero(
+  const value           : int)
+                        : nat is
+  case is_nat(value) of [
+  | Some(natural) -> natural
+  | None -> 0n
+  ]
+
+function reverse_list<t>(
+  const lst             : list(t))
+                        : list(t) is
+  List.fold(
+    function(
+      const lst         : list(t);
+      const op          : t)
+                        : list(t) is
+      op # lst,
+    lst,
+    (nil : list(t))
+  )

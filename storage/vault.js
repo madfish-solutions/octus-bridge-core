@@ -1,15 +1,15 @@
 const { MichelsonMap } = require("@taquito/michelson-encoder");
 
-const { alice } = require("../../scripts/sandbox/accounts");
+const { alice } = require("../scripts/sandbox/accounts");
 
 const fees = {
   native: {
-    withdraw_f: 0.1 * 10 ** 6,
-    deposit_f: 0.1 * 10 ** 6,
+    withdraw_f: 100,
+    deposit_f: 100,
   },
   aliens: {
-    withdraw_f: 0.1 * 10 ** 6,
-    deposit_f: 0.1 * 10 ** 6,
+    withdraw_f: 100,
+    deposit_f: 100,
   },
 };
 

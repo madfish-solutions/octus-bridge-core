@@ -1,0 +1,130 @@
+[
+  {
+    "index": 0,
+    "name": "set_owner_l"
+  },
+  {
+    "index": 1,
+    "name": "set_bridge"
+  },
+  {
+    "index": 2,
+    "name": "set_management"
+  },
+  {
+    "index": 3,
+    "name": "set_fish"
+  },
+  {
+    "index": 4,
+    "name": "set_guardian"
+  },
+  {
+    "index": 5,
+    "name": "set_deposit_limit"
+  },
+  {
+    "index": 6,
+    "name": "set_fees"
+  },
+  {
+    "index": 7,
+    "name": "set_asset_deposit_fee"
+  },
+  {
+    "index": 8,
+    "name": "set_asset_withdraw_fee"
+  },
+  {
+    "index": 9,
+    "name": "set_native_config"
+  },
+  {
+    "index": 10,
+    "name": "set_aliens_config"
+  },
+  {
+    "index": 11,
+    "name": "toggle_pause_asset"
+  },
+  {
+    "index": 12,
+    "name": "toggle_ban_asset"
+  },
+  {
+    "index": 13,
+    "name": "toggle_emergency_shutdown"
+  },
+  {
+    "index": 14,
+    "name": "update_metadata_l"
+  },
+  {
+    "index": 15,
+    "name": "delegate_tez"
+  },
+  {
+    "index": 16,
+    "name": "claim_baker_rewards"
+  },
+  {
+    "index": 17,
+    "name": "claim_fee"
+  },
+  {
+    "index": 18,
+    "name": "claim_strategy_rewards"
+  },
+  {
+    "index": 19,
+    "name": "confirm_owner_l"
+  },
+  {
+    "index": 20,
+    "name": "add_strategy"
+  },
+  {
+    "index": 21,
+    "name": "update_strategy"
+  },
+  {
+    "index": 22,
+    "name": "revoke_strategy"
+  },
+  {
+    "index": 23,
+    "name": "handle_harvest"
+  },
+  {
+    "index": 24,
+    "name": "maintain"
+  },
+  {
+    "index": 25,
+    "name": "harvest"
+  },
+  {
+    "index": 26,
+    "name": "deposit"
+  },
+  {
+    "index": 27,
+    "name": "deposit_with_bounty"
+  },
+  {
+    "index": 28,
+    "name": "withdraw"
+  },
+  {
+    "index": 29,
+    "name": "set_bounty"
+  },
+  {
+    "index": 30,
+    "name": "cancel_withdrawal"
+  },
+  {
+    "index": 31,
+    "name": "default"
+  }
+]
