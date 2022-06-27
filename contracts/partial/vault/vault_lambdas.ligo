@@ -216,6 +216,12 @@ function withdraw(
       var operations := result.operations;
       case asset.asset_type of [
       | Wrapped(token_) -> {
+        require(
+          s.asset_config.native.configuration_address = payload.configuration_address and
+          s.asset_config.native.configuration_wid = payload.configuration_wid,
+          Errors.wrong_event_configuration
+        );
+
           var mint_params : mint_params_t := list[
             record[
               token_id = token_.id;
@@ -244,6 +250,11 @@ function withdraw(
           s.withdrawal_count := s.withdrawal_count + 1n;
         }
       | _ -> {
+        require(
+          s.asset_config.aliens.configuration_address = payload.configuration_address and
+          s.asset_config.aliens.configuration_wid = payload.configuration_wid,
+          Errors.wrong_event_configuration
+        );
         if asset.virtual_balance >= params.amount
         then {
             operations := wrap_transfer(
