@@ -4,7 +4,8 @@ const { Tzip16Module } = require("@taquito/tzip16");
 const { alice, bob, eve } = require("../../scripts/sandbox/accounts");
 
 const env = require("../../env");
-const networkConfig = env.networks.development;
+const network = env.network;
+const networkConfig = env.networks[network];
 
 const rpc = networkConfig.rpc;
 const Tezos = new TezosToolkit(rpc);
