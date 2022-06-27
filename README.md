@@ -5,7 +5,7 @@
   </a>
   <br />
   <br />
-  {{Contract Repo Template}}
+  {{Octus Bridge for Tezos}}
 </h1>
 
 <div align="center">
@@ -33,12 +33,9 @@
 
 ## About
 
-> **[?]**
-> Provide general information about your project here.
-> What problem does it (intend to) solve?
-> What is the purpose of your project?
-> Why did you undertake it?
-> You don't have to answer all the questions -- just the ones relevant to your project.
+The scope of this project is a system of the smart contract on the Tezos blockchain enabling arbitrary cross-chain messaging and permissionless asset transferring built on top of it. Interface and infrastructure development are out of this solution.
+
+The new set of contracts will be deployed to Tezos blockchain and is expected to be integrated into the bridge relayers code and Octus frontend.
 
 ### Built With
 
@@ -51,13 +48,15 @@
 
 ### Prerequisites
 
-- Installed node modules:
+Install node modules:
 
 ```shell
 yarn install
 ```
 
 ### Compilation
+
+Compile all smart contracts:
 
 ```shell
 yarn compile
