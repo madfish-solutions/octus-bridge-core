@@ -5,7 +5,7 @@
   </a>
   <br />
   <br />
-  {{Octus Bridge for Tezos}}
+  Octus Bridge Smart Contracts for Tezos
 </h1>
 
 <div align="center">
