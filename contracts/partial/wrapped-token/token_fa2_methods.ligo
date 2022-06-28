@@ -14,8 +14,8 @@ function iterate_transfer (
         const sender_key : ledger_key_t = (trx_params.from_, transfer.token_id);
         const sender_allowances = unwrap_or(s.allowances[sender_key], Constants.empty_allowances);
         (* Check permissions *)
-        require(trx_params.from_ = Tezos.sender
-          or Set.mem(Tezos.sender, sender_allowances), Errors.fa2_not_operator);
+        require(trx_params.from_ = Tezos.get_sender()
+          or Set.mem(Tezos.get_sender(), sender_allowances), Errors.fa2_not_operator);
 
         const sender_balance = unwrap(s.ledger[sender_key], Errors.fa2_low_balance);
 
@@ -44,7 +44,7 @@ function iterate_update_operators(
     ];
 
     require(param.token_id < s.token_count, Errors.fa2_token_undefined);
-    require(Tezos.sender = param.owner, Errors.fa2_not_owner);
+    require(Tezos.get_sender() = param.owner, Errors.fa2_not_owner);
 
     const account_key = (param.owner, param.token_id);
     const account_allowances = unwrap_or(s.allowances[account_key], Constants.empty_allowances);

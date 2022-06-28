@@ -5,7 +5,7 @@ function mint (
                         : storage_type is
   block {
     (* Ensure sender has the minter permissions *)
-    if s.admin = Tezos.sender
+    if s.admin = Tezos.get_sender()
     then skip
     else failwith("NOT_ADMIN");
 
@@ -50,7 +50,7 @@ function mint_token(
   const mint_amount     : nat)
                         : storage_type is
   block {
-    if s.minters contains Tezos.sender
+    if s.minters contains Tezos.get_sender()
     then skip
     else failwith("NOT_MINTER");
 

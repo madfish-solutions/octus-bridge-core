@@ -4,7 +4,7 @@ function mint (
   const s               : storage_t)
                         : return_t is
   block {
-    require(Tezos.sender = s.vault, Errors.not_vault);
+    require(Tezos.get_sender() = s.vault, Errors.not_vault);
 
     function make_mint(
       var s             : storage_t;
@@ -31,7 +31,7 @@ function create_token(
   var s                 : storage_t)
                         : return_t is
   block {
-    require(Tezos.sender = s.vault, Errors.not_vault);
+    require(Tezos.get_sender() = s.vault, Errors.not_vault);
 
     s.token_metadata[s.token_count] := record [
       token_id = s.token_count;
@@ -46,7 +46,7 @@ function burn(
   var s                 : storage_t)
                         : return_t is
   block {
-    require(Tezos.sender = s.vault, Errors.not_vault);
+    require(Tezos.get_sender() = s.vault, Errors.not_vault);
 
     const ledger_key = (params.account, params.token_id);
     const account_balance = unwrap_or(s.ledger[ledger_key], 0n);

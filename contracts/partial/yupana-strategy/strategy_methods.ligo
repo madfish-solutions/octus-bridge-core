@@ -3,7 +3,7 @@ function invest(
   var s                   : storage_t)
                           : return_t is
   block {
-    require(Tezos.sender = s.vault, Errors.not_vault);
+    require(Tezos.get_sender() = s.vault, Errors.not_vault);
 
     var operations := list[
         get_get_price_op(s.protocol_asset_id, s.price_feed);
@@ -40,7 +40,7 @@ function divest(
   var s                   : storage_t)
                           : return_t is
   block {
-    require(Tezos.sender = s.vault, Errors.not_vault);
+    require(Tezos.get_sender() = s.vault, Errors.not_vault);
     require(amount_ <= s.tvl, Errors.low_balance);
 
     require(amount_ > 0n, Errors.zero_transfer);
@@ -51,7 +51,7 @@ function divest(
         get_update_interest_op(s.protocol_asset_id, s.protocol);
         get_reedem_op(amount_, amount_, s.protocol_asset_id, s.protocol);
         wrap_transfer(
-          Tezos.self_address,
+          Tezos.get_self_address(),
           s.vault,
           amount_,
           s.deposit_asset
@@ -63,7 +63,7 @@ function harvest(
   const s               : storage_t)
                         : return_t is
   block {
-    require(Tezos.sender = s.vault, Errors.not_vault);
+    require(Tezos.get_sender() = s.vault, Errors.not_vault);
     const shares_balance = get_shares_balance(s.protocol_asset_id, s.protocol, True);
     const tvl_shares = convert_amount(s.tvl, s.protocol_asset_id, s.protocol, True, False);
     const profit_shares = get_nat_or_fail(shares_balance - tvl_shares, Errors.not_nat);
@@ -75,7 +75,7 @@ function harvest(
           get_update_interest_op(s.protocol_asset_id, s.protocol);
           get_reedem_op(profit, profit, s.protocol_asset_id, s.protocol);
           wrap_transfer(
-            Tezos.self_address,
+            Tezos.get_self_address(),
             s.vault,
             profit,
             s.reward_asset

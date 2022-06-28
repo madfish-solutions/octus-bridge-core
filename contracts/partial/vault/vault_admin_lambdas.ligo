@@ -33,7 +33,7 @@ function set_bridge(
                         : return_t is
   case action of [
   | Set_bridge(new_bridge) -> block {
-      require(Tezos.sender = s.owner, Errors.not_owner);
+      require(Tezos.get_sender() = s.owner, Errors.not_owner);
     } with (no_operations, s with record[bridge = new_bridge])
   | _ -> (no_operations, s)
   ]
@@ -44,7 +44,7 @@ function set_management(
                         : return_t is
   case action of [
   | Set_management(new_management) -> block {
-      require(Tezos.sender = s.owner, Errors.not_owner);
+      require(Tezos.get_sender() = s.owner, Errors.not_owner);
     } with (no_operations, s with record[management = new_management])
   | _ -> (no_operations, s)
   ]
@@ -55,7 +55,7 @@ function set_fish(
                         : return_t is
   case action of [
   | Set_fish(new_fish) -> block {
-      require(Tezos.sender = s.fish, Errors.not_fish);
+      require(Tezos.get_sender() = s.fish, Errors.not_fish);
     } with (no_operations, s with record[fish = new_fish])
   | _ -> (no_operations, s)
   ]
@@ -66,7 +66,7 @@ function set_guardian(
                         : return_t is
   case action of [
   | Set_guardian(new_guardian) -> block {
-      require(Tezos.sender = s.guardian, Errors.not_guardian);
+      require(Tezos.get_sender() = s.guardian, Errors.not_guardian);
     } with (no_operations, s with record[guardian = new_guardian])
   | _ -> (no_operations, s)
   ]
@@ -77,7 +77,7 @@ function set_deposit_limit(
                         : return_t is
   case action of [
   | Set_deposit_limit(params) -> block {
-      require(Tezos.sender = s.owner, Errors.not_owner);
+      require(Tezos.get_sender() = s.owner, Errors.not_owner);
       var asset := unwrap(s.assets[params.asset_id], Errors.asset_undefined);
       asset.deposit_limit := params.deposit_limit;
       s.assets[params.asset_id] := asset;
@@ -91,7 +91,7 @@ function set_fees(
                         : return_t is
   case action of [
   | Set_fees(new_fees) -> block {
-      require(Tezos.sender = s.owner, Errors.not_owner);
+      require(Tezos.get_sender() = s.owner, Errors.not_owner);
     } with (no_operations, s with record[fees = new_fees])
   | _ -> (no_operations, s)
   ]
@@ -102,7 +102,7 @@ function set_asset_deposit_fee(
                         : return_t is
   case action of [
   | Set_asset_deposit_fee(params) -> {
-      require(Tezos.sender = s.owner, Errors.not_owner);
+      require(Tezos.get_sender() = s.owner, Errors.not_owner);
       var asset:= unwrap(s.assets[params.asset_id], Errors.asset_undefined);
       asset.deposit_fee_f := params.fee_f;
       s.assets[params.asset_id] := asset;
@@ -116,7 +116,7 @@ function set_asset_withdraw_fee(
                         : return_t is
   case action of [
   | Set_asset_withdraw_fee(params) -> block {
-      require(Tezos.sender = s.owner, Errors.not_owner);
+      require(Tezos.get_sender() = s.owner, Errors.not_owner);
       var asset := unwrap(s.assets[params.asset_id], Errors.asset_undefined);
       asset.withdrawal_fee_f := params.fee_f;
       s.assets[params.asset_id] := asset;
@@ -130,7 +130,7 @@ function set_native_config(
                         : return_t is
   case action of [
   | Set_native_config(config) -> block {
-      require(Tezos.sender = s.owner, Errors.not_owner);
+      require(Tezos.get_sender() = s.owner, Errors.not_owner);
       s.asset_config.native := config;
     } with (no_operations, s)
   | _ -> (no_operations, s)
@@ -142,7 +142,7 @@ function set_aliens_config(
                         : return_t is
   case action of [
   | Set_aliens_config(config) -> block {
-      require(Tezos.sender = s.owner, Errors.not_owner);
+      require(Tezos.get_sender() = s.owner, Errors.not_owner);
       s.asset_config.aliens := config;
     } with (no_operations, s)
   | _ -> (no_operations, s)
@@ -155,8 +155,8 @@ function toggle_emergency_shutdown(
   case action of [
   | Toggle_emergency_shutdown(_) -> block {
       if s.emergency_shutdown
-      then require(Tezos.sender = s.owner, Errors.not_owner)
-      else require(Tezos.sender = s.guardian or Tezos.sender = s.owner, Errors.not_owner_or_guardian);
+      then require(Tezos.get_sender() = s.owner, Errors.not_owner)
+      else require(Tezos.get_sender() = s.guardian or Tezos.get_sender() = s.owner, Errors.not_owner_or_guardian);
     } with (no_operations, s with record[emergency_shutdown = not(s.emergency_shutdown)])
   | _ -> (no_operations, s)
   ]
@@ -169,8 +169,8 @@ function toggle_pause_asset(
   | Toggle_pause_asset(asset_id) -> block {
       var asset := unwrap(s.assets[asset_id], Errors.asset_undefined);
       if asset.paused
-      then require(Tezos.sender = s.owner, Errors.not_owner)
-      else require(Tezos.sender = s.guardian or Tezos.sender = s.owner, Errors.not_owner_or_guardian);
+      then require(Tezos.get_sender() = s.owner, Errors.not_owner)
+      else require(Tezos.get_sender() = s.guardian or Tezos.get_sender() = s.owner, Errors.not_owner_or_guardian);
 
       s.assets[asset_id] := asset with record[paused = not(asset.paused)];
     } with (no_operations, s)
@@ -183,7 +183,7 @@ function toggle_ban_asset(
                         : return_t is
   case action of [
   | Toggle_ban_asset(asset) -> block {
-      require(Tezos.sender = s.owner, Errors.not_owner);
+      require(Tezos.get_sender() = s.owner, Errors.not_owner);
       s := s with record[banned_assets = Big_map.update(
           asset,
           Some(not(unwrap_or(s.banned_assets[asset], False))),
@@ -199,7 +199,7 @@ function delegate_tez(
                         : return_t is
   case action of [
   | Delegate_tez(baker) -> block {
-        require(Tezos.sender = s.owner, Errors.not_owner);
+        require(Tezos.get_sender() = s.owner, Errors.not_owner);
     } with (list[Tezos.set_delegate(baker)], s)
   | _ -> (no_operations, s)
   ]
@@ -210,14 +210,14 @@ function claim_baker_rewards(
                         : return_t is
   case action of [
   | Claim_baker_rewards(recipient) -> block {
-      var balance_f := unwrap_or(s.baker_rewards[Tezos.sender], 0n);
+      var balance_f := unwrap_or(s.baker_rewards[Tezos.get_sender()], 0n);
       const reward = balance_f / Constants.precision;
       require(reward > 0n, Errors.zero_fee_balance);
 
-      s.baker_rewards[Tezos.sender] := get_nat_or_fail(balance_f - reward * Constants.precision, Errors.not_nat);
+      s.baker_rewards[Tezos.get_sender()] := get_nat_or_fail(balance_f - reward * Constants.precision, Errors.not_nat);
 
       const operation = wrap_transfer(
-          Tezos.self_address,
+          Tezos.get_self_address(),
           recipient,
           reward,
           Tez(unit)
@@ -235,13 +235,13 @@ function claim_fee(
   | Claim_fee(params) -> block {
       const asset = unwrap(s.assets[params.asset_id], Errors.asset_undefined);
       var fee_balances : fee_balances_t := unwrap(s.fee_balances[params.asset_id], Errors.asset_undefined);
-      var balance_f := unwrap_or(fee_balances[Tezos.sender], 0n);
+      var balance_f := unwrap_or(fee_balances[Tezos.get_sender()], 0n);
       require(balance_f / Constants.precision > 0n, Errors.zero_fee_balance);
       const reward = balance_f / Constants.precision;
-      fee_balances[Tezos.sender] := get_nat_or_fail(balance_f - reward * Constants.precision, Errors.not_nat);
+      fee_balances[Tezos.get_sender()] := get_nat_or_fail(balance_f - reward * Constants.precision, Errors.not_nat);
       s.fee_balances[params.asset_id] := fee_balances;
       const operation =  wrap_transfer(
-          Tezos.self_address,
+          Tezos.get_self_address(),
           params.recipient,
           reward,
           asset.asset_type
@@ -258,15 +258,15 @@ function claim_strategy_rewards(
   | Claim_strategy_rewards(params) -> block {
       const asset = unwrap(s.assets[params.asset_id], Errors.asset_undefined);
       var fee_balances : fee_balances_t := unwrap(s.strategy_rewards[params.asset_id], Errors.asset_undefined);
-      var balance_f := unwrap_or(fee_balances[Tezos.sender], 0n);
+      var balance_f := unwrap_or(fee_balances[Tezos.get_sender()], 0n);
       const reward = balance_f / Constants.precision;
       require(reward > 0n, Errors.zero_fee_balance);
-      fee_balances[Tezos.sender] := get_nat_or_fail(balance_f - reward * Constants.precision, Errors.not_nat);
+      fee_balances[Tezos.get_sender()] := get_nat_or_fail(balance_f - reward * Constants.precision, Errors.not_nat);
 
       s.strategy_rewards[params.asset_id] := fee_balances;
 
       const operation = wrap_transfer(
-          Tezos.self_address,
+          Tezos.get_self_address(),
           params.recipient,
           reward,
           asset.asset_type
@@ -281,7 +281,7 @@ function add_strategy(
                         : return_t is
   case action of [
   | Add_strategy(params) -> {
-      require(Tezos.sender = s.strategist, Errors.not_strategist);
+      require(Tezos.get_sender() = s.strategist, Errors.not_strategist);
       const asset = unwrap(s.assets[params.asset_id], Errors.asset_undefined);
       require_none(s.strategies[params.asset_id], Errors.strategy_exists);
 
@@ -302,7 +302,7 @@ function update_strategy(
                         : return_t is
   case action of [
   | Update_strategy(params) -> block {
-      require(Tezos.sender = s.strategist, Errors.not_strategist);
+      require(Tezos.get_sender() = s.strategist, Errors.not_strategist);
       var strategy := unwrap(s.strategies[params.asset_id], Errors.strategy_undefined);
       strategy := strategy with record[
           target_reserves_rate_f = params.target_reserves_rate_f;
@@ -319,7 +319,7 @@ function revoke_strategy(
                         : return_t is
   case action of [
   | Revoke_strategy(params) -> block {
-      require(Tezos.sender = s.strategist, Errors.not_strategist);
+      require(Tezos.get_sender() = s.strategist, Errors.not_strategist);
       var asset := unwrap(s.assets[params.asset_id], Errors.asset_undefined);
       var strategy := unwrap(s.strategies[params.asset_id], Errors.strategy_undefined);
 
@@ -360,7 +360,7 @@ function harvest(
                         : return_t is
   case action of [
   | Harvest(asset_id ) -> block {
-        require(Tezos.sender = s.strategist, Errors.not_strategist);
+        require(Tezos.get_sender() = s.strategist, Errors.not_strategist);
         const strategy = unwrap(s.strategies[asset_id], Errors.strategy_undefined);
     } with (list[get_harvest_op(strategy.strategy_address)], s)
   | _ -> (no_operations, s)
@@ -374,7 +374,7 @@ function handle_harvest(
   | Handle_harvest(params) -> {
       const asset_id = unwrap(s.asset_ids[params.asset], Errors.asset_undefined);
       const strategy = unwrap(s.strategies[asset_id], Errors.strategy_undefined);
-      require(Tezos.sender = strategy.strategy_address, Errors.not_strategist);
+      require(Tezos.get_sender() = strategy.strategy_address, Errors.not_strategist);
 
       if params.amount > 0n
       then s.strategy_rewards := update_fee_balances(s.strategy_rewards, s.fish, s.management, params.amount, asset_id)
@@ -389,7 +389,7 @@ function maintain(
                         : return_t is
   case action of [
   | Maintain(asset_id) -> block {
-      require(Tezos.sender = s.strategist, Errors.not_strategist);
+      require(Tezos.get_sender() = s.strategist, Errors.not_strategist);
       var asset := unwrap(s.assets[asset_id], Errors.asset_undefined);
       var strategy := unwrap(s.strategies[asset_id], Errors.strategy_undefined);
 
@@ -420,7 +420,7 @@ function maintain(
               then {
                   operations := list[
                       wrap_transfer(
-                        Tezos.self_address,
+                        Tezos.get_self_address(),
                         strategy.strategy_address,
                         disbalance_amount,
                         asset.asset_type);

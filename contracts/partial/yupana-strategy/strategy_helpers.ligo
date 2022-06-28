@@ -6,12 +6,12 @@
     record [
       requests = list[
         record[
-          owner = Tezos.self_address;
+          owner = Tezos.get_self_address();
           token_id = token_id;
         ]
       ];
       callback = unwrap(
-          (Tezos.get_entrypoint_opt("%callback_balance", Tezos.self_address) : option(contract(list (balance_of_response_t)))),
+          (Tezos.get_entrypoint_opt("%callback_balance", Tezos.get_self_address()) : option(contract(list (balance_of_response_t)))),
           Errors.callback_balance_404);
     ],
     0mutez,
@@ -126,7 +126,7 @@ function get_shares_balance(
             record[
               requests = list[
                   record[
-                    owner = Tezos.self_address;
+                    owner = Tezos.get_self_address();
                     token_id = asset_id;
                   ]
                 ];

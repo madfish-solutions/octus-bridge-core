@@ -21,7 +21,7 @@
     "compile": "yarn clean && node scripts/cli.js compile && node scripts/cli.js compileTest && yarn compile-vault-lambdas",
     "migrate": "yarn compile && node scripts/cli.js migrate",
     "test": "mocha --bail",
-    "start-sandbox": "docker run --rm --name dev-sandbox -e flextesa_node_cors_origin='*' -e block_time=1 --detach -p 8732:20000 oxheadalpha/flextesa:latest ithacabox start",
+    "start-sandbox": "docker run --rm --name dev-sandbox -e flextesa_node_cors_origin='*' -e block_time=1 --detach -p 8732:20000 oxheadalpha/flextesa:20220510 jakartabox start",
     "stop-sandbox": "docker kill dev-sandbox"
   },
   "repository": {

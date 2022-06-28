@@ -119,7 +119,7 @@ function get_harvest_op(
                          : operation is
   Tezos.transaction(
       unwrap(
-        (Tezos.get_entrypoint_opt("%handle_harvest", Tezos.self_address) : option(contract(harvest_response_t))),
+        (Tezos.get_entrypoint_opt("%handle_harvest", Tezos.get_self_address()) : option(contract(harvest_response_t))),
         Errors.handle_harvest_etp_404
       ),
       0mutez,
