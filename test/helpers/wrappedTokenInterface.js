@@ -7,10 +7,7 @@ module.exports = class WrappedToken extends Token {
     await this.updateStorage();
 
     try {
-      const balance = await this.storage.ledger.get({
-        spender: address,
-        value: tokenId,
-      });
+      const balance = await this.storage.ledger.get([address, tokenId]);
 
       return balance.toNumber();
     } catch (e) {
