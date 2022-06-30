@@ -1,6 +1,4 @@
-import sys
 from os import urandom
-from pytezos import pytezos
 
 from pytezos.crypto.encoding import base58_encode
 
@@ -24,6 +22,8 @@ contract_self_address = 'KT1BEqzn5Wx8uJrZNvuS9DVHmLvG9td3fDLi'
 me = "tz1Ke2h7sDdakHJQh8WX4Z372du1KChsksyU"
 
 burn = "tz1ZZZZZZZZZZZZZZZZZZZZZZZZZZZZNkiRg"
+
+proxy = "KT1Mjjcb6tmSsLm7Cb3DSQszePjfchPM4Uxm"
 
 deadline = 100_000
 
@@ -302,17 +302,6 @@ def calc_total_balance(res, address):
 def generate_random_address() -> str:
     return base58_encode(urandom(20), b'tz1').decode()
 
-def calc_out_per_hundred(chain, dex):
-    res = chain.interpret(dex.tokenToTezPayment(amount=100, min_out=1, receiver=alice), amount=0)
-    ops = parse_ops(res)
-    tez_out = ops[0]["amount"]
-
-    res = chain.interpret(dex.tezToTokenPayment(min_out=1, receiver=alice), amount=100)
-    ops = parse_ops(res)
-    token_out = ops[0]["amount"]
-
-    return (tez_out, token_out)
-
 def get_shares(res, pool, user):
     storage = res.storage["storage"]
     return storage["ledger"][(user, pool)]
@@ -325,39 +314,6 @@ def get_reserves(res, pool):
         reserves[token_idx] = token["reserves"]
     return reserves
 
-def form_pool_rates(reserves_a, reserves_b, reserves_c=None):
-    rates = {
-                0: {
-                    "rate": pow(10,18),
-                    "precision_multiplier": 1,
-                    "reserves": reserves_a,
-                },
-                1: {
-                    "rate": pow(10,18),
-                    "precision_multiplier": 1,
-                    "reserves": reserves_b,
-                }
-            }
-    if reserves_c:
-        rates[2] = {
-                    "rate": pow(10,18),
-                    "precision_multiplier": 1,
-                    "reserves": reserves_c,
-                }
-    return rates
-
-def equal_pool_rates(array):
-    rates = {}
-    for i in range(len(array)):
-        reserves = array[i]
-
-        rates[i] = {
-            "rate": pow(10,18),
-            "precision_multiplier": 1,
-            "reserves": reserves,
-        }
-    return rates
-
 def operator_add(owner, operator, token_id=0):
     return {
         "add_operator": {
@@ -366,6 +322,29 @@ def operator_add(owner, operator, token_id=0):
             "token_id": token_id
         }
     }
+
+def pack_withdraw_payload(packer, amount, recipient, asset, deposit_id="01"):
+    withdraw_bytes = packer.withdrawal({
+        "deposit_id"              : deposit_id,
+        "asset"                   : asset,
+        "amount"                  : amount,
+        "recipient"               : recipient,
+        "metadata"                : None,
+    }).interpret().storage
+
+    payload = packer.event({
+        "event_transaction_lt"    : 0,
+        "event_timestamp"         : 0,
+        "event_data"              : withdraw_bytes,
+        "configuration_wid"       : 0,
+        "configuration_address"   : 0,
+        "event_contract_wid"      : 0,
+        "event_contract_address"  : 0,
+        "proxy"                   : proxy,
+        "round"                   : 0,  
+    }).interpret().storage
+
+    return payload
 
 class MockChain():
     def __init__(self, storage):

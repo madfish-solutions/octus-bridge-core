@@ -33,40 +33,41 @@ class VaultTest(TestCase):
         res = chain.execute(self.ct.deposit(recipient=RECEIVER, amount=555_000, asset=token_a_fa2))
 
         transfers = parse_transfers(res)
-        self.assertEqual(len(transfers),1)
+        self.assertEqual(len(transfers), 1)
         self.assertEqual(transfers[0]["amount"], 555_000)
         self.assertEqual(transfers[0]["destination"], contract_self_address)
         self.assertEqual(transfers[0]["source"], me)
         self.assertEqual(transfers[0]["token_address"], token_a_address)
 
-        withdraw_bytes = self.packer.withdrawal({
-            "deposit_id"              : "01",
-            "asset"                   : token_a_fa2,
-            "amount"                  : 222_000,
-            "recipient"               : alice,
-            "metadata"                : None,
-        }).interpret().storage
-
-        payload = self.packer.event({
-            "event_transaction_lt"    : 0,
-            "event_timestamp"         : 0,
-            "event_data"              : withdraw_bytes,
-            "configuration_wid"       : 0,
-            "configuration_address"   : 0,
-            "event_contract_wid"      : 0,
-            "event_contract_address"  : 0,
-            "proxy"                   : proxy,
-            "round"                   : 0,  
-        }).interpret().storage
+        payload = pack_withdraw_payload(self.packer, 222_000, alice, token_a_fa2, "01")
 
         res = chain.execute(self.ct.withdraw(payload=payload, signatures={}), view_results=vr)
 
         transfers = parse_transfers(res)
-        self.assertEqual(len(transfers),1)
+        self.assertEqual(len(transfers), 1)
         self.assertEqual(transfers[0]["amount"], 222_000)
         self.assertEqual(transfers[0]["destination"], alice)
         self.assertEqual(transfers[0]["source"], contract_self_address)
         self.assertEqual(transfers[0]["token_address"], token_a_address)
 
+        with self.assertRaises(MichelsonRuntimeError) as error:
+            res = chain.execute(self.ct.withdraw(payload=payload, signatures={}), view_results=vr)
+        self.assertIn("payload-already-seen", error.exception.args[-1])
 
+        payload = pack_withdraw_payload(self.packer, 334_000, alice, token_a_fa2, "02")
 
+        with self.assertRaises(MichelsonRuntimeError) as error:
+            res = chain.execute(self.ct.withdraw(payload=payload, signatures={}), view_results=vr)
+        self.assertIn("not-nat", error.exception.args[-1])
+
+    def test_withdrawal_fee(self):
+        chain = MockChain(storage=self.storage)
+
+        res = chain.execute(self.ct.deposit(recipient=RECEIVER, amount=555_000, asset=token_a_fa2))
+
+        transfers = parse_transfers(res)
+        self.assertEqual(len(transfers), 1)
+        self.assertEqual(transfers[0]["amount"], 555_000)
+        self.assertEqual(transfers[0]["destination"], contract_self_address)
+        self.assertEqual(transfers[0]["source"], me)
+        self.assertEqual(transfers[0]["token_address"], token_a_address)
