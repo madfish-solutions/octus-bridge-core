@@ -1,0 +1,25 @@
+{ parameter
+    (or (pair %event
+           (nat %event_transaction_lt)
+           (timestamp %event_timestamp)
+           (bytes %event_data)
+           (int %configuration_wid)
+           (nat %configuration_address)
+           (int %event_contract_wid)
+           (nat %event_contract_address)
+           (address %proxy)
+           (nat %round))
+        (pair %withdrawal
+           (bytes %deposit_id)
+           (or %asset
+              (or (address %fa12) (pair %fa2 (address %address) (nat %id)))
+              (or (unit %tez) (pair %wrapped (address %address) (nat %id))))
+           (nat %amount)
+           (address %recipient)
+           (option %metadata (map string bytes)))) ;
+  storage bytes ;
+  code { NIL operation ;
+         SWAP ;
+         CAR ;
+         IF_LEFT { PACK ; SWAP ; PAIR } { PACK ; SWAP ; PAIR } } }
+
