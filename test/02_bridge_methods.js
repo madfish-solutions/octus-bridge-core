@@ -53,7 +53,7 @@ describe("Bridge-core methods test", async function () {
     }
   });
 
-  describe("Testing view method: Set_round_relays", async function () {
+  describe("Testing method: Set_round_relays", async function () {
     let round_1;
     let round_2;
     let payload_1;
