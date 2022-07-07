@@ -5,7 +5,7 @@ function update_admin(
                         : storage_type is
   block {
     (* Ensure sender has the admin permissions *)
-    if Tezos.sender =/= s.admin
+    if Tezos.get_sender() =/= s.admin
     then failwith("NOT_ADMIN")
     else skip;
 
@@ -19,7 +19,7 @@ function update_minter(
   const param           : update_minter_param)
                         : storage_type is
   block {
-    if Tezos.sender =/= s.admin
+    if Tezos.get_sender() =/= s.admin
     then failwith("NOT_ADMIN")
     else skip;
 

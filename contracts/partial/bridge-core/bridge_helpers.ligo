@@ -33,7 +33,7 @@ function check_message(
         then Round_greater_last_round(unit)
         else Round_less_initial_round(unit)
       | Some(round) ->
-        if round.ttl < Tezos.now
+        if round.ttl < Tezos.get_now()
         then Round_outdated(unit)
         else
             if calculate_signatures(params, round.relays, banned_relays) < round.required_signatures

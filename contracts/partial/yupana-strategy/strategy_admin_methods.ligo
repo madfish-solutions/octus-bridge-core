@@ -3,7 +3,7 @@ function set_owner(
   const s               : storage_t)
                         : return_t is
   block {
-    require(Tezos.sender = s.owner, Errors.not_owner)
+    require(Tezos.get_sender() = s.owner, Errors.not_owner)
   } with (Constants.no_operations, s with record[owner = new_owner])
 
 function update_operator(
@@ -11,7 +11,7 @@ function update_operator(
   const s               : storage_t)
                         : return_t is
   block {
-    require(Tezos.sender = s.owner, Errors.not_owner);
+    require(Tezos.get_sender() = s.owner, Errors.not_owner);
 
     const token : token_t = case s.deposit_asset of [
       | Fa2(token) -> token
@@ -23,7 +23,7 @@ function update_operator(
       then list[
           Add_operator(
             record[
-              owner    = Tezos.self_address;
+              owner    = Tezos.get_self_address();
               operator = s.protocol;
               token_id = token.id;
             ])
@@ -31,7 +31,7 @@ function update_operator(
       else list[
           Remove_operator(
             record[
-              owner    = Tezos.self_address;
+              owner    = Tezos.get_self_address();
               operator = s.protocol;
               token_id = token.id;
             ])

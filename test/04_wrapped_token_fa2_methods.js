@@ -103,20 +103,20 @@ describe("Wrapped token FA2 methods test", async function () {
       it("Should allow add operator", async function () {
         await token.updateOperator("add_operator", alice.pkh, bob.pkh, 0);
         await token.updateStorage();
-        const aliceAllowances = await token.storage.allowances.get({
-          spender: alice.pkh,
-          value: 0,
-        });
+        const aliceAllowances = await token.storage.allowances.get([
+          alice.pkh,
+          0,
+        ]);
         strictEqual(aliceAllowances[0], bob.pkh);
       });
 
       it("Should allow remove_operator", async function () {
         await token.updateOperator("remove_operator", alice.pkh, bob.pkh, 0);
         await token.updateStorage();
-        const aliceAllowances = await token.storage.allowances.get({
-          spender: alice.pkh,
-          value: 0,
-        });
+        const aliceAllowances = await token.storage.allowances.get([
+          alice.pkh,
+          0,
+        ]);
         strictEqual(aliceAllowances[0], undefined);
       });
     });

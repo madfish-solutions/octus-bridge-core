@@ -3,7 +3,7 @@ function set_round_submitter(
   var s                 : storage_t)
                         : return_t is
   block {
-    require(Tezos.sender = s.owner, Errors.not_owner)
+    require(Tezos.get_sender() = s.owner, Errors.not_owner)
   } with (Constants.no_operations, s with record[round_submitter = new_submitter])
 
 function set_round_ttl(
@@ -11,7 +11,7 @@ function set_round_ttl(
   var s                 : storage_t)
                         : return_t is
   block {
-    require(Tezos.sender = s.owner, Errors.not_owner)
+    require(Tezos.get_sender() = s.owner, Errors.not_owner)
    } with (Constants.no_operations, s with record[ttl = new_ttl])
 
 function set_required_signatures(
@@ -19,7 +19,7 @@ function set_required_signatures(
   var s                 : storage_t)
                         : return_t is
   block {
-    require(Tezos.sender = s.owner, Errors.not_owner)
+    require(Tezos.get_sender() = s.owner, Errors.not_owner)
    } with (Constants.no_operations, s with record[required_signatures = new_value])
 
 function set_configuration(
@@ -27,7 +27,7 @@ function set_configuration(
   var s                 : storage_t)
                         : return_t is
   block {
-    require(Tezos.sender = s.owner, Errors.not_owner)
+    require(Tezos.get_sender() = s.owner, Errors.not_owner)
    } with (Constants.no_operations, s with record[
         configuration_address = params.configuration_address;
         configuration_wid = params.configuration_wid
@@ -37,7 +37,7 @@ function toggle_pause_bridge(
   var s                 : storage_t)
                         : return_t is
   block {
-    require(Tezos.sender = s.owner, Errors.not_owner)
+    require(Tezos.get_sender() = s.owner, Errors.not_owner)
   } with (Constants.no_operations, s with record[paused = not(s.paused)])
 
 function toggle_ban_relay(
@@ -45,7 +45,7 @@ function toggle_ban_relay(
   var s                 : storage_t)
                         : return_t is
   block {
-    require(Tezos.sender = s.owner, Errors.not_owner)
+    require(Tezos.get_sender() = s.owner, Errors.not_owner)
   } with (Constants.no_operations,
       s with record[banned_relays = Big_map.update(
         relay_pk,
@@ -58,7 +58,7 @@ function force_round_relay(
   var s                 : storage_t)
                         : return_t is
   block {
-    require(Tezos.sender = s.round_submitter, Errors.not_submitter);
+    require(Tezos.get_sender() = s.round_submitter, Errors.not_submitter);
     require(not(s.paused), Errors.bridge_paused);
 
     const new_round = record[

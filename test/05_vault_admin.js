@@ -616,7 +616,7 @@ describe("Vault Admin tests", async function () {
       await rejects(vault.call("delegate_tez", alice.pkh), err => {
         strictEqual(
           err.message,
-          "(temporary) proto.012-Psithaca.delegate.unchanged",
+          "(temporary) proto.013-PtJakart.delegate.unchanged",
         );
         return true;
       });
