@@ -186,6 +186,7 @@ function withdraw(
       const payload = unwrap((Bytes.unpack(message.payload) : option(payload_t)), Errors.invalid_payload);
       const params = unwrap((Bytes.unpack(payload.event_data) : option(withdrawal_data_t)), Errors.invalid_withdrawal_params);
 
+      require(params.chain_id = Constants.chain_id, Errors.wrong_chain_id);
       const result = get_or_create_asset(params.asset, params.metadata, s);
       var asset := result.asset;
       const asset_id = result.asset_id;

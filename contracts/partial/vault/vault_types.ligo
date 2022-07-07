@@ -136,6 +136,7 @@ type get_asset_return_t is [@layout:comb] record[
 
 type withdrawal_data_t  is [@layout:comb] record[
   deposit_id              : bytes;
+  chain_id                : bytes;
   asset                   : asset_standard_t;
   amount                  : nat;
   recipient               : address;

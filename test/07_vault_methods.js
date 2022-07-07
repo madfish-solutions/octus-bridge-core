@@ -18,6 +18,7 @@ const precision = 10 ** 6;
 const packPayload = require("../scripts/packPayload");
 const packWithdrawal = require("../scripts/packWithdrawal");
 
+const CHAIN_ID = "05010000000f4e6574586451707263566b70615755";
 describe("Vault methods tests", async function () {
   let vault;
   let bridge;
@@ -609,6 +610,7 @@ describe("Vault methods tests", async function () {
     });
     it("Shouldn't withdraw if asset is paused", async function () {
       payload_1.eventData = packWithdrawal({
+        chainId: CHAIN_ID,
         depositId: "00",
         amount: 100,
         recipient: alice.pkh,
@@ -631,6 +633,7 @@ describe("Vault methods tests", async function () {
     });
     it("Shouldn't withdraw if asset is banned", async function () {
       payload_1.eventData = packWithdrawal({
+        chainId: CHAIN_ID,
         depositId: "00",
         amount: 100,
         recipient: alice.pkh,
@@ -653,6 +656,7 @@ describe("Vault methods tests", async function () {
     });
     it("Shouldn't withdraw if transfer amount 0", async function () {
       payload_1.eventData = packWithdrawal({
+        chainId: CHAIN_ID,
         depositId: "00",
         amount: 0,
         recipient: alice.pkh,
@@ -675,6 +679,7 @@ describe("Vault methods tests", async function () {
     });
     it("Shouldn't withdraw if wrong event config", async function () {
       payload_1.eventData = packWithdrawal({
+        chainId: CHAIN_ID,
         depositId: "00",
         amount: 1000000,
         recipient: alice.pkh,
@@ -695,12 +700,38 @@ describe("Vault methods tests", async function () {
         },
       );
     });
+    it("Shouldn't withdraw if wrong chain id", async function () {
+      payload_1.confAddr = 20102010;
+      payload_1.confWid = 2;
+      payload_1.eventData = packWithdrawal({
+        chainId: "0000",
+        depositId: "00",
+        amount: 1000000,
+        recipient: alice.pkh,
+        assetType: "FA12",
+        assetAddress: fa12Token.address,
+      });
+      payload_1.round = 1;
+      const payload = packPayload(payload_1);
+      const signature = await signerAlice.sign(payload);
+      await rejects(
+        vault.call("withdraw", {
+          payload: payload,
+          signatures: MichelsonMap.fromLiteral({ [alice.pk]: signature.sig }),
+        }),
+        err => {
+          strictEqual(err.message, "Vault/wrong-chain-id");
+          return true;
+        },
+      );
+    });
     it("Should withdraw fa12 asset", async function () {
       const withdrawalAmount = 30 * precision;
 
       payload_1.confAddr = 20102010;
       payload_1.confWid = 2;
       payload_1.eventData = packWithdrawal({
+        chainId: CHAIN_ID,
         depositId: "00",
         amount: withdrawalAmount,
         recipient: alice.pkh,
@@ -768,6 +799,7 @@ describe("Vault methods tests", async function () {
       const withdrawalAmount = 90 * precision;
 
       payload_1.eventData = packWithdrawal({
+        chainId: CHAIN_ID,
         depositId: "01",
         amount: withdrawalAmount,
         recipient: alice.pkh,
@@ -837,6 +869,7 @@ describe("Vault methods tests", async function () {
       const withdrawalAmount = 90 * precision;
 
       payload_1.eventData = packWithdrawal({
+        chainId: CHAIN_ID,
         depositId: "02",
         amount: withdrawalAmount,
         recipient: alice.pkh,
@@ -922,6 +955,7 @@ describe("Vault methods tests", async function () {
       payload_1.confAddr = 10101010;
       payload_1.confWid = 1;
       payload_1.eventData = packWithdrawal({
+        chainId: CHAIN_ID,
         depositId: "03",
         amount: withdrawalAmount,
         recipient: alice.pkh,
@@ -992,6 +1026,7 @@ describe("Vault methods tests", async function () {
       payload_1.confAddr = 20102010;
       payload_1.confWid = 2;
       payload_1.eventData = packWithdrawal({
+        chainId: CHAIN_ID,
         depositId: "01",
         amount: withdrawalAmount,
         recipient: alice.pkh,
@@ -1066,6 +1101,7 @@ describe("Vault methods tests", async function () {
       payload_1.confAddr = 20102010;
       payload_1.confWid = 2;
       payload_1.eventData = packWithdrawal({
+        chainId: CHAIN_ID,
         depositId: "02",
         amount: withdrawalAmount,
         recipient: alice.pkh,
@@ -1147,6 +1183,7 @@ describe("Vault methods tests", async function () {
       payload_1.confAddr = 20102010;
       payload_1.confWid = 2;
       payload_1.eventData = packWithdrawal({
+        chainId: CHAIN_ID,
         depositId: "06",
         amount: withdrawalAmount,
         recipient: alice.pkh,
@@ -1218,6 +1255,7 @@ describe("Vault methods tests", async function () {
       payload_1.confAddr = 20102010;
       payload_1.confWid = 2;
       payload_1.eventData = packWithdrawal({
+        chainId: CHAIN_ID,
         depositId: "06",
         amount: withdrawalAmount,
         recipient: eve.pkh,
@@ -1289,6 +1327,7 @@ describe("Vault methods tests", async function () {
       payload_1.confAddr = 20102010;
       payload_1.confWid = 2;
       payload_1.eventData = packWithdrawal({
+        chainId: CHAIN_ID,
         depositId: "02",
         amount: withdrawalAmount,
         recipient: alice.pkh,
@@ -1369,6 +1408,7 @@ describe("Vault methods tests", async function () {
       payload_1.confAddr = 20102010;
       payload_1.confWid = 2;
       payload_1.eventData = packWithdrawal({
+        chainId: CHAIN_ID,
         depositId: "01",
         amount: withdrawalAmount,
         recipient: alice.pkh,
@@ -1396,6 +1436,7 @@ describe("Vault methods tests", async function () {
       payload_1.confAddr = 10101010;
       payload_1.confWid = 1;
       payload_1.eventData = packWithdrawal({
+        chainId: CHAIN_ID,
         depositId: "03",
         amount: withdrawalAmount,
         recipient: alice.pkh,
@@ -1420,6 +1461,7 @@ describe("Vault methods tests", async function () {
 
     it("Shouldn't withdraw unknown wrapped asset if metadata not passed", async function () {
       payload_1.eventData = packWithdrawal({
+        chainId: CHAIN_ID,
         depositId: "00",
         amount: 1000,
         recipient: alice.pkh,
@@ -1455,6 +1497,7 @@ describe("Vault methods tests", async function () {
       payload_1.confAddr = 10101010;
       payload_1.confWid = 1;
       payload_1.eventData = packWithdrawal({
+        chainId: CHAIN_ID,
         depositId: "04",
         amount: withdrawalAmount,
         recipient: alice.pkh,
