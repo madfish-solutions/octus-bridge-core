@@ -81,7 +81,7 @@ function wrap_transfer(
         token_.address)
     ]
 
-function is_withdraw_valid(
+function ensure_withdraw_valid(
   const message         : message_t;
   const bridge          : address)
                         : unit is

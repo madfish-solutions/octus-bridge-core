@@ -181,7 +181,7 @@ function withdraw(
       require(not(s.emergency_shutdown), Errors.emergency_shutdown_enabled);
       require_none(s.withdrawal_ids[message.payload], Errors.payload_already_seen);
       require_none(s.pending_withdrawal_ids[message.payload], Errors.payload_already_seen);
-      is_withdraw_valid(message, s.bridge);
+      ensure_withdraw_valid(message, s.bridge);
 
       const payload = unwrap((Bytes.unpack(message.payload) : option(payload_t)), Errors.invalid_payload);
       const params = unwrap((Bytes.unpack(payload.event_data) : option(withdrawal_data_t)), Errors.invalid_withdrawal_params);
