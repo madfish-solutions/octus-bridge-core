@@ -3,7 +3,6 @@ module Constants is {
   const no_operations     : list(operation) = nil;
   const empty_allowances  : set(address) = set[];
   const precision         : nat = 1_000_000n;
-  const div_two           : nat = 2n;
   const zero_address      : address = ("tz1ZZZZZZZZZZZZZZZZZZZZZZZZZZZZNkiRg" : address);
   const profit_ratio      : nat = 2n;
   const asset_mock        : asset_t = record[

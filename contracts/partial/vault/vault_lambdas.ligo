@@ -313,8 +313,9 @@ function default(
       then {
         const fish_balance_f = unwrap_or(s.baker_rewards[s.fish], 0n);
         const management_balance_f = unwrap_or(s.baker_rewards[s.management], 0n);
-        s.baker_rewards[s.fish] := fish_balance_f + reward_f / Constants.div_two;
-        s.baker_rewards[s.management] := management_balance_f + reward_f / Constants.div_two;
+        const half_reward = reward_f / 2n;
+        s.baker_rewards[s.fish] := fish_balance_f + half_reward;
+        s.baker_rewards[s.management] := management_balance_f + half_reward;
       } else skip
     } with (no_operations, s)
   | _ -> (no_operations, s)
