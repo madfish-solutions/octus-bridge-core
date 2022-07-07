@@ -42,3 +42,14 @@ type new_round_t        is [@layout:comb] record[
 ]
 
 type validate_t         is message_t
+
+type is_relay_t         is [@layout:comb] record[
+  round                   : nat;
+  relay_key               : key;
+]
+
+type decoded_round_relays_event_data_t is [@layout:comb] record[
+  round                   : nat;
+  relays                  : set(key);
+  round_end               : timestamp;
+]
