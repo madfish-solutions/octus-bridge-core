@@ -109,9 +109,9 @@ function update_fee_balances(
     var fee_balances := unwrap_or(fee_balances_map[asset_id], Constants.fee_balances_mock);
     const fish_balance_f = unwrap_or(fee_balances[fish], 0n);
     const management_balance_f = unwrap_or(fee_balances[management], 0n);
-    const half_fee = fee * Constants.precision / 2n;
-    fee_balances[fish] := fish_balance_f + half_fee;
-    fee_balances[management] := management_balance_f + half_fee;
+    const half_fee_f = fee * Constants.precision / 2n;
+    fee_balances[fish] := fish_balance_f + half_fee_f;
+    fee_balances[management] := management_balance_f + half_fee_f;
     fee_balances_map[asset_id] := fee_balances;
   } with fee_balances_map
 

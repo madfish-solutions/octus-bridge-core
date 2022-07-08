@@ -23,9 +23,11 @@ function deposit(
 
       require(params.amount > 0n, Errors.zero_transfer);
 
-      const fee = params.amount * asset.deposit_fee_f / Constants.precision;
+      const fee_f = params.amount * asset.deposit_fee_f;
 
-      const deposited_amount = get_nat_or_fail(params.amount - fee, Errors.not_nat);
+      const deposited_amount = get_nat_or_fail(params.amount * Constants.precision - fee_f, Errors.not_nat) / Constants.precision;
+
+      const fee = get_nat_or_fail(params.amount - deposited_amount, Errors.not_nat);
 
       if fee > 0n
       then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset_id)
@@ -103,9 +105,11 @@ function deposit_with_bounty(
       require(params.amount > 0n, Errors.zero_transfer);
       require(asset.tvl + params.amount <= asset.deposit_limit or asset.deposit_limit = 0n, Errors.deposit_limit);
 
-      const fee = params.amount * asset.deposit_fee_f / Constants.precision;
+      const fee_f = params.amount * asset.deposit_fee_f;
 
-      var deposited_amount := get_nat_or_fail(params.amount - fee, Errors.not_nat);
+      const deposited_amount = get_nat_or_fail(params.amount * Constants.precision - fee_f, Errors.not_nat) / Constants.precision;
+
+      const fee = get_nat_or_fail(params.amount - deposited_amount, Errors.not_nat);
 
       var total_bounty := 0n;
       var total_withdrawal := 0n;
@@ -197,9 +201,11 @@ function withdraw(
 
       require(params.amount > 0n, Errors.zero_transfer);
 
-      const fee = params.amount * asset.withdrawal_fee_f / Constants.precision;
+      const fee_f = params.amount * asset.withdrawal_fee_f;
 
-      const withdrawal_amount = get_nat_or_fail(params.amount - fee, Errors.not_nat);
+      const withdrawal_amount = get_nat_or_fail(params.amount * Constants.precision - fee_f, Errors.not_nat) / Constants.precision;
+
+      const fee = get_nat_or_fail(params.amount - withdrawal_amount, Errors.not_nat);
 
       const new_withdrawal = record[
           deposit_id = params.deposit_id;
