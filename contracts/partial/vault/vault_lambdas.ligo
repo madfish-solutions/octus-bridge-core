@@ -279,12 +279,12 @@ function withdraw(
             s.withdrawal_count := s.withdrawal_count + 1n;
           }
         else {
-          require(params.bounty <= get_nat_or_fail(params.amount - fee, Errors.not_nat), Errors.bounty_too_high);
+          require(params.bounty <= withdrawal_amount, Errors.bounty_too_high);
 
           s.pending_withdrawals[s.pending_count] := record[
               deposit_id = params.deposit_id;
               asset      = asset.asset_type;
-              amount     = get_nat_or_fail(params.amount - fee, Errors.not_nat);
+              amount     = withdrawal_amount;
               recipient  = params.recipient;
               metadata   = params.metadata;
               bounty     = params.bounty;
