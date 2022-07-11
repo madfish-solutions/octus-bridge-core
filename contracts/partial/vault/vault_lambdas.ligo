@@ -137,7 +137,6 @@ function deposit_with_bounty(
           asset      = pending_withdrawal.asset;
           amount     = pending_withdrawal.amount;
           recipient  = pending_withdrawal.recipient;
-          metadata   = pending_withdrawal.metadata;
           signatures = pending_withdrawal.message.signatures;
         ];
         s.withdrawal_ids[pending_withdrawal.message.payload] := s.withdrawal_count;
@@ -212,7 +211,6 @@ function withdraw(
           asset      = asset.asset_type;
           amount     = withdrawal_amount;
           recipient  = params.recipient;
-          metadata   = params.metadata;
           signatures = message.signatures;
       ];
 
@@ -286,7 +284,6 @@ function withdraw(
               asset      = asset.asset_type;
               amount     = withdrawal_amount;
               recipient  = params.recipient;
-              metadata   = params.metadata;
               bounty     = params.bounty;
               message    = message;
               status     = Pending(unit);

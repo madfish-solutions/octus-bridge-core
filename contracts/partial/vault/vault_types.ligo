@@ -42,7 +42,6 @@ type withdrawal_t       is [@layout:comb] record[
   asset                   : asset_standard_t;
   amount                  : nat;
   recipient               : address;
-	metadata                : option(token_meta_t);
   signatures              : signatures_t;
 ]
 
@@ -72,7 +71,6 @@ type pending_withdrawal_t is [@layout:comb] record[
   asset                   : asset_standard_t;
   amount                  : nat;
   recipient               : address;
-	metadata                : option(token_meta_t);
   bounty                  : nat;
   message                 : message_t;
   status                  : withdrawal_status_t;
