@@ -29,7 +29,7 @@ const yupanaStrategy = require("./storage/yupanaStrategy");
 
 const precision = 10 ** 6;
 
-describe("Vault Admin tests", async function () {
+describe.only("Vault Admin tests", async function () {
   let vault;
   let fa12Token;
   let fa2Token;
@@ -627,14 +627,17 @@ describe("Vault Admin tests", async function () {
   });
   describe("Testing entrypoint: Default (baker rewards)", async function () {
     it("Should allow receive baker rewards", async function () {
-      await vault.call("default", null, 10 / 1e6);
+      const op = await Tezos.contract.transfer({ to: vault.address, amount: 10 })
+
+      await confirmOperation(Tezos, op.hash);
+      await vault.updateStorage()
 
       const fishFee = await vault.storage.baker_rewards.get(vault.storage.fish);
       const managementFee = await vault.storage.baker_rewards.get(
         vault.storage.management,
       );
-      strictEqual(fishFee.toNumber(), 5 * 10 ** 6);
-      strictEqual(managementFee.toNumber(), 5 * 10 ** 6);
+      strictEqual(fishFee.toNumber(), 5 * 10 ** 12);
+      strictEqual(managementFee.toNumber(), 5 * 10 ** 12);
     });
   });
   describe("Testing entrypoint: Claim_baker_rewards", async function () {
