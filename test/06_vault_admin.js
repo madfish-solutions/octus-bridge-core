@@ -125,6 +125,7 @@ describe("Vault Admin tests", async function () {
       await wrappedToken.call("mint", [
         [{ token_id: 0, recipient: vault.address, amount: 1000 * precision }],
       ]);
+      await wrappedToken.call("set_vault", vault.address);
       await fa12Token.transfer(alice.pkh, vault.address, 100 * precision);
       await fa2Token.transfer(alice.pkh, vault.address, 110 * precision);
 
@@ -479,6 +480,26 @@ describe("Vault Admin tests", async function () {
       strictEqual(fishFee.toNumber(), 0);
       strictEqual(managementFee.toNumber(), 0);
       strictEqual(eveBalance, prevEveBalance + 1000);
+    });
+    it("Should allow claim fee wrapped token (fish and management)", async function () {
+      const prevAliceBalance = await wrappedToken.getWBalance(alice.pkh);
+      const prevBobBalance = await wrappedToken.getWBalance(bob.pkh);
+
+      Tezos.setSignerProvider(signerAlice);
+      await vault.call("claim_fee", [3, alice.pkh]);
+      const aliceBalance = await wrappedToken.getWBalance(alice.pkh);
+
+      Tezos.setSignerProvider(signerBob);
+      await vault.call("claim_fee", [3, bob.pkh]);
+      const bobBalance = await wrappedToken.getWBalance(bob.pkh);
+      const fees = await vault.storage.fee_balances.get("3");
+      const fishFee = await fees.get(vault.storage.fish);
+      const managementFee = await fees.get(vault.storage.management);
+
+      strictEqual(fishFee.toNumber(), 0);
+      strictEqual(managementFee.toNumber(), 0);
+      strictEqual(aliceBalance, prevAliceBalance + 500);
+      strictEqual(bobBalance, prevBobBalance + 500);
     });
   });
   describe("Testing entrypoint: Toggle_emergency_shutdown", async function () {

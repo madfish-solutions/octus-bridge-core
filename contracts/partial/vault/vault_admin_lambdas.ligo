@@ -238,12 +238,28 @@ function claim_fee(
       const reward = balance_f / Constants.precision;
       fee_balances[Tezos.get_sender()] := get_nat_or_fail(balance_f - reward * Constants.precision, Errors.not_nat);
       s.fee_balances[params.asset_id] := fee_balances;
-      const operation =  wrap_transfer(
-          Tezos.get_self_address(),
-          params.recipient,
-          reward,
-          asset.asset_type
-       );
+      const operation = case asset.asset_type of [
+        | Wrapped(token) -> Tezos.transaction(
+            list[
+              record[
+                token_id = token.id;
+                recipient = params.recipient;
+                amount = reward;
+              ];
+            ],
+            0mutez,
+            unwrap(
+              (Tezos.get_entrypoint_opt("%mint", token.address) : option(contract(mint_params_t))),
+              Errors.mint_etp_404
+            )
+          )
+        | _ ->  wrap_transfer(
+            Tezos.get_self_address(),
+            params.recipient,
+            reward,
+            asset.asset_type
+          )
+        ];
     } with (list[operation], s)
   | _ -> (no_operations, s)
   ]
