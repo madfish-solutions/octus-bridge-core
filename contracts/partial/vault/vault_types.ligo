@@ -5,12 +5,12 @@ type fees_t             is [@layout:comb] record[
 
 type vault_fees_t       is [@layout:comb] record[
   native                  : fees_t;
-  aliens                  : fees_t;
+  alien                   : fees_t;
 ]
 
 type asset_config_t     is [@layout:comb] record[
   native                  : config_t;
-  aliens                  : config_t;
+  alien                   : config_t;
 ]
 
 type assets_t           is big_map(nat, asset_t)
@@ -189,7 +189,7 @@ type action_t           is
 | Set_asset_deposit_fee   of fee_per_asset_t
 | Set_asset_withdraw_fee  of fee_per_asset_t
 | Set_native_config       of config_t
-| Set_aliens_config       of config_t
+| Set_alien_config        of config_t
 | Toggle_pause_asset      of asset_id_t
 | Toggle_ban_asset        of asset_standard_t
 | Toggle_emergency_shutdown of unit

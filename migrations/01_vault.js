@@ -7,7 +7,7 @@ const vaultFunctions = require("../builds/lambdas/vault_lambdas.json");
 const { OpKind } = require("@taquito/taquito");
 const { confirmOperation } = require("../scripts/confirmation");
 
-module.exports = async (tezos) => {
+module.exports = async tezos => {
   const sender = await tezos.signer.publicKeyHash();
   vaultStorage.storage.owner = sender;
   if (env.network === "mainnet") {
@@ -16,10 +16,10 @@ module.exports = async (tezos) => {
         configuration_wid: env.networks[env.network].configurationWidNative,
         configuration_address: env.networks[env.network].configurationWidNative,
       },
-      aliens: {
-        configuration_wid: env.networks[env.network].configurationWidAliens,
+      alien: {
+        configuration_wid: env.networks[env.network].configurationWidAlien,
         configuration_address:
-          env.networks[env.network].configurationAddressAliens,
+          env.networks[env.network].configurationAddressAlien,
       },
     };
     vaultStorage.storage.asset_config = assetConfig;

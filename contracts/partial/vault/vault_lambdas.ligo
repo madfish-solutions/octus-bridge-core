@@ -258,8 +258,8 @@ function withdraw(
         }
       | _ -> {
         require(
-          s.asset_config.aliens.configuration_address = payload.configuration_address and
-          s.asset_config.aliens.configuration_wid = payload.configuration_wid,
+          s.asset_config.alien.configuration_address = payload.configuration_address and
+          s.asset_config.alien.configuration_wid = payload.configuration_wid,
           Errors.wrong_event_configuration
         );
         if asset.virtual_balance >= params.amount

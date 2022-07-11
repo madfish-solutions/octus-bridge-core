@@ -1,5 +1,3 @@
-
-
 function set_owner_l(
   const action          : action_t;
   var s                 : storage_t)
@@ -136,14 +134,14 @@ function set_native_config(
   | _ -> (no_operations, s)
   ]
 
-function set_aliens_config(
+function set_alien_config(
   const action          : action_t;
   var s                 : storage_t)
                         : return_t is
   case action of [
-  | Set_aliens_config(config) -> block {
+  | Set_alien_config(config) -> block {
       require(Tezos.get_sender() = s.owner, Errors.not_owner);
-      s.asset_config.aliens := config;
+      s.asset_config.alien := config;
     } with (no_operations, s)
   | _ -> (no_operations, s)
   ]

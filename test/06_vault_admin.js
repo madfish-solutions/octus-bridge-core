@@ -319,8 +319,8 @@ describe("Vault Admin tests", async function () {
 
       strictEqual(vault.storage.fees.native.deposit_f.toNumber(), 1000);
       strictEqual(vault.storage.fees.native.withdraw_f.toNumber(), 500);
-      strictEqual(vault.storage.fees.aliens.deposit_f.toNumber(), 10);
-      strictEqual(vault.storage.fees.aliens.withdraw_f.toNumber(), 50);
+      strictEqual(vault.storage.fees.alien.deposit_f.toNumber(), 10);
+      strictEqual(vault.storage.fees.alien.withdraw_f.toNumber(), 50);
     });
   });
   describe("Testing entrypoint: Set_asset_deposit_fee", async function () {
@@ -380,25 +380,25 @@ describe("Vault Admin tests", async function () {
       );
     });
   });
-  describe("Testing entrypoint: Set_aliens_config", async function () {
-    it("Shouldn't set aliens config fee if the user is not an owner", async function () {
+  describe("Testing entrypoint: Set_alien_config", async function () {
+    it("Shouldn't set alien config fee if the user is not an owner", async function () {
       Tezos.setSignerProvider(signerAlice);
-      await rejects(vault.call("set_aliens_config", [0, 9]), err => {
+      await rejects(vault.call("set_alien_config", [0, 9]), err => {
         strictEqual(err.message, "Vault/not-owner");
         return true;
       });
     });
-    it("Should allow set aliens config", async function () {
+    it("Should allow set alien config", async function () {
       Tezos.setSignerProvider(signerBob);
 
-      await vault.call("set_aliens_config", [0, 1909]);
+      await vault.call("set_alien_config", [0, 1909]);
 
       strictEqual(
-        vault.storage.asset_config.aliens.configuration_wid.toNumber(),
+        vault.storage.asset_config.alien.configuration_wid.toNumber(),
         0,
       );
       strictEqual(
-        vault.storage.asset_config.aliens.configuration_address.toNumber(),
+        vault.storage.asset_config.alien.configuration_address.toNumber(),
         1909,
       );
     });
