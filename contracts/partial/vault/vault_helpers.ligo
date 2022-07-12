@@ -36,8 +36,8 @@ function get_or_create_asset(
             ) # operations;
           }
         | _ -> {
-            asset.deposit_fee_f  := s.fees.aliens.deposit_f;
-            asset.withdrawal_fee_f := s.fees.aliens.withdraw_f;
+            asset.deposit_fee_f  := s.fees.alien.deposit_f;
+            asset.withdrawal_fee_f := s.fees.alien.withdraw_f;
           }
         ];
         s.assets[asset_id] := asset;

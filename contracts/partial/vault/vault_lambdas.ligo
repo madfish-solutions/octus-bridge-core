@@ -137,7 +137,6 @@ function deposit_with_bounty(
           asset      = pending_withdrawal.asset;
           amount     = pending_withdrawal.amount;
           recipient  = pending_withdrawal.recipient;
-          metadata   = pending_withdrawal.metadata;
           signatures = pending_withdrawal.message.signatures;
         ];
         s.withdrawal_ids[pending_withdrawal.message.payload] := s.withdrawal_count;
@@ -212,7 +211,6 @@ function withdraw(
           asset      = asset.asset_type;
           amount     = withdrawal_amount;
           recipient  = params.recipient;
-          metadata   = params.metadata;
           signatures = message.signatures;
       ];
 
@@ -258,8 +256,8 @@ function withdraw(
         }
       | _ -> {
         require(
-          s.asset_config.aliens.configuration_address = payload.configuration_address and
-          s.asset_config.aliens.configuration_wid = payload.configuration_wid,
+          s.asset_config.alien.configuration_address = payload.configuration_address and
+          s.asset_config.alien.configuration_wid = payload.configuration_wid,
           Errors.wrong_event_configuration
         );
         if asset.virtual_balance >= params.amount
@@ -279,14 +277,13 @@ function withdraw(
             s.withdrawal_count := s.withdrawal_count + 1n;
           }
         else {
-          require(params.bounty <= get_nat_or_fail(params.amount - fee, Errors.not_nat), Errors.bounty_too_high);
+          require(params.bounty <= withdrawal_amount, Errors.bounty_too_high);
 
           s.pending_withdrawals[s.pending_count] := record[
               deposit_id = params.deposit_id;
               asset      = asset.asset_type;
-              amount     = get_nat_or_fail(params.amount - fee, Errors.not_nat);
+              amount     = withdrawal_amount;
               recipient  = params.recipient;
-              metadata   = params.metadata;
               bounty     = params.bounty;
               message    = message;
               status     = Pending(unit);

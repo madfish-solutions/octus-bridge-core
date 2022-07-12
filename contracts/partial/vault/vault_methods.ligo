@@ -14,7 +14,7 @@
       | Set_asset_deposit_fee(_)   -> 7n
       | Set_asset_withdraw_fee(_)  -> 8n
       | Set_native_config(_)       -> 9n
-      | Set_aliens_config(_)       -> 10n
+      | Set_alien_config(_)        -> 10n
       | Toggle_pause_asset(_)      -> 11n
       | Toggle_ban_asset(_)        -> 12n
       | Toggle_emergency_shutdown(_) -> 13n
