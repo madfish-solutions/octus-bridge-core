@@ -125,6 +125,7 @@ describe("Vault Admin tests", async function () {
       await wrappedToken.call("mint", [
         [{ token_id: 0, recipient: vault.address, amount: 1000 * precision }],
       ]);
+      await wrappedToken.call("set_vault", vault.address);
       await fa12Token.transfer(alice.pkh, vault.address, 100 * precision);
       await fa2Token.transfer(alice.pkh, vault.address, 110 * precision);
 
@@ -319,8 +320,8 @@ describe("Vault Admin tests", async function () {
 
       strictEqual(vault.storage.fees.native.deposit_f.toNumber(), 1000);
       strictEqual(vault.storage.fees.native.withdraw_f.toNumber(), 500);
-      strictEqual(vault.storage.fees.aliens.deposit_f.toNumber(), 10);
-      strictEqual(vault.storage.fees.aliens.withdraw_f.toNumber(), 50);
+      strictEqual(vault.storage.fees.alien.deposit_f.toNumber(), 10);
+      strictEqual(vault.storage.fees.alien.withdraw_f.toNumber(), 50);
     });
   });
   describe("Testing entrypoint: Set_asset_deposit_fee", async function () {
@@ -380,25 +381,25 @@ describe("Vault Admin tests", async function () {
       );
     });
   });
-  describe("Testing entrypoint: Set_aliens_config", async function () {
-    it("Shouldn't set aliens config fee if the user is not an owner", async function () {
+  describe("Testing entrypoint: Set_alien_config", async function () {
+    it("Shouldn't set alien config fee if the user is not an owner", async function () {
       Tezos.setSignerProvider(signerAlice);
-      await rejects(vault.call("set_aliens_config", [0, 9]), err => {
+      await rejects(vault.call("set_alien_config", [0, 9]), err => {
         strictEqual(err.message, "Vault/not-owner");
         return true;
       });
     });
-    it("Should allow set aliens config", async function () {
+    it("Should allow set alien config", async function () {
       Tezos.setSignerProvider(signerBob);
 
-      await vault.call("set_aliens_config", [0, 1909]);
+      await vault.call("set_alien_config", [0, 1909]);
 
       strictEqual(
-        vault.storage.asset_config.aliens.configuration_wid.toNumber(),
+        vault.storage.asset_config.alien.configuration_wid.toNumber(),
         0,
       );
       strictEqual(
-        vault.storage.asset_config.aliens.configuration_address.toNumber(),
+        vault.storage.asset_config.alien.configuration_address.toNumber(),
         1909,
       );
     });
@@ -479,6 +480,26 @@ describe("Vault Admin tests", async function () {
       strictEqual(fishFee.toNumber(), 0);
       strictEqual(managementFee.toNumber(), 0);
       strictEqual(eveBalance, prevEveBalance + 1000);
+    });
+    it("Should allow claim fee wrapped token (fish and management)", async function () {
+      const prevAliceBalance = await wrappedToken.getWBalance(alice.pkh);
+      const prevBobBalance = await wrappedToken.getWBalance(bob.pkh);
+
+      Tezos.setSignerProvider(signerAlice);
+      await vault.call("claim_fee", [3, alice.pkh]);
+      const aliceBalance = await wrappedToken.getWBalance(alice.pkh);
+
+      Tezos.setSignerProvider(signerBob);
+      await vault.call("claim_fee", [3, bob.pkh]);
+      const bobBalance = await wrappedToken.getWBalance(bob.pkh);
+      const fees = await vault.storage.fee_balances.get("3");
+      const fishFee = await fees.get(vault.storage.fish);
+      const managementFee = await fees.get(vault.storage.management);
+
+      strictEqual(fishFee.toNumber(), 0);
+      strictEqual(managementFee.toNumber(), 0);
+      strictEqual(aliceBalance, prevAliceBalance + 500);
+      strictEqual(bobBalance, prevBobBalance + 500);
     });
   });
   describe("Testing entrypoint: Toggle_emergency_shutdown", async function () {
@@ -616,7 +637,7 @@ describe("Vault Admin tests", async function () {
       await rejects(vault.call("delegate_tez", alice.pkh), err => {
         strictEqual(
           err.message,
-          "(temporary) proto.012-Psithaca.delegate.unchanged",
+          "(temporary) proto.013-PtJakart.delegate.unchanged",
         );
         return true;
       });

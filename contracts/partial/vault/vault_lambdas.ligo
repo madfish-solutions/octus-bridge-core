@@ -15,7 +15,7 @@ function deposit(
       require(not(asset.banned), Errors.asset_banned);
 
       case asset.asset_type of [
-      | Tez -> require(Tezos.amount / 1mutez = params.amount, Errors.amounts_mismatch)
+      | Tez -> require(Tezos.get_amount() / 1mutez = params.amount, Errors.amounts_mismatch)
       | _ -> skip
       ];
 
@@ -23,9 +23,11 @@ function deposit(
 
       require(params.amount > 0n, Errors.zero_transfer);
 
-      const fee = params.amount * asset.deposit_fee_f / Constants.precision;
+      const fee_f = params.amount * asset.deposit_fee_f;
 
-      const deposited_amount = get_nat_or_fail(params.amount - fee, Errors.not_nat);
+      const deposited_amount = get_nat_or_fail(params.amount * Constants.precision - fee_f, Errors.not_nat) / Constants.precision;
+
+      const fee = get_nat_or_fail(params.amount - deposited_amount, Errors.not_nat);
 
       if fee > 0n
       then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset_id)
@@ -36,7 +38,7 @@ function deposit(
       | Wrapped(token_) -> {
         const burn_params : burn_params_t = record[
           token_id = token_.id;
-          account = Tezos.sender;
+          account = Tezos.get_sender();
           amount = params.amount
         ];
         operations := Tezos.transaction(
@@ -59,8 +61,8 @@ function deposit(
         }
       | _ -> {
           operations := wrap_transfer(
-            Tezos.sender,
-            Tezos.self_address,
+            Tezos.get_sender(),
+            Tezos.get_self_address(),
             params.amount,
             asset.asset_type
           ) # operations;
@@ -97,15 +99,17 @@ function deposit_with_bounty(
       require(not(asset.banned), Errors.asset_banned);
 
       case asset.asset_type of [
-      | Tez -> require(Tezos.amount / 1mutez = params.amount, Errors.amounts_mismatch)
+      | Tez -> require(Tezos.get_amount() / 1mutez = params.amount, Errors.amounts_mismatch)
       | _ -> skip
       ];
       require(params.amount > 0n, Errors.zero_transfer);
       require(asset.tvl + params.amount <= asset.deposit_limit or asset.deposit_limit = 0n, Errors.deposit_limit);
 
-      const fee = params.amount * asset.deposit_fee_f / Constants.precision;
+      const fee_f = params.amount * asset.deposit_fee_f;
 
-      var deposited_amount := get_nat_or_fail(params.amount - fee, Errors.not_nat);
+      const deposited_amount = get_nat_or_fail(params.amount * Constants.precision - fee_f, Errors.not_nat) / Constants.precision;
+
+      const fee = get_nat_or_fail(params.amount - deposited_amount, Errors.not_nat);
 
       var total_bounty := 0n;
       var total_withdrawal := 0n;
@@ -122,7 +126,7 @@ function deposit_with_bounty(
         total_bounty := total_bounty + pending_withdrawal.bounty;
 
         operations := wrap_transfer(
-          Tezos.self_address,
+          Tezos.get_self_address(),
           pending_withdrawal.recipient,
           get_nat_or_fail(pending_withdrawal.amount - pending_withdrawal.bounty, Errors.not_nat),
           pending_withdrawal.asset
@@ -133,7 +137,6 @@ function deposit_with_bounty(
           asset      = pending_withdrawal.asset;
           amount     = pending_withdrawal.amount;
           recipient  = pending_withdrawal.recipient;
-          metadata   = pending_withdrawal.metadata;
           signatures = pending_withdrawal.message.signatures;
         ];
         s.withdrawal_ids[pending_withdrawal.message.payload] := s.withdrawal_count;
@@ -148,8 +151,8 @@ function deposit_with_bounty(
       else skip;
 
       operations := wrap_transfer(
-          Tezos.sender,
-          Tezos.self_address,
+          Tezos.get_sender(),
+          Tezos.get_self_address(),
           params.amount,
           asset.asset_type
         ) # operations;
@@ -181,11 +184,12 @@ function withdraw(
       require(not(s.emergency_shutdown), Errors.emergency_shutdown_enabled);
       require_none(s.withdrawal_ids[message.payload], Errors.payload_already_seen);
       require_none(s.pending_withdrawal_ids[message.payload], Errors.payload_already_seen);
-      is_withdraw_valid(message, s.bridge);
+      ensure_withdraw_valid(message, s.bridge);
 
       const payload = unwrap((Bytes.unpack(message.payload) : option(payload_t)), Errors.invalid_payload);
       const params = unwrap((Bytes.unpack(payload.event_data) : option(withdrawal_data_t)), Errors.invalid_withdrawal_params);
 
+      require(params.chain_id = Constants.chain_id, Errors.wrong_chain_id);
       const result = get_or_create_asset(params.asset, params.metadata, s);
       var asset := result.asset;
       const asset_id = result.asset_id;
@@ -196,16 +200,17 @@ function withdraw(
 
       require(params.amount > 0n, Errors.zero_transfer);
 
-      const fee = params.amount * asset.withdrawal_fee_f / Constants.precision;
+      const fee_f = params.amount * asset.withdrawal_fee_f;
 
-      const withdrawal_amount = get_nat_or_fail(params.amount - fee, Errors.not_nat);
+      const withdrawal_amount = get_nat_or_fail(params.amount * Constants.precision - fee_f, Errors.not_nat) / Constants.precision;
+
+      const fee = get_nat_or_fail(params.amount - withdrawal_amount, Errors.not_nat);
 
       const new_withdrawal = record[
           deposit_id = params.deposit_id;
           asset      = asset.asset_type;
           amount     = withdrawal_amount;
           recipient  = params.recipient;
-          metadata   = params.metadata;
           signatures = message.signatures;
       ];
 
@@ -251,14 +256,14 @@ function withdraw(
         }
       | _ -> {
         require(
-          s.asset_config.aliens.configuration_address = payload.configuration_address and
-          s.asset_config.aliens.configuration_wid = payload.configuration_wid,
+          s.asset_config.alien.configuration_address = payload.configuration_address and
+          s.asset_config.alien.configuration_wid = payload.configuration_wid,
           Errors.wrong_event_configuration
         );
         if asset.virtual_balance >= params.amount
         then {
             operations := wrap_transfer(
-                Tezos.self_address,
+                Tezos.get_self_address(),
                 params.recipient,
                 withdrawal_amount,
                 asset.asset_type
@@ -272,14 +277,13 @@ function withdraw(
             s.withdrawal_count := s.withdrawal_count + 1n;
           }
         else {
-          require(params.bounty <= get_nat_or_fail(params.amount - fee, Errors.not_nat), Errors.bounty_too_high);
+          require(params.bounty <= withdrawal_amount, Errors.bounty_too_high);
 
           s.pending_withdrawals[s.pending_count] := record[
               deposit_id = params.deposit_id;
               asset      = asset.asset_type;
-              amount     = get_nat_or_fail(params.amount - fee, Errors.not_nat);
+              amount     = withdrawal_amount;
               recipient  = params.recipient;
-              metadata   = params.metadata;
               bounty     = params.bounty;
               message    = message;
               status     = Pending(unit);
@@ -307,13 +311,14 @@ function default(
                         : return_t is
   case action of [
   | Default(_) -> block {
-      const reward_f = (Tezos.amount / 1mutez) * Constants.precision;
+      const reward_f = (Tezos.get_amount() / 1mutez) * Constants.precision;
       if reward_f > 0n
       then {
         const fish_balance_f = unwrap_or(s.baker_rewards[s.fish], 0n);
         const management_balance_f = unwrap_or(s.baker_rewards[s.management], 0n);
-        s.baker_rewards[s.fish] := fish_balance_f + reward_f / Constants.div_two;
-        s.baker_rewards[s.management] := management_balance_f + reward_f / Constants.div_two;
+        const half_reward = reward_f / 2n;
+        s.baker_rewards[s.fish] := fish_balance_f + half_reward;
+        s.baker_rewards[s.management] := management_balance_f + half_reward;
       } else skip
     } with (no_operations, s)
   | _ -> (no_operations, s)
@@ -326,7 +331,7 @@ function set_bounty(
   case action of [
   | Set_bounty(params) -> block {
       var pending_withdrawal := unwrap(s.pending_withdrawals[params.pending_id], Errors.unknown_pending_withdrawal);
-      require(Tezos.sender = pending_withdrawal.recipient, Errors.not_recipient);
+      require(Tezos.get_sender() = pending_withdrawal.recipient, Errors.not_recipient);
       require(pending_withdrawal.status = Pending(unit), Errors.pending_withdrawal_closed);
       require(params.bounty <= pending_withdrawal.amount, Errors.bounty_too_high);
       pending_withdrawal.bounty := params.bounty;
@@ -342,7 +347,7 @@ function cancel_withdrawal(
   case action of [
   | Cancel_withdrawal(params) -> block {
       var pending_withdrawal := unwrap(s.pending_withdrawals[params.pending_id], Errors.unknown_pending_withdrawal);
-      require(Tezos.sender = pending_withdrawal.recipient, Errors.not_recipient);
+      require(Tezos.get_sender() = pending_withdrawal.recipient, Errors.not_recipient);
       require(pending_withdrawal.status = Pending(unit), Errors.pending_withdrawal_closed);
 
       pending_withdrawal.status := Canceled(unit);

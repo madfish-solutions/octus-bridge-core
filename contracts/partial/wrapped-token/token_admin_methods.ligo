@@ -3,7 +3,7 @@ function set_vault(
   var s                 : storage_t)
                         : return_t is
   block {
-    require(Tezos.sender = s.owner, Errors.not_owner);
+    require(Tezos.get_sender() = s.owner, Errors.not_owner);
   } with (Constants.no_operations, s with record[
       vault = new_address
   ])
@@ -13,7 +13,7 @@ function update_token_metadata(
   var s                 : storage_t)
                         : return_t is
   block {
-    require(Tezos.sender = s.owner, Errors.not_owner);
+    require(Tezos.get_sender() = s.owner, Errors.not_owner);
     require(params.token_id < s.token_count, Errors.token_undefined);
 
     s.token_metadata[params.token_id] := params;

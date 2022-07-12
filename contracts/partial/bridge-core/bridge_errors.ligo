@@ -14,5 +14,6 @@ module Errors is {
   const wrong_event_configuration : string = "Bridge-core/wrong-event-configuration";
   const wrong_round               : string = "Bridge-core/wrong-round";
   const invalid_new_round         : string = "Bridge-core/invalid-new-round";
-  const validate_message_404      : string = "Bridge-core/view-validate-methods-not-found"
+  const validate_message_404      : string = "Bridge-core/view-validate-methods-not-found";
+  const round_undefined           : string = "Bridge-core/round-undefined";
   }

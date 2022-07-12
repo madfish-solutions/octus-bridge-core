@@ -12,20 +12,20 @@ function mint(
 
     if token.totalSupplyF =/= 0n
     then {
-      //require(token.interestUpdateTime >= Tezos.now, Errors.needUpdate);
+      //require(token.interestUpdateTime >= Tezos.get_now(), Errors.needUpdate);
       const liquidityF : nat = get_nat_or_fail(token.totalLiquidF + token.totalBorrowsF - token.totalReservesF, Errors.lowLiquidityReserve);
       mintTokensF := mintTokensF * token.totalSupplyF / liquidityF;
     } else skip;
 
     require(mintTokensF / Constants.precision >= params.minReceived, Errors.highReceived);
 
-    var userBalance : nat := unwrap_or(s.ledger[(Tezos.sender, params.tokenId)], 0n);
+    var userBalance : nat := unwrap_or(s.ledger[(Tezos.get_sender(), params.tokenId)], 0n);
     userBalance := userBalance + mintTokensF;
-    s.ledger[(Tezos.sender, params.tokenId)] := userBalance;
+    s.ledger[(Tezos.get_sender(), params.tokenId)] := userBalance;
     token.totalSupplyF := token.totalSupplyF + mintTokensF;
     token.totalLiquidF := token.totalLiquidF + params.amount * Constants.precision;
     s.tokens[params.tokenId] := token;
-    const operations = transfer_token(Tezos.sender, Tezos.self_address, params.amount, token.mainToken);
+    const operations = transfer_token(Tezos.get_sender(), Tezos.get_self_address(), params.amount, token.mainToken);
   } with (operations, s)
 
 function applyInterestToBorrows(
@@ -43,14 +43,15 @@ function applyInterestToBorrows(
         var userAccount : account := getAccount(user, tokenId, accountsMap);
         const token : tokenType = unwrap(tokensMap[tokenId], Errors.undefined);
 
-        //require(token.interestUpdateTime >= Tezos.now, Errors.needUpdate);
+        //require(token.interestUpdateTime >= Tezos.get_now(), Errors.needUpdate);
 
         if userAccount.lastBorrowIndex =/= 0n
           then userAccount.borrow := userAccount.borrow * token.borrowIndex / userAccount.lastBorrowIndex
         else
           skip;
         userAccount.lastBorrowIndex := token.borrowIndex;
-      } with Map.update((user, tokenId), Some(userAccount), userAccMap);
+        userAccMap[(user, tokenId)] := userAccount;
+      } with userAccMap
   } with Set.fold(oneToken, borrowedTokens, accountsMap)
 
 function calcMaxCollateralInCU(
@@ -70,8 +71,8 @@ function calcMaxCollateralInCU(
         if token.totalSupplyF > 0n then {
           const liquidityF : nat = get_nat_or_fail(token.totalLiquidF + token.totalBorrowsF - token.totalReservesF, Errors.lowLiquidityReserve);
 
-          //require(token.priceUpdateTime >= Tezos.now, Errors.needUpdate);
-          //require(token.interestUpdateTime >= Tezos.now, Errors.needUpdate);
+          //require(token.priceUpdateTime >= Tezos.get_now(), Errors.needUpdate);
+          //require(token.interestUpdateTime >= Tezos.get_now(), Errors.needUpdate);
 
           (* sum += collateralFactorF * exchangeRate * oraclePrice * balance *)
             acc := acc + userBalance * token.lastPrice
@@ -99,7 +100,7 @@ function calcOutstandingBorrowInCU(
         const userBalance : nat = unwrap_or(ledger[(user, tokenId)], 0n);
         var token : tokenType := unwrap(tokens[tokenId], Errors.undefined);
 
-        //require(token.priceUpdateTime >= Tezos.now, Errors.needUpdate);
+        //require(token.priceUpdateTime >= Tezos.get_now(), Errors.needUpdate);
 
         (* sum += oraclePrice * borrow *)
         if userBalance > 0n or userAccount.borrow > 0n
@@ -116,7 +117,7 @@ function redeem(
     require(params.tokenId < s.lastTokenId, Errors.undefined);
 
     var token : tokenType :=  unwrap(s.tokens[params.tokenId], Errors.undefined);
-    var userBalance : nat := unwrap_or(s.ledger[(Tezos.sender, params.tokenId)], 0n);
+    var userBalance : nat := unwrap_or(s.ledger[(Tezos.get_sender(), params.tokenId)], 0n);
     const liquidityF : nat =  get_nat_or_fail(token.totalLiquidF + token.totalBorrowsF - token.totalReservesF, Errors.lowLiquidityReserve);
     const redeemAmount : nat = if params.amount = 0n
     then userBalance * liquidityF / token.totalSupplyF / Constants.precision
@@ -127,28 +128,28 @@ function redeem(
     else ceil_div(redeemAmount * Constants.precision * token.totalSupplyF, liquidityF);
 
     userBalance := get_nat_or_fail(userBalance - burnTokensF, Errors.lowBalance);
-    s.ledger[(Tezos.sender, params.tokenId)] := userBalance;
+    s.ledger[(Tezos.get_sender(), params.tokenId)] := userBalance;
 
     token.totalSupplyF := get_nat_or_fail(token.totalSupplyF - burnTokensF, Errors.lowSupply);
     token.totalLiquidF := get_nat_or_fail(token.totalLiquidF - redeemAmount * Constants.precision, Errors.lowLiquidity);
 
     s.tokens[params.tokenId] := token;
     s.accounts := applyInterestToBorrows(
-            getTokenIds(Tezos.sender, s.borrows),
-            Tezos.sender,
+            getTokenIds(Tezos.get_sender(), s.borrows),
+            Tezos.get_sender(),
             s.accounts,
             s.tokens
           );
 
     const maxBorrowInCU : nat = calcMaxCollateralInCU(
-      getTokenIds(Tezos.sender, s.markets),
-      Tezos.sender,
+      getTokenIds(Tezos.get_sender(), s.markets),
+      Tezos.get_sender(),
       s.ledger,
       s.tokens
     );
     const outstandingBorrowInCU : nat = calcOutstandingBorrowInCU(
-      getTokenIds(Tezos.sender, s.borrows),
-      Tezos.sender,
+      getTokenIds(Tezos.get_sender(), s.borrows),
+      Tezos.get_sender(),
       s.accounts,
       s.ledger,
       s.tokens
@@ -156,7 +157,7 @@ function redeem(
 
     require(outstandingBorrowInCU <= maxBorrowInCU, Errors.redeemExceeds);
 
-    operations := transfer_token(Tezos.self_address, Tezos.sender, redeemAmount, token.mainToken);
+    const operations = transfer_token(Tezos.get_self_address(), Tezos.get_sender(), redeemAmount, token.mainToken);
 
   } with (operations, s)
 
@@ -174,27 +175,27 @@ function borrow(
     require(token.borrowPause = False, Errors.borrowPaused);
 
 
-    var borrowTokens : set(nat) := getTokenIds(Tezos.sender, s.borrows);
-    require(Bytes.length(borrowTokens) < s.maxMarkets, Errors.maxMarketLimit);
+    var borrowTokens : set(nat) := getTokenIds(Tezos.get_sender(), s.borrows);
+    require(Set.size(borrowTokens) < s.maxMarkets, Errors.maxMarketLimit);
 
     borrowTokens := Set.add(params.tokenId, borrowTokens);
-    s.accounts := applyInterestToBorrows(borrowTokens, Tezos.sender, s.accounts, s.tokens);
-    var userAccount : account := getAccount(Tezos.sender, params.tokenId, s.accounts);
+    s.accounts := applyInterestToBorrows(borrowTokens, Tezos.get_sender(), s.accounts, s.tokens);
+    var userAccount : account := getAccount(Tezos.get_sender(), params.tokenId, s.accounts);
     const borrowsF : nat = params.amount * Constants.precision;
 
     userAccount.borrow := userAccount.borrow + borrowsF;
-    s.accounts[(Tezos.sender, params.tokenId)] := userAccount;
-    s.borrows[Tezos.sender] := borrowTokens;
+    s.accounts[(Tezos.get_sender(), params.tokenId)] := userAccount;
+    s.borrows[Tezos.get_sender()] := borrowTokens;
 
     const maxBorrowInCU : nat = calcMaxCollateralInCU(
-      getTokenIds(Tezos.sender, s.markets),
-      Tezos.sender,
+      getTokenIds(Tezos.get_sender(), s.markets),
+      Tezos.get_sender(),
       s.ledger,
       s.tokens
     );
     const outstandingBorrowInCU : nat = calcOutstandingBorrowInCU(
-      getTokenIds(Tezos.sender, s.borrows),
-      Tezos.sender,
+      getTokenIds(Tezos.get_sender(), s.borrows),
+      Tezos.get_sender(),
       s.accounts,
       s.ledger,
       s.tokens
@@ -205,7 +206,7 @@ function borrow(
     token.totalBorrowsF := token.totalBorrowsF + borrowsF;
     token.totalLiquidF := get_nat_or_fail(token.totalLiquidF - borrowsF, Errors.lowLiquidity);
     s.tokens[params.tokenId] := token;
-    const operations = transfer_token(Tezos.self_address, Tezos.sender, params.amount, token.mainToken);
+    const operations = transfer_token(Tezos.get_self_address(), Tezos.get_sender(), params.amount, token.mainToken);
   } with (operations, s)
 
 function repay(
@@ -217,9 +218,9 @@ function repay(
     require(params.tokenId < s.lastTokenId, Errors.undefined);
 
     var token : tokenType := unwrap(s.tokens[params.tokenId], Errors.undefined);
-    var borrowTokens : set(nat) := getTokenIds(Tezos.sender, s.borrows);
-    s.accounts := applyInterestToBorrows(borrowTokens, Tezos.sender, s.accounts, s.tokens);
-    var userAccount : account := getAccount(Tezos.sender, params.tokenId, s.accounts);
+    var borrowTokens : set(nat) := getTokenIds(Tezos.get_sender(), s.borrows);
+    s.accounts := applyInterestToBorrows(borrowTokens, Tezos.get_sender(), s.accounts, s.tokens);
+    var userAccount : account := getAccount(Tezos.get_sender(), params.tokenId, s.accounts);
     var repayAmountF : nat := params.amount * Constants.precision;
 
     if repayAmountF = 0n
@@ -232,13 +233,13 @@ function repay(
     then borrowTokens := Set.remove(params.tokenId, borrowTokens)
     else skip;
 
-    s.accounts[(Tezos.sender, params.tokenId)] := userAccount;
+    s.accounts[(Tezos.get_sender(), params.tokenId)] := userAccount;
     token.totalBorrowsF := get_nat_or_fail(token.totalBorrowsF - repayAmountF, Errors.lowTotalBorrow);
     token.totalLiquidF := token.totalLiquidF + repayAmountF + 100000000n * Constants.precision;
     s.tokens[params.tokenId] := token;
-    s.borrows[Tezos.sender] := borrowTokens;
+    s.borrows[Tezos.get_sender()] := borrowTokens;
     const value : nat = ceil_div(repayAmountF, Constants.precision);
-    operations := transfer_token(Tezos.sender, Tezos.self_address, value, token.mainToken);
+    const operations = transfer_token(Tezos.get_sender(), Tezos.get_self_address(), value, token.mainToken);
 
   } with (operations, s)
 

@@ -62,7 +62,7 @@ function balance_of(
         requests    = list[record[
                         owner   = owner;
                         token_id = token_id]];
-        callback    = get_callback(Tezos.self_address);
+        callback    = get_callback(Tezos.get_self_address());
       ],
       0mutez,
       get_balance_entrypoint(s.bridge_address)

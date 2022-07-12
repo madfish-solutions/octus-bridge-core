@@ -15,7 +15,7 @@ function has_expired(
           | None -> default_expiry
           ]
       ]
-  } with permit_info.created_at + int(expiry) < Tezos.now
+  } with permit_info.created_at + int(expiry) < Tezos.get_now()
 
 function sender_check (
   const expected_user   : address;
@@ -23,7 +23,7 @@ function sender_check (
   const full_param      : action_type;
   const err_message     : string)
                         : storage_type is
-  if Tezos.sender = expected_user
+  if Tezos.get_sender() = expected_user
   then store
   else block {
     const full_param_hash : blake2b_hash =
@@ -120,7 +120,7 @@ function insert_permit(
         permits = Map.add(
           permit,
           record [
-            created_at = Tezos.now;
+            created_at = Tezos.get_now();
             expiry = (None : option(seconds))
           ],
           user_permits.permits
@@ -140,7 +140,7 @@ function add_permit(
       Tezos.implicit_account(Crypto.hash_key(key)));
     const to_sign : bytes =
       Bytes.pack((
-        (Tezos.self_address, Tezos.chain_id),
+        (Tezos.get_self_address(), Tezos.get_chain_id()),
         (store.permit_counter, permit)
       ));
     const store : storage_type =
@@ -187,7 +187,7 @@ function set_permit_expiry_with_check(
   const new_expiry      : seconds)
                         : option(permit_info) is
   block {
-    const permit_age: int = Tezos.now - permit_info.created_at;
+    const permit_age: int = Tezos.get_now() - permit_info.created_at;
   } with if permit_age >= int(new_expiry)
     then (None : option(permit_info))
     else Some(permit_info with record [expiry = Some(new_expiry)])

@@ -42,7 +42,7 @@ function is_approved_operator(
   const s               : storage_type)
                         : bool is
   block {
-    const operator : address = Tezos.sender;
+    const operator : address = Tezos.get_sender();
     const owner : address = transfer_param.from_;
     const user : account = get_account(owner, s);
   } with owner = operator or Set.mem(operator, user.permits)
@@ -114,8 +114,8 @@ function iterate_transfer(
         var src_account : account := get_account(params.from_, s);
 
         (* Check permissions *)
-        if params.from_ = Tezos.sender
-        or src_account.permits contains Tezos.sender
+        if params.from_ = Tezos.get_sender()
+        or src_account.permits contains Tezos.get_sender()
         then skip
         else failwith("FA2_NOT_OPERATOR");
 
@@ -164,7 +164,7 @@ function iterate_update_operators(
     case params of [
       Add_operator(param) -> block {
       (* Check an owner *)
-      if Tezos.sender =/= param.owner
+      if Tezos.get_sender() =/= param.owner
       then failwith("FA2_NOT_OWNER")
       else skip;
 
@@ -179,7 +179,7 @@ function iterate_update_operators(
     }
     | Remove_operator(param) -> block {
       (* Check an owner *)
-      if Tezos.sender =/= param.owner
+      if Tezos.get_sender() =/= param.owner
       then failwith("FA2_NOT_OWNER")
       else skip;
 
@@ -236,7 +236,7 @@ function update_operators(
                         : storage_type is
   block {
     const store : storage_type =
-      sender_check(Tezos.sender, s, full_param, "NOT_TOKEN_OWNER");
+      sender_check(Tezos.get_sender(), s, full_param, "NOT_TOKEN_OWNER");
   } with List.fold(iterate_update_operators, params, store)
 
 function transfer(
