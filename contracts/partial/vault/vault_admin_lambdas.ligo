@@ -408,10 +408,8 @@ function maintain(
       var strategy := unwrap(s.strategies[asset_id], Errors.strategy_undefined);
 
       require(asset.tvl > 0n, Errors.low_asset_liquidity);
+      const current_rate_f = strategy.tvl * Constants.precision / asset.tvl;
       var operations := no_operations;
-      const current_rate_f = if strategy.tvl > 0n
-        then strategy.tvl * Constants.precision / asset.tvl
-        else 0n;
 
       if s.emergency_shutdown and strategy.tvl > 0n
       then {
