@@ -13,7 +13,8 @@ admin = "tz1iAdminAdminAdminAdminAdminAh4qKqu"
 
 burn = "tz1ZZZZZZZZZZZZZZZZZZZZZZZZZZZZNkiRg"
 
-candidate = "tz1XXPVLyQqsMVaQKnPWvD4q6nVwgwXUG4Fp"
+fish = "tz1XXPVLyQqsMVaQKnPWvD4q6nVwgwXUG4Fp"
+management = "tz1hh9w4wnB7xLuGRvqwzWxc7A5ngrVTAPGT"
 
 # the same as Pytezos' contract.context.get_self_address()
 contract_self_address = 'KT1BEqzn5Wx8uJrZNvuS9DVHmLvG9td3fDLi'
@@ -123,6 +124,26 @@ def parse_originations(res):
             }
             originations.append(orig)
     return originations
+
+def parse_strategy_ops(res):
+    result = []
+    for op in res.operations:
+        if op["kind"] == "transaction":
+            ep = op["parameters"]["entrypoint"]
+            if ep == "invest":
+                invest = {
+                    "amount": int(op["parameters"]["value"]["int"]),
+                    "type": "invest"
+                }
+                result.append(invest)
+            elif ep == "divest":
+                divest = {
+                    "amount": int(op["parameters"]["value"]["int"]),
+                    "type": "divest"
+                }
+                result.append(divest)
+            
+    return result
 
 def parse_mints(res):
     mints = []
@@ -323,12 +344,13 @@ def operator_add(owner, operator, token_id=0):
         }
     }
 
-def pack_withdraw_payload(packer, amount, recipient, asset, deposit_id="01"):
+def pack_withdraw_payload(packer, amount, recipient, asset, deposit_id="01", bounty=0):
     withdraw_bytes = packer.withdrawal({
         "deposit_id"              : deposit_id,
         "asset"                   : asset,
         "amount"                  : amount,
         "recipient"               : recipient,
+        "bounty"                  : bounty,
         "metadata"                : None,
     }).interpret().storage
 
@@ -345,6 +367,9 @@ def pack_withdraw_payload(packer, amount, recipient, asset, deposit_id="01"):
     }).interpret().storage
 
     return payload
+
+def skip_nones(d) -> dict:
+    return {k: v for k, v in d.items() if v is not None}
 
 class MockChain():
     def __init__(self, storage):
@@ -371,6 +396,9 @@ class MockChain():
             level=self.level
         )
         self.balance = new_balance
+
+        res.storage["storage"]["strategies"] = skip_nones(res.storage["storage"]["strategies"])
+
         self.storage = res.storage
 
         # calculate total xtz payouts from contract
@@ -395,10 +423,7 @@ class MockChain():
                 if dest not in contract_balance:
                     contract_balance[dest] = 0
                 contract_balance[dest] += amount
-                # TODO source funds removal
-            # imitate closing of the function for convenience
-            elif op["type"] == "close":
-                self.storage["storage"]["entered"] = False   
+                # TODO source funds removal  
 
         return res
 

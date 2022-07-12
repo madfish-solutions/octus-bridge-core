@@ -1,13 +1,6 @@
 PRECISION = 1_000_000
-A_CONST = 1_000_000
-
-TEZOS_PRECISION = int(1e6)
-BITCOIN_PRECISION = int(1e8)
-ETH_PRECISION = int(1e18)
 
 FAR_FUTURE = int(1e10)
-
-MIN_RAMP_TIME=86_400
 
 distributor_asset = "KT18fp5rcTW7mbWDmzFwjLDUhs5MeJmagDSZ"
 auction = "KT19kgnqC5VWoxktLRdRUERbyUPku9YioE8W"
@@ -53,12 +46,14 @@ vr = {
     f"{bridge}%validate_message": "message_valid"
 }
 
+CHAIN_ID = "7263566b706157554e657458645170"
+RECEIVER = "1234567890"
 
 factory = "KT1LzyPS8rN375tC31WPAVHaQ4HyBvTSLwBu"
 quipu_token = "KT1LzyPS8rN375tC31WPAVHaQ4HyBvTSLwBu"
-price_feed = "KT1Qf46j2x37sAN4t2MKRQRVt9gc4FZ5duMs"
+strategy = "KT1Qf46j2x37sAN4t2MKRQRVt9gc4FZ5duMs"
 
-fee_collector = "tz1MDhGTfMQjtMYFXeasKzRWzkQKPtXEkSEw"
+strategist = "tz1MDhGTfMQjtMYFXeasKzRWzkQKPtXEkSEw"
 dummy_sig = "sigY3oZknG7z2N9bj5aWVtdZBakTviKnwbSYTecbbT2gwQDrnLRNhP5KDcLroggq71AjXWkx27nSLfS8rodS4DYn14FyueS5"
 
 dev = "tz1fRXMLR27hWoD49tdtKunHyfy3CQb5XZst"
