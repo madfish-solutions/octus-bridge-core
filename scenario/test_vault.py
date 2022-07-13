@@ -19,6 +19,7 @@ class VaultTest(TestCase):
 
         storage = cls.ct.storage.dummy()
         storage["storage"]["owner"] = admin
+        storage["storage"]["guardian"] = guardian
         storage["storage"]["bridge"] = bridge
         storage["storage"]["fish"] = fish
         storage["storage"]["management"] = management
@@ -248,3 +249,26 @@ class VaultTest(TestCase):
         self.assertEqual(transfers[0]["amount"], 50_000)
         self.assertEqual(transfers[0]["destination"], fish)
         self.assertEqual(transfers[0]["source"], contract_self_address)
+
+    def test_case_toggle_emergency_shutdown(self):
+        chain = MockChain(storage=self.storage)
+        
+        # before shutdown
+        with self.assertRaises(MichelsonRuntimeError):
+            chain.execute(self.ct.toggle_emergency_shutdown(), sender=alice)
+
+        chain.interpret(self.ct.toggle_emergency_shutdown(), sender=guardian)
+
+        chain.execute(self.ct.toggle_emergency_shutdown(), sender=admin)
+
+        # after shutdown
+        # alice still can't
+        with self.assertRaises(MichelsonRuntimeError):
+            chain.execute(self.ct.toggle_emergency_shutdown(), sender=alice)
+
+        # not even guardian can do that
+        with self.assertRaises(MichelsonRuntimeError):
+            chain.execute(self.ct.toggle_emergency_shutdown(), sender=guardian)
+
+        chain.execute(self.ct.toggle_emergency_shutdown(), sender=admin)
+        
