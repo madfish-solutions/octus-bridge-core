@@ -10,6 +10,7 @@ carol = "tz1iCaro1Caro1Caro1Caro1Caro1CbMUKN1"
 dave = "tz1iDaveDaveDaveDaveDaveDaveDatFC4So"
 julian = "tz1iJu1ianJu1ianJu1ianJu1ianJtvTftP8"
 admin = "tz1iAdminAdminAdminAdminAdminAh4qKqu"
+guardian = "tz1LpP5zU73ivpXwHnKYBDRBL3F7aoNsaGWu"
 
 burn = "tz1ZZZZZZZZZZZZZZZZZZZZZZZZZZZZNkiRg"
 
@@ -21,8 +22,6 @@ contract_self_address = 'KT1BEqzn5Wx8uJrZNvuS9DVHmLvG9td3fDLi'
 
 # the same as Pytezos' `contract.context.get_sender()`. The default Tezos.sender
 me = "tz1Ke2h7sDdakHJQh8WX4Z372du1KChsksyU"
-
-burn = "tz1ZZZZZZZZZZZZZZZZZZZZZZZZZZZZNkiRg"
 
 proxy = "KT1Mjjcb6tmSsLm7Cb3DSQszePjfchPM4Uxm"
 

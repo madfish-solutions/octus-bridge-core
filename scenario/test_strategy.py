@@ -52,7 +52,13 @@ class StrategyTest(TestCase):
         self.assertEqual(st_ops[0]["type"], "invest")
         self.assertEqual(st_ops[0]["amount"], 300_000)
 
-        res = chain.execute(self.ct.deposit(recipient=RECEIVER, amount=200_000, asset=token_a_fa2))
+        res = chain.execute(self.ct.deposit(recipient=RECEIVER, amount=50_000, asset=token_a_fa2))
+
+        # nothing to rebalance yet
+        with self.assertRaises(MichelsonRuntimeError):
+            res = chain.execute(self.ct.maintain(0), sender=strategist, view_results=vr)
+
+        res = chain.execute(self.ct.deposit(recipient=RECEIVER, amount=150_000, asset=token_a_fa2))
 
         # invest 100k so they are now both 400:400
         res = chain.execute(self.ct.maintain(0), sender=strategist, view_results=vr)
