@@ -54,4 +54,5 @@ module Errors is {
   const not_unpack_lambda           : string = "Vault/can-not-unpack-lambda";
   const func_seted                  : string = "Vault/func-seted";
   const wrong_index                 : string = "Vault/wrong-index";
+  const wrong_chain_id              : string = "Vault/wrong-chain-id";
   }

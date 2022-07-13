@@ -7,7 +7,7 @@ const fees = {
     withdraw_f: 0.1 * 10 ** 6,
     deposit_f: 0.1 * 10 ** 6,
   },
-  aliens: {
+  alien: {
     withdraw_f: 0.1 * 10 ** 6,
     deposit_f: 0.1 * 10 ** 6,
   },
@@ -18,7 +18,7 @@ const assetConfig = {
     configuration_wid: 1,
     configuration_address: 10101010,
   },
-  aliens: {
+  alien: {
     configuration_wid: 2,
     configuration_address: 20102010,
   },

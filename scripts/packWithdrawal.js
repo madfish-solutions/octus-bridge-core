@@ -1,6 +1,7 @@
 const { Parser, packDataBytes } = require("@taquito/michel-codec");
 
 function paramToBytes({
+  chainId,
   depositId,
   amount,
   recipient,
@@ -14,6 +15,7 @@ function paramToBytes({
   const type = `
     (pair
       (bytes %deposit_id)
+      (bytes %chain_id)
       (or %asset
         (or (address %fa12) (pair %fa2 (address %address) (nat %id)))
         (or (unit %tez) (pair %wrapped (address %address) (nat %id))))
@@ -26,6 +28,7 @@ function paramToBytes({
     case "FA12":
       data = `
         (Pair 0x${depositId}
+              0x${chainId}
         (Left (Left "${assetAddress}"))
         ${amount}
         "${recipient}"
@@ -35,6 +38,7 @@ function paramToBytes({
     case "FA2":
       data = `
         (Pair 0x${depositId}
+              0x${chainId}
         (Left (Right (Pair "${assetAddress}" ${assetId})))
         ${amount}
         "${recipient}"
@@ -44,6 +48,7 @@ function paramToBytes({
     case "TEZ":
       data = `
       (Pair 0x${depositId}
+            0x${chainId}
       (Right (Left Unit))
       ${amount}
       "${recipient}"
@@ -54,6 +59,7 @@ function paramToBytes({
       if (metadata) {
         data = `
         (Pair 0x${depositId}
+              0x${chainId}
         (Right (Right (Pair "${assetAddress}" ${assetId})))
         ${amount}
         "${recipient}"
@@ -70,6 +76,7 @@ function paramToBytes({
       } else {
         data = `
         (Pair 0x${depositId}
+              0x${chainId}
         (Right (Right (Pair "${assetAddress}" ${assetId})))
         ${amount}
         "${recipient}"
