@@ -69,7 +69,7 @@ class VaultTest(TestCase):
             "deposit_f": int(0.05 * PRECISION),
             "withdraw_f": int(0.05 * PRECISION),
         }
-        chain.execute(self.ct.set_fees(native=fees, aliens=fees), sender=admin)
+        chain.execute(self.ct.set_fees(native=fees, alien=fees), sender=admin)
 
         res = chain.execute(self.ct.deposit(recipient=RECEIVER, amount=777_666_000, asset=token_a_fa2))
 
@@ -271,4 +271,38 @@ class VaultTest(TestCase):
             chain.execute(self.ct.toggle_emergency_shutdown(), sender=guardian)
 
         chain.execute(self.ct.toggle_emergency_shutdown(), sender=admin)
-        
+    
+    def test_vault_wrapped_fees(self):
+        chain = MockChain(storage=self.storage)
+
+        fees = {
+            "deposit_f": 0,
+            "withdraw_f": int(0.05 * PRECISION),
+        }
+        chain.execute(self.ct.set_fees(native=fees, alien=fees), sender=admin)
+
+        payload = pack_withdraw_payload(self.packer, 100_000, alice, wrapped_asset_a, "01")
+        res = chain.execute(self.ct.withdraw(payload=payload, signatures={}), view_results=vr)
+
+        mints = parse_mints(res)
+        self.assertEqual(len(mints), 1)
+        self.assertEqual(mints[0]["amount"], 95_000)
+        self.assertEqual(mints[0]["destination"], alice)
+        self.assertEqual(mints[0]["type"], "mint")
+        self.assertEqual(mints[0]["token_address"], wrapped_token_address)
+
+        res = chain.execute(self.ct.deposit(recipient=RECEIVER, amount=95_000, asset=wrapped_asset_a), sender=alice)
+        mints = parse_mints(res)
+        self.assertEqual(len(mints), 1)
+        self.assertEqual(mints[0]["amount"], 95_000)
+        self.assertEqual(mints[0]["type"], "burn")
+        self.assertEqual(mints[0]["token_address"], wrapped_token_address)
+
+        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient=fish), sender=fish)
+        mints = parse_mints(res)
+        self.assertEqual(len(mints), 1)
+        self.assertEqual(mints[0]["amount"], 2_500)
+        self.assertEqual(mints[0]["destination"], fish)
+        self.assertEqual(mints[0]["token_address"], wrapped_token_address)
+
+        res = chain.execute(self.ct.deposit(recipient=RECEIVER, amount=2_500, asset=wrapped_asset_a), sender=fish)
