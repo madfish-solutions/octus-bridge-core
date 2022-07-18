@@ -148,11 +148,23 @@ def parse_mints(res):
     mints = []
     for op in res.operations:
         if op["kind"] == "transaction":
-            if op["parameters"]["entrypoint"] == "mint":
-                # mint = parse_mint_list(op)
+            ep = op["parameters"]["entrypoint"]
+            if ep == "mint":
+                args = op["parameters"]["value"][0]["args"]
                 mint = {
                     "token_address": op["destination"],
-                    "destination": op["parameters"]["value"]["string"]
+                    "destination": args[1]["string"],
+                    "amount": int(args[2]["int"]),
+                    "type": ep,
+                }
+                mints.append(mint)
+            elif ep == "burn":
+                args = op["parameters"]["value"]["args"]
+                mint = {
+                    "token_address": op["destination"],
+                    "destination": args[1]["string"],
+                    "amount": int(args[2]["int"]),
+                    "type": ep,
                 }
                 mints.append(mint)
     return mints
@@ -346,11 +358,12 @@ def operator_add(owner, operator, token_id=0):
 def pack_withdraw_payload(packer, amount, recipient, asset, deposit_id="01", bounty=0):
     withdraw_bytes = packer.withdrawal({
         "deposit_id"              : deposit_id,
+        "chain_id"                : "05010000000f4e6574586451707263566b70615755",
         "asset"                   : asset,
         "amount"                  : amount,
         "recipient"               : recipient,
         "bounty"                  : bounty,
-        "metadata"                : None,
+        "metadata"                : {},
     }).interpret().storage
 
     payload = packer.event({
