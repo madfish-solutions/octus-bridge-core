@@ -409,7 +409,8 @@ class MockChain():
         )
         self.balance = new_balance
 
-        res.storage["storage"]["strategies"] = skip_nones(res.storage["storage"]["strategies"])
+        if "storage" in res.storage:
+            res.storage["storage"]["strategies"] = skip_nones(res.storage["storage"]["strategies"])
 
         self.storage = res.storage
 
@@ -458,7 +459,9 @@ class MockChain():
         res = call.onchain_view(
             storage=self.storage,
             balance=self.balance,
-            view_results=view_results
+            view_results=view_results,
+            now=self.now,
+            level=self.level
         )
         return res
 

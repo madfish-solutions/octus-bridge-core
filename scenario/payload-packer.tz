@@ -11,11 +11,13 @@
            (nat %round))
         (pair %withdrawal
            (bytes %deposit_id)
+           (bytes %chain_id)
            (or %asset
               (or (address %fa12) (pair %fa2 (address %address) (nat %id)))
               (or (unit %tez) (pair %wrapped (address %address) (nat %id))))
            (nat %amount)
            (address %recipient)
+           (nat %bounty)
            (option %metadata (map string bytes)))) ;
   storage bytes ;
   code { NIL operation ;
