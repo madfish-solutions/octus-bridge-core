@@ -121,7 +121,6 @@ function deposit_with_bounty(
         require(pending_withdrawal.status = Pending(unit), Errors.pending_withdrawal_closed);
 
         total_withdrawal := total_withdrawal + pending_withdrawal.amount;
-        require(deposited_amount >= total_withdrawal, Errors.amount_less_pending_amount);
 
         total_bounty := total_bounty + pending_withdrawal.bounty;
 
@@ -144,7 +143,8 @@ function deposit_with_bounty(
 
         pending_withdrawal.status := Completed(unit);
         s.pending_withdrawals[withdrawal_id] := pending_withdrawal;
-       };
+      };
+      require(deposited_amount >= total_withdrawal, Errors.amount_less_pending_amount);
 
       if fee > 0n
       then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, params.asset_id)
