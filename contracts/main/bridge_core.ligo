@@ -13,7 +13,7 @@ type parameter_t        is
 | Set_owner                 of address
 | Set_round_submitter       of address
 | Set_round_ttl             of nat
-| Set_required_signatures   of nat
+| Set_min_required_signatures   of nat
 | Set_configuration         of config_t
 | Toggle_pause_bridge       of unit
 | Toggle_ban_relay          of key
@@ -31,7 +31,7 @@ function main(
   | Set_owner(params)                 -> common_set_owner(params, s)
   | Set_round_submitter(params)       -> set_round_submitter(params, s)
   | Set_round_ttl(params)             -> set_round_ttl(params, s)
-  | Set_required_signatures(params)   -> set_required_signatures(params, s)
+  | Set_min_required_signatures(params) -> set_min_required_signatures(params, s)
   | Set_configuration(params)         -> set_configuration(params, s)
   | Toggle_pause_bridge(_)            -> toggle_pause_bridge(s)
   | Toggle_ban_relay(params)          -> toggle_ban_relay(params, s)

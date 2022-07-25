@@ -21,7 +21,7 @@ type storage_t          is [@layout:comb] record[
   last_round              : nat;
   initial_round           : nat;
   ttl                     : nat;
-  required_signatures     : nat;
+  min_required_signatures : nat;
   banned_relays           : banned_relays_t;
   paused                  : bool;
   cache                   : cache_t;
