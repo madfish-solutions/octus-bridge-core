@@ -37,6 +37,12 @@
   | Some(decoded_payload) -> decoded_payload
   ]
 
+[@view] function encode_everscale_event(
+  const payload         : payload_t;
+  const _s              : storage_t)
+                        : bytes is
+  Bytes.pack(payload)
+
 [@view] function decode_round_relays_event_data(
   const payload         : bytes;
   const s               : storage_t)
