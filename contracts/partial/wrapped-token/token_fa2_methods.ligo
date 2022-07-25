@@ -13,6 +13,8 @@ function iterate_transfer (
       block {
         const sender_key : ledger_key_t = (trx_params.from_, transfer.token_id);
         const sender_allowances = unwrap_or(s.allowances[sender_key], Constants.empty_allowances);
+
+        require(transfer.token_id < s.token_count, Errors.fa2_token_undefined);
         (* Check permissions *)
         require(trx_params.from_ = Tezos.get_sender()
           or Set.mem(Tezos.get_sender(), sender_allowances), Errors.fa2_not_operator);
