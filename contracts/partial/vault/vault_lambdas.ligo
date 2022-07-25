@@ -145,7 +145,7 @@ function deposit_with_bounty(
         s.pending_withdrawals[withdrawal_id] := pending_withdrawal;
       };
       require(deposited_amount >= total_withdrawal, Errors.amount_less_pending_amount);
-
+      require(params.expected_min_bounty <= total_bounty, Errors.bounty_lower_expected);
       if fee > 0n
       then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, params.asset_id)
       else skip;

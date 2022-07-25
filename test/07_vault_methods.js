@@ -1654,7 +1654,7 @@ describe("Vault methods tests", async function () {
     it("Shouldn't deposit if emergency shutdown is enabled", async function () {
       await vault.call("toggle_emergency_shutdown");
       await rejects(
-        vault.call("deposit_with_bounty", ["001100", 0, 0, [1]]),
+        vault.call("deposit_with_bounty", ["001100", 0, 0, [1], 10]),
         err => {
           strictEqual(err.message, "Vault/emergency-shutdown-enabled");
           return true;
@@ -1664,7 +1664,13 @@ describe("Vault methods tests", async function () {
     });
     it("Shouldn't deposit if assets do not match", async function () {
       await rejects(
-        vault.call("deposit_with_bounty", ["001100", 100 * precision, 0, [1]]),
+        vault.call("deposit_with_bounty", [
+          "001100",
+          100 * precision,
+          0,
+          [1],
+          10,
+        ]),
         err => {
           strictEqual(err.message, "Vault/assets-do-not-match");
           return true;
@@ -1673,7 +1679,13 @@ describe("Vault methods tests", async function () {
     });
     it("Shouldn't deposit if asset is paused", async function () {
       await rejects(
-        vault.call("deposit_with_bounty", ["001100", 100 * precision, 4, [1]]),
+        vault.call("deposit_with_bounty", [
+          "001100",
+          100 * precision,
+          4,
+          [1],
+          10,
+        ]),
         err => {
           strictEqual(err.message, "Vault/asset-is-paused");
           return true;
@@ -1684,7 +1696,7 @@ describe("Vault methods tests", async function () {
       await rejects(
         vault.call(
           "deposit_with_bounty",
-          ["001100", 250 * precision, 2, [1]],
+          ["001100", 250 * precision, 2, [1], 10],
           (250 * precision) / 1e6,
         ),
         err => {
@@ -1695,7 +1707,7 @@ describe("Vault methods tests", async function () {
     });
     it("Shouldn't deposit if deposit zero amount", async function () {
       await rejects(
-        vault.call("deposit_with_bounty", ["001100", 0, 0, [1]]),
+        vault.call("deposit_with_bounty", ["001100", 0, 0, [1], 10]),
         err => {
           strictEqual(err.message, "Vault/zero-transfer");
           return true;
@@ -1704,7 +1716,7 @@ describe("Vault methods tests", async function () {
     });
     it("Shouldn't deposit if amount less than pending withdrawal amount", async function () {
       await rejects(
-        vault.call("deposit_with_bounty", ["001100", 200, 0, [2]]),
+        vault.call("deposit_with_bounty", ["001100", 200, 0, [2], 100]),
         err => {
           strictEqual(
             err.message,
@@ -1716,7 +1728,13 @@ describe("Vault methods tests", async function () {
     });
     it("Shouldn't deposit if asset is banned", async function () {
       await rejects(
-        vault.call("deposit_with_bounty", ["001100", 100 * precision, 5, [1]]),
+        vault.call("deposit_with_bounty", [
+          "001100",
+          100 * precision,
+          5,
+          [1],
+          1000,
+        ]),
         err => {
           strictEqual(err.message, "Vault/asset-is-banned");
           return true;
@@ -1725,9 +1743,27 @@ describe("Vault methods tests", async function () {
     });
     it("Shouldn't deposit if pending withdrawal is closed", async function () {
       await rejects(
-        vault.call("deposit_with_bounty", ["001100", 1000, 2, [1]], 1000 / 1e6),
+        vault.call(
+          "deposit_with_bounty",
+          ["001100", 1000, 2, [1], 1000],
+          1000 / 1e6,
+        ),
         err => {
           strictEqual(err.message, "Vault/pending-withdrawal-closed");
+          return true;
+        },
+      );
+    });
+    it("Shouldn't deposit if bounty lower than expected bounty", async function () {
+      const depositAmount = 120 * precision;
+      await rejects(
+        vault.call(
+          "deposit_with_bounty",
+          ["001100", depositAmount, 2, [4], 1000000000000000],
+          depositAmount / 1e6,
+        ),
+        err => {
+          strictEqual(err.message, "Vault/bounty-lower-than-expected");
           return true;
         },
       );
@@ -1749,7 +1785,7 @@ describe("Vault methods tests", async function () {
       );
       await vault.call(
         "deposit_with_bounty",
-        ["001100", depositAmount, 2, [4]],
+        ["001100", depositAmount, 2, [4], 100],
         depositAmount / 1e6,
       );
 
@@ -1837,6 +1873,7 @@ describe("Vault methods tests", async function () {
         depositAmount,
         0,
         [2, 3],
+        10,
       ]);
 
       const asset = await vault.storage.assets.get("0");
