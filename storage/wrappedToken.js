@@ -6,7 +6,7 @@ module.exports = {
   vault: alice.pkh,
   ledger: MichelsonMap.fromLiteral({}),
   allowances: MichelsonMap.fromLiteral({}),
-  tokens_supply: MichelsonMap.fromLiteral({}),
+  tokens_supplies: MichelsonMap.fromLiteral({}),
   token_count: 0,
   metadata: MichelsonMap.fromLiteral({}),
   token_metadata: MichelsonMap.fromLiteral({}),
