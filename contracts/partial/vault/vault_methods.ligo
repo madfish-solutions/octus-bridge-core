@@ -58,7 +58,7 @@
   block {
     require(params.index <= vault_methods_max_index, Errors.wrong_index);
     case s.vault_lambdas[params.index] of [
-    | Some(_) -> failwith(Errors.func_seted)
+    | Some(_) -> failwith(Errors.already_set)
     | None    -> s.vault_lambdas[params.index] := params.func
     ]
   } with (Constants.no_operations, s)

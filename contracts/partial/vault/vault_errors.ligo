@@ -52,6 +52,6 @@ module Errors is {
   const assets_do_not_match         : string = "Vault/assets-do-not-match";
   const func_not_set                : string = "Vault/func-not-set";
   const not_unpack_lambda           : string = "Vault/can-not-unpack-lambda";
-  const func_seted                  : string = "Vault/func-seted";
+  const already_set                 : string = "Vault/lambda-already-set"
   const wrong_index                 : string = "Vault/wrong-index";
   }
