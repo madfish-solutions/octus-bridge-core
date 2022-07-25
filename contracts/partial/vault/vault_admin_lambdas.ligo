@@ -1,29 +1,29 @@
 
 
-function set_owner_l(
+function set_owner(
   const action          : action_t;
   var s                 : storage_t)
                         : return_t is
   case action of [
-  | Set_owner(new_owner) -> set_owner(new_owner, s)
+  | Set_owner(new_owner) -> common_set_owner(new_owner, s)
   | _ -> (no_operations, s)
   ]
 
-function confirm_owner_l(
+function confirm_owner(
   const action          : action_t;
   var s                 : storage_t)
                         : return_t is
   case action of [
-  | Confirm_owner(_) -> confirm_owner(s)
+  | Confirm_owner(_) -> common_confirm_owner(s)
   | _ -> (no_operations, s)
   ]
 
-function update_metadata_l(
+function update_metadata(
   const action          : action_t;
   var s                 : storage_t)
                         : return_t is
   case action of [
-  | Update_metadata(params) -> update_metadata(params, s)
+  | Update_metadata(params) -> common_update_metadata(params, s)
   | _  -> (no_operations, s)
   ]
 

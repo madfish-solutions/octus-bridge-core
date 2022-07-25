@@ -1,7 +1,7 @@
 [
   {
     "index": 0,
-    "name": "set_owner_l"
+    "name": "set_owner"
   },
   {
     "index": 1,
@@ -57,7 +57,7 @@
   },
   {
     "index": 14,
-    "name": "update_metadata_l"
+    "name": "update_metadata"
   },
   {
     "index": 15,
@@ -77,7 +77,7 @@
   },
   {
     "index": 19,
-    "name": "confirm_owner_l"
+    "name": "confirm_owner"
   },
   {
     "index": 20,

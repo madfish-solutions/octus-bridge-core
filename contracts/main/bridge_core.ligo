@@ -28,16 +28,16 @@ function main(
                            : return_t is
   case action of [
   (* Admin methods *)
-  | Set_owner(params)                 -> set_owner(params, s)
+  | Set_owner(params)                 -> common_set_owner(params, s)
   | Set_round_submitter(params)       -> set_round_submitter(params, s)
   | Set_round_ttl(params)             -> set_round_ttl(params, s)
   | Set_required_signatures(params)   -> set_required_signatures(params, s)
   | Set_configuration(params)         -> set_configuration(params, s)
   | Toggle_pause_bridge(_)            -> toggle_pause_bridge(s)
   | Toggle_ban_relay(params)          -> toggle_ban_relay(params, s)
-  | Update_metadata(params)           -> update_metadata(params, s)
+  | Update_metadata(params)           -> common_update_metadata(params, s)
 
-  | Confirm_owner(_)                  -> confirm_owner(s)
+  | Confirm_owner(_)                  -> common_confirm_owner(s)
   | Force_round_relay(params)         -> force_round_relay(params, s)
 
   | Set_round_relays(params)          -> set_round_relays(params, s)
