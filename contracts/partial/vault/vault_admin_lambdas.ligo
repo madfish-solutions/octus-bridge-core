@@ -1,5 +1,3 @@
-
-
 function set_owner(
   const action          : action_t;
   var s                 : storage_t)
@@ -136,14 +134,14 @@ function set_native_config(
   | _ -> (no_operations, s)
   ]
 
-function set_aliens_config(
+function set_alien_config(
   const action          : action_t;
   var s                 : storage_t)
                         : return_t is
   case action of [
-  | Set_aliens_config(config) -> block {
+  | Set_alien_config(config) -> block {
       require(Tezos.get_sender() = s.owner, Errors.not_owner);
-      s.asset_config.aliens := config;
+      s.asset_config.alien := config;
     } with (no_operations, s)
   | _ -> (no_operations, s)
   ]
@@ -240,12 +238,28 @@ function claim_fee(
       const reward = balance_f / Constants.precision;
       fee_balances[Tezos.get_sender()] := get_nat_or_fail(balance_f - reward * Constants.precision, Errors.not_nat);
       s.fee_balances[params.asset_id] := fee_balances;
-      const operation =  wrap_transfer(
-          Tezos.get_self_address(),
-          params.recipient,
-          reward,
-          asset.asset_type
-       );
+      const operation = case asset.asset_type of [
+        | Wrapped(token) -> Tezos.transaction(
+            list[
+              record[
+                token_id = token.id;
+                recipient = params.recipient;
+                amount = reward;
+              ];
+            ],
+            0mutez,
+            unwrap(
+              (Tezos.get_entrypoint_opt("%mint", token.address) : option(contract(mint_params_t))),
+              Errors.mint_etp_404
+            )
+          )
+        | _ ->  wrap_transfer(
+            Tezos.get_self_address(),
+            params.recipient,
+            reward,
+            asset.asset_type
+          )
+        ];
     } with (list[operation], s)
   | _ -> (no_operations, s)
   ]
@@ -397,10 +411,8 @@ function maintain(
       var strategy := unwrap(s.strategies[asset_id], Errors.strategy_undefined);
 
       require(asset.tvl > 0n, Errors.low_asset_liquidity);
+      const current_rate_f = strategy.tvl * Constants.precision / asset.tvl;
       var operations := no_operations;
-      const current_rate_f = if strategy.tvl > 0n
-        then strategy.tvl * Constants.precision / asset.tvl
-        else 0n;
 
       if abs(current_rate_f - strategy.target_reserves_rate_f) > strategy.delta_f
         or strategy.tvl = 0n
