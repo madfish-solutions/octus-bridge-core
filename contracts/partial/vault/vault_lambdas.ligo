@@ -23,9 +23,11 @@ function deposit(
 
       require(params.amount > 0n, Errors.zero_transfer);
 
-      const fee = params.amount * asset.deposit_fee_f / Constants.precision;
+      const fee_f = params.amount * asset.deposit_fee_f;
 
-      const deposited_amount = get_nat_or_fail(params.amount - fee, Errors.not_nat);
+      const deposited_amount = get_nat_or_fail(params.amount * Constants.precision - fee_f, Errors.not_nat) / Constants.precision;
+
+      const fee = get_nat_or_fail(params.amount - deposited_amount, Errors.not_nat);
 
       if fee > 0n
       then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset_id)
@@ -103,9 +105,11 @@ function deposit_with_bounty(
       require(params.amount > 0n, Errors.zero_transfer);
       require(asset.tvl + params.amount <= asset.deposit_limit or asset.deposit_limit = 0n, Errors.deposit_limit);
 
-      const fee = params.amount * asset.deposit_fee_f / Constants.precision;
+      const fee_f = params.amount * asset.deposit_fee_f;
 
-      var deposited_amount := get_nat_or_fail(params.amount - fee, Errors.not_nat);
+      const deposited_amount = get_nat_or_fail(params.amount * Constants.precision - fee_f, Errors.not_nat) / Constants.precision;
+
+      const fee = get_nat_or_fail(params.amount - deposited_amount, Errors.not_nat);
 
       var total_bounty := 0n;
       var total_withdrawal := 0n;
@@ -133,7 +137,6 @@ function deposit_with_bounty(
           asset      = pending_withdrawal.asset;
           amount     = pending_withdrawal.amount;
           recipient  = pending_withdrawal.recipient;
-          metadata   = pending_withdrawal.metadata;
           signatures = pending_withdrawal.message.signatures;
         ];
         s.withdrawal_ids[pending_withdrawal.message.payload] := s.withdrawal_count;
@@ -181,11 +184,12 @@ function withdraw(
       require(not(s.emergency_shutdown), Errors.emergency_shutdown_enabled);
       require_none(s.withdrawal_ids[message.payload], Errors.payload_already_seen);
       require_none(s.pending_withdrawal_ids[message.payload], Errors.payload_already_seen);
-      is_withdraw_valid(message, s.bridge);
+      ensure_withdraw_valid(message, s.bridge);
 
       const payload = unwrap((Bytes.unpack(message.payload) : option(payload_t)), Errors.invalid_payload);
       const params = unwrap((Bytes.unpack(payload.event_data) : option(withdrawal_data_t)), Errors.invalid_withdrawal_params);
 
+      require(params.chain_id = Constants.chain_id, Errors.wrong_chain_id);
       const result = get_or_create_asset(params.asset, params.metadata, s);
       var asset := result.asset;
       const asset_id = result.asset_id;
@@ -196,16 +200,17 @@ function withdraw(
 
       require(params.amount > 0n, Errors.zero_transfer);
 
-      const fee = params.amount * asset.withdrawal_fee_f / Constants.precision;
+      const fee_f = params.amount * asset.withdrawal_fee_f;
 
-      const withdrawal_amount = get_nat_or_fail(params.amount - fee, Errors.not_nat);
+      const withdrawal_amount = get_nat_or_fail(params.amount * Constants.precision - fee_f, Errors.not_nat) / Constants.precision;
+
+      const fee = get_nat_or_fail(params.amount - withdrawal_amount, Errors.not_nat);
 
       const new_withdrawal = record[
           deposit_id = params.deposit_id;
           asset      = asset.asset_type;
           amount     = withdrawal_amount;
           recipient  = params.recipient;
-          metadata   = params.metadata;
           signatures = message.signatures;
       ];
 
@@ -251,8 +256,8 @@ function withdraw(
         }
       | _ -> {
         require(
-          s.asset_config.aliens.configuration_address = payload.configuration_address and
-          s.asset_config.aliens.configuration_wid = payload.configuration_wid,
+          s.asset_config.alien.configuration_address = payload.configuration_address and
+          s.asset_config.alien.configuration_wid = payload.configuration_wid,
           Errors.wrong_event_configuration
         );
         if asset.virtual_balance >= params.amount
@@ -272,14 +277,13 @@ function withdraw(
             s.withdrawal_count := s.withdrawal_count + 1n;
           }
         else {
-          require(params.bounty <= get_nat_or_fail(params.amount - fee, Errors.not_nat), Errors.bounty_too_high);
+          require(params.bounty <= withdrawal_amount, Errors.bounty_too_high);
 
           s.pending_withdrawals[s.pending_count] := record[
               deposit_id = params.deposit_id;
               asset      = asset.asset_type;
-              amount     = get_nat_or_fail(params.amount - fee, Errors.not_nat);
+              amount     = withdrawal_amount;
               recipient  = params.recipient;
-              metadata   = params.metadata;
               bounty     = params.bounty;
               message    = message;
               status     = Pending(unit);
@@ -312,8 +316,9 @@ function default(
       then {
         const fish_balance_f = unwrap_or(s.baker_rewards[s.fish], 0n);
         const management_balance_f = unwrap_or(s.baker_rewards[s.management], 0n);
-        s.baker_rewards[s.fish] := fish_balance_f + reward_f / Constants.div_two;
-        s.baker_rewards[s.management] := management_balance_f + reward_f / Constants.div_two;
+        const half_reward = reward_f / 2n;
+        s.baker_rewards[s.fish] := fish_balance_f + half_reward;
+        s.baker_rewards[s.management] := management_balance_f + half_reward;
       } else skip
     } with (no_operations, s)
   | _ -> (no_operations, s)
