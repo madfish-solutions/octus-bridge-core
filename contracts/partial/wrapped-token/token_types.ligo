@@ -15,7 +15,7 @@ type storage_t          is [@layout:comb] record [
   vault                   : address;
   ledger                  : ledger_t;
   allowances              : allowances_t;
-  tokens_supply           : big_map(token_id_t, nat);
+  tokens_supplies           : big_map(token_id_t, nat);
   token_count             : nat;
   metadata                : metadata_t;
   token_metadata          : big_map(token_id_t, token_metadata_t);
