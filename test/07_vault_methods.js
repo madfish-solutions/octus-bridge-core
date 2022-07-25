@@ -10,6 +10,8 @@ const WrappedToken = require("./helpers/wrappedTokenInterface");
 const { alice, bob, eve } = require("../scripts/sandbox/accounts");
 const { MichelsonMap } = require("@taquito/taquito");
 const { confirmOperation } = require("../scripts/confirmation");
+const keccak256 = require("keccak256");
+
 const fa12TokenStorage = require("../test/storage/FA12");
 const fa2TokenStorage = require("../test/storage/FA2");
 const wrappedTokenStorage = require("../test/storage/wrappedToken");
@@ -768,7 +770,13 @@ describe("Vault methods tests", async function () {
       const managementFee = await feeBalances.get(vault.storage.management);
 
       const newWithdrawal = await vault.storage.withdrawals.get("0");
-      const newWithdrawalId = await vault.storage.withdrawal_ids.get(payload);
+
+      const payloadHash = keccak256(Buffer.from(payload, "hex")).toString(
+        "hex",
+      );
+      const newWithdrawalId = await vault.storage.withdrawal_ids.get(
+        payloadHash,
+      );
       strictEqual(
         vault.storage.withdrawal_count.toNumber(),
         prevWithdrawalCount + 1,
@@ -837,7 +845,12 @@ describe("Vault methods tests", async function () {
       const managementFee = await feeBalances.get(vault.storage.management);
 
       const newWithdrawal = await vault.storage.withdrawals.get("1");
-      const newWithdrawalId = await vault.storage.withdrawal_ids.get(payload);
+      const payloadHash = keccak256(Buffer.from(payload, "hex")).toString(
+        "hex",
+      );
+      const newWithdrawalId = await vault.storage.withdrawal_ids.get(
+        payloadHash,
+      );
       strictEqual(
         vault.storage.withdrawal_count.toNumber(),
         prevWithdrawalCount + 1,
@@ -918,7 +931,12 @@ describe("Vault methods tests", async function () {
       const managementFee = await feeBalances.get(vault.storage.management);
 
       const newWithdrawal = await vault.storage.withdrawals.get("2");
-      const newWithdrawalId = await vault.storage.withdrawal_ids.get(payload);
+      const payloadHash = keccak256(Buffer.from(payload, "hex")).toString(
+        "hex",
+      );
+      const newWithdrawalId = await vault.storage.withdrawal_ids.get(
+        payloadHash,
+      );
       strictEqual(
         vault.storage.withdrawal_count.toNumber(),
         prevWithdrawalCount + 1,
@@ -992,7 +1010,12 @@ describe("Vault methods tests", async function () {
       const managementFee = await feeBalances.get(vault.storage.management);
 
       const newWithdrawal = await vault.storage.withdrawals.get("3");
-      const newWithdrawalId = await vault.storage.withdrawal_ids.get(payload);
+      const payloadHash = keccak256(Buffer.from(payload, "hex")).toString(
+        "hex",
+      );
+      const newWithdrawalId = await vault.storage.withdrawal_ids.get(
+        payloadHash,
+      );
       strictEqual(
         vault.storage.withdrawal_count.toNumber(),
         prevWithdrawalCount + 1,
@@ -1061,7 +1084,12 @@ describe("Vault methods tests", async function () {
       const managementFee = await feeBalances.get(vault.storage.management);
 
       const newWithdrawal = await vault.storage.withdrawals.get("4");
-      const newWithdrawalId = await vault.storage.withdrawal_ids.get(payload);
+      const payloadHash = keccak256(Buffer.from(payload, "hex")).toString(
+        "hex",
+      );
+      const newWithdrawalId = await vault.storage.withdrawal_ids.get(
+        payloadHash,
+      );
 
       const newPendingWithdrawal = await vault.storage.pending_withdrawals.get(
         "0",
@@ -1148,7 +1176,12 @@ describe("Vault methods tests", async function () {
       const managementFee = await feeBalances.get(vault.storage.management);
 
       const newWithdrawal = await vault.storage.withdrawals.get("4");
-      const newWithdrawalId = await vault.storage.withdrawal_ids.get(payload);
+      const payloadHash = keccak256(Buffer.from(payload, "hex")).toString(
+        "hex",
+      );
+      const newWithdrawalId = await vault.storage.withdrawal_ids.get(
+        payloadHash,
+      );
 
       const newPendingWithdrawal = await vault.storage.pending_withdrawals.get(
         "1",
@@ -1221,7 +1254,12 @@ describe("Vault methods tests", async function () {
       const newWithdrawal = await vault.storage.withdrawals.get(
         `${vault.storage.withdrawal_count}`,
       );
-      const newWithdrawalId = await vault.storage.withdrawal_ids.get(payload);
+      const payloadHash = keccak256(Buffer.from(payload, "hex")).toString(
+        "hex",
+      );
+      const newWithdrawalId = await vault.storage.withdrawal_ids.get(
+        payloadHash,
+      );
 
       const newPendingWithdrawal = await vault.storage.pending_withdrawals.get(
         "2",
@@ -1292,7 +1330,12 @@ describe("Vault methods tests", async function () {
       const newWithdrawal = await vault.storage.withdrawals.get(
         `${vault.storage.withdrawal_count}`,
       );
-      const newWithdrawalId = await vault.storage.withdrawal_ids.get(payload);
+      const payloadHash = keccak256(Buffer.from(payload, "hex")).toString(
+        "hex",
+      );
+      const newWithdrawalId = await vault.storage.withdrawal_ids.get(
+        payloadHash,
+      );
 
       const newPendingWithdrawal = await vault.storage.pending_withdrawals.get(
         "3",
@@ -1373,7 +1416,12 @@ describe("Vault methods tests", async function () {
       const managementFee = await feeBalances.get(vault.storage.management);
 
       const newWithdrawal = await vault.storage.withdrawals.get("4");
-      const newWithdrawalId = await vault.storage.withdrawal_ids.get(payload);
+      const payloadHash = keccak256(Buffer.from(payload, "hex")).toString(
+        "hex",
+      );
+      const newWithdrawalId = await vault.storage.withdrawal_ids.get(
+        payloadHash,
+      );
 
       const newPendingWithdrawal = await vault.storage.pending_withdrawals.get(
         "4",
@@ -1536,7 +1584,12 @@ describe("Vault methods tests", async function () {
       const feeBalances = await vault.storage.fee_balances.get(newAssetId);
       const fishFee = await feeBalances.get(vault.storage.fish);
       const managementFee = await feeBalances.get(vault.storage.management);
-      const newWithdrawalId = await vault.storage.withdrawal_ids.get(payload);
+      const payloadHash = keccak256(Buffer.from(payload, "hex")).toString(
+        "hex",
+      );
+      const newWithdrawalId = await vault.storage.withdrawal_ids.get(
+        payloadHash,
+      );
       const newWithdrawal = await vault.storage.withdrawals.get(
         `${newWithdrawalId}`,
       );

@@ -138,7 +138,8 @@ function deposit_with_bounty(
           recipient  = pending_withdrawal.recipient;
           signatures = pending_withdrawal.message.signatures;
         ];
-        s.withdrawal_ids[pending_withdrawal.message.payload] := s.withdrawal_count;
+        const payload_hash = Crypto.keccak(pending_withdrawal.message.payload);
+        s.withdrawal_ids[payload_hash] := s.withdrawal_count;
         s.withdrawal_count := s.withdrawal_count + 1n;
 
         pending_withdrawal.status := Completed(unit);
@@ -182,8 +183,10 @@ function withdraw(
   case action of [
   | Withdraw(message) -> {
       require(not(s.emergency_shutdown), Errors.emergency_shutdown_enabled);
-      require_none(s.withdrawal_ids[message.payload], Errors.payload_already_seen);
-      require_none(s.pending_withdrawal_ids[message.payload], Errors.payload_already_seen);
+
+      const payload_hash = Crypto.keccak(message.payload);
+      require_none(s.withdrawal_ids[payload_hash], Errors.payload_already_seen);
+      require_none(s.pending_withdrawal_ids[payload_hash], Errors.payload_already_seen);
       ensure_withdraw_valid(message, s.bridge);
 
       const payload = unwrap((Bytes.unpack(message.payload) : option(payload_t)), Errors.invalid_payload);
@@ -251,7 +254,7 @@ function withdraw(
             ];
 
           s.withdrawals[s.withdrawal_count] := new_withdrawal;
-          s.withdrawal_ids[message.payload] := s.withdrawal_count;
+          s.withdrawal_ids[payload_hash] := s.withdrawal_count;
           s.withdrawal_count := s.withdrawal_count + 1n;
         }
       | _ -> {
@@ -273,7 +276,7 @@ function withdraw(
                 virtual_balance = get_nat_or_fail(asset.virtual_balance - params.amount, Errors.not_nat)
             ];
             s.withdrawals[s.withdrawal_count] := new_withdrawal;
-            s.withdrawal_ids[message.payload] := s.withdrawal_count;
+            s.withdrawal_ids[payload_hash] := s.withdrawal_count;
             s.withdrawal_count := s.withdrawal_count + 1n;
           }
         else {
@@ -288,7 +291,7 @@ function withdraw(
               message    = message;
               status     = Pending(unit);
           ];
-          s.pending_withdrawal_ids[message.payload] := s.pending_count ;
+          s.pending_withdrawal_ids[payload_hash] := s.pending_count ;
           s.pending_count := s.pending_count + 1n;
 
           asset := asset with record[
