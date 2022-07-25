@@ -303,6 +303,7 @@ function update_strategy(
   case action of [
   | Update_strategy(params) -> block {
       require(Tezos.get_sender() = s.strategist, Errors.not_strategist);
+      require(not(s.emergency_shutdown), Errors.emergency_shutdown_enabled);
       var strategy := unwrap(s.strategies[params.asset_id], Errors.strategy_undefined);
       strategy := strategy with record[
           target_reserves_rate_f = params.target_reserves_rate_f;

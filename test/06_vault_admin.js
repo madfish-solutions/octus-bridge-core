@@ -750,6 +750,17 @@ describe("Vault Admin tests", async function () {
         return true;
       });
     });
+    it("Shouldn't update stategy if the emergency shutdown mode is enabled", async function () {
+      Tezos.setSignerProvider(signerBob);
+      await vault.call("toggle_emergency_shutdown");
+      Tezos.setSignerProvider(signerAlice);
+      await rejects(vault.call("update_strategy", [0, 0, 0]), err => {
+        strictEqual(err.message, "Vault/emergency-shutdown-enabled");
+        return true;
+      });
+      Tezos.setSignerProvider(signerBob);
+      await vault.call("toggle_emergency_shutdown");
+    });
     it("Should allow update strategy", async function () {
       Tezos.setSignerProvider(signerAlice);
       const targetReversesF = 0.2 * 10 ** 6;
