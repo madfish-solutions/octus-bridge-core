@@ -328,7 +328,7 @@ function set_bounty(
       var pending_withdrawal := unwrap(s.pending_withdrawals[params.pending_id], Errors.unknown_pending_withdrawal);
       require(Tezos.get_sender() = pending_withdrawal.recipient, Errors.not_recipient);
       require(pending_withdrawal.status = Pending(unit), Errors.pending_withdrawal_closed);
-      require(params.bounty <= pending_withdrawal.amount, Errors.bounty_too_high);
+      require(params.bounty < pending_withdrawal.amount, Errors.bounty_too_high);
       pending_withdrawal.bounty := params.bounty;
       s.pending_withdrawals[params.pending_id] := pending_withdrawal;
     } with (no_operations, s)
