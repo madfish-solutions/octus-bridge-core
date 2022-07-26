@@ -159,22 +159,6 @@ function toggle_emergency_shutdown(
   | _ -> (no_operations, s)
   ]
 
-function toggle_pause_asset(
-  const action          : action_t;
-  var s                 : storage_t)
-                        : return_t is
-  case action of [
-  | Toggle_pause_asset(asset_id) -> block {
-      var asset := unwrap(s.assets[asset_id], Errors.asset_undefined);
-      if asset.paused
-      then require(Tezos.get_sender() = s.owner, Errors.not_owner)
-      else require(Tezos.get_sender() = s.guardian or Tezos.get_sender() = s.owner, Errors.not_owner_or_guardian);
-
-      s.assets[asset_id] := asset with record[paused = not(asset.paused)];
-    } with (no_operations, s)
-  | _ -> (no_operations, s)
-  ]
-
 function toggle_ban_asset(
   const action          : action_t;
   var s                 : storage_t)

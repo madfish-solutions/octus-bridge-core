@@ -189,7 +189,6 @@ type action_t           is
 | Set_asset_withdraw_fee  of fee_per_asset_t
 | Set_native_config       of config_t
 | Set_alien_config        of config_t
-| Toggle_pause_asset      of asset_id_t
 | Toggle_ban_asset        of asset_standard_t
 | Toggle_emergency_shutdown of unit
 | Update_metadata         of metadata_t
@@ -236,6 +235,6 @@ type full_action_t      is
 | Use                     of action_t
 | Setup_func              of setup_func_t
 
-[@inline] const vault_methods_max_index : nat = 31n;
+[@inline] const vault_methods_max_index : nat = 30n;
 
 [@inline] const no_operations     : list(operation) = nil;

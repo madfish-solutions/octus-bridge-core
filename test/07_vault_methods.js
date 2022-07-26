@@ -93,8 +93,6 @@ describe("Vault methods tests", async function () {
           deposit_limit: 1000 * precision,
           tvl: 180 * precision,
           virtual_balance: 0,
-          paused: false,
-          banned: false,
         },
         1: {
           asset_type: { fa2: { address: fa2Token.address, id: 0 } },
@@ -103,8 +101,6 @@ describe("Vault methods tests", async function () {
           deposit_limit: 0,
           tvl: 50 * precision,
           virtual_balance: 0,
-          paused: false,
-          banned: false,
         },
         2: {
           asset_type: { tez: null },
@@ -113,8 +109,6 @@ describe("Vault methods tests", async function () {
           deposit_limit: 300 * precision,
           tvl: 10 * precision,
           virtual_balance: 0,
-          paused: false,
-          banned: false,
         },
         3: {
           asset_type: { wrapped: { address: wrappedToken.address, id: 0 } },
@@ -123,8 +117,6 @@ describe("Vault methods tests", async function () {
           deposit_limit: 0,
           tvl: 90 * precision,
           virtual_balance: 90 * precision,
-          paused: false,
-          banned: false,
         },
         4: {
           asset_type: { fa12: alice.pkh },
@@ -133,8 +125,6 @@ describe("Vault methods tests", async function () {
           deposit_limit: 0,
           tvl: 0,
           virtual_balance: 0,
-          paused: true,
-          banned: false,
         },
         5: {
           asset_type: { fa12: alice.pkh },
@@ -143,8 +133,6 @@ describe("Vault methods tests", async function () {
           deposit_limit: 0,
           tvl: 0,
           virtual_balance: 0,
-          paused: false,
-          banned: true,
         },
         6: {
           asset_type: { fa12: fa12Token_2.address },
@@ -154,8 +142,6 @@ describe("Vault methods tests", async function () {
           tvl: 0,
           virtual_balance: 0,
           pending_fee: 0,
-          paused: false,
-          banned: false,
         },
       });
       vaultStorage.storage.asset_ids.set({ fa12: fa12Token.address }, 0);
@@ -193,15 +179,6 @@ describe("Vault methods tests", async function () {
       );
       await vault.call("toggle_emergency_shutdown");
     });
-    it("Shouldn't deposit if asset is paused", async function () {
-      await rejects(
-        vault.call("deposit", ["001100", 0, "fa12", alice.pkh]),
-        err => {
-          strictEqual(err.message, "Vault/asset-is-paused");
-          return true;
-        },
-      );
-    });
     it("Shouldn't deposit if amount + tvl > deposit limit", async function () {
       await rejects(
         vault.call("deposit", [
@@ -217,6 +194,7 @@ describe("Vault methods tests", async function () {
       );
     });
     it("Shouldn't deposit if asset is banned", async function () {
+      await vault.call("toggle_ban_asset", ["fa12", bob.pkh]);
       await rejects(
         vault.call("deposit", ["001100", 0, "fa12", bob.pkh]),
         err => {
@@ -606,29 +584,6 @@ describe("Vault methods tests", async function () {
         }),
         err => {
           strictEqual(err.message, "Vault/not-enough-signatures");
-          return true;
-        },
-      );
-    });
-    it("Shouldn't withdraw if asset is paused", async function () {
-      payload_1.eventData = packWithdrawal({
-        chainId: CHAIN_ID,
-        depositId: "00",
-        amount: 100,
-        recipient: alice.pkh,
-        assetType: "FA12",
-        assetAddress: alice.pkh,
-      });
-      payload_1.round = 1;
-      const payload = packPayload(payload_1);
-      const signature = await signerAlice.sign(payload);
-      await rejects(
-        vault.call("withdraw", {
-          payload: payload,
-          signatures: MichelsonMap.fromLiteral({ [alice.pk]: signature.sig }),
-        }),
-        err => {
-          strictEqual(err.message, "Vault/asset-is-paused");
           return true;
         },
       );
@@ -1730,21 +1685,6 @@ describe("Vault methods tests", async function () {
         },
       );
     });
-    it("Shouldn't deposit if asset is paused", async function () {
-      await rejects(
-        vault.call("deposit_with_bounty", [
-          "001100",
-          100 * precision,
-          4,
-          [1],
-          10,
-        ]),
-        err => {
-          strictEqual(err.message, "Vault/asset-is-paused");
-          return true;
-        },
-      );
-    });
     it("Shouldn't deposit if amount + tvl > deposit limit", async function () {
       await rejects(
         vault.call(
@@ -1775,21 +1715,6 @@ describe("Vault methods tests", async function () {
             err.message,
             "Vault/amount-less-than-pending-withdrawal-amount",
           );
-          return true;
-        },
-      );
-    });
-    it("Shouldn't deposit if asset is banned", async function () {
-      await rejects(
-        vault.call("deposit_with_bounty", [
-          "001100",
-          100 * precision,
-          5,
-          [1],
-          1000,
-        ]),
-        err => {
-          strictEqual(err.message, "Vault/asset-is-banned");
           return true;
         },
       );

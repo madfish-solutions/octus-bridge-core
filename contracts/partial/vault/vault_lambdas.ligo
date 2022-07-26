@@ -11,8 +11,7 @@ function deposit(
       const asset_id = result.asset_id;
       s := result.storage;
 
-      require(not(asset.paused), Errors.asset_paused);
-      require(not(asset.banned), Errors.asset_banned);
+      require(not(unwrap_or(s.banned_assets[params.asset], False)), Errors.asset_banned);
 
       case asset.asset_type of [
       | Tez -> require(Tezos.get_amount() / 1mutez = params.amount, Errors.amounts_mismatch)
@@ -94,9 +93,6 @@ function deposit_with_bounty(
       require(not(s.emergency_shutdown), Errors.emergency_shutdown_enabled);
 
       var asset := unwrap(s.assets[params.asset_id], Errors.asset_undefined);
-
-      require(not(asset.paused), Errors.asset_paused);
-      require(not(asset.banned), Errors.asset_banned);
 
       case asset.asset_type of [
       | Tez -> require(Tezos.get_amount() / 1mutez = params.amount, Errors.amounts_mismatch)
@@ -198,8 +194,7 @@ function withdraw(
       const asset_id = result.asset_id;
       s := result.storage;
 
-      require(not(asset.paused), Errors.asset_paused);
-      require(not(asset.banned), Errors.asset_banned);
+      require(not(unwrap_or(s.banned_assets[params.asset], False)), Errors.asset_banned);
 
       require(params.amount > 0n, Errors.zero_transfer);
 

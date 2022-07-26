@@ -74,8 +74,6 @@ type asset_t            is [@layout:comb] record[
   deposit_limit           : nat;
   tvl                     : nat;
   virtual_balance         : nat;
-  paused                  : bool;
-  banned                  : bool;
 ]
 
 type fee_balances_t     is map(address, nat)
