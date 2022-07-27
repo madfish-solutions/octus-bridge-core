@@ -70,8 +70,9 @@ type fee_balances_map_t is big_map(asset_id_t, fee_balances_t)
 type pending_withdrawal_t is [@layout:comb] record[
   deposit_id              : bytes;
   asset                   : asset_standard_t;
-  amount                  : nat;
   recipient               : address;
+  amount                  : nat;
+  fee                     : nat;
   bounty                  : nat;
   message                 : message_t;
   status                  : withdrawal_status_t;
