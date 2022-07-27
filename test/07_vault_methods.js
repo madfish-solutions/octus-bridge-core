@@ -1090,7 +1090,6 @@ describe("Vault methods tests", async function () {
         amount: 20,
       });
       await confirmOperation(Tezos, operation.hash);
-      Tezos.setSignerProvider(signerEve);
       const withdrawalAmount = 250 * precision;
       payload_1.confAddr = 20102010;
       payload_1.confWid = 2;
@@ -1107,10 +1106,6 @@ describe("Vault methods tests", async function () {
       const signature = await signerAlice.sign(payload);
 
       const prevWithdrawalCount = vault.storage.withdrawal_count.toNumber();
-      const prevAliceBalance = await Tezos.tz
-        .getBalance(alice.pkh)
-        .then(balance => Math.floor(balance.toNumber()))
-        .catch(error => console.log(JSON.stringify(error)));
       const prevVaultBalance = await Tezos.tz
         .getBalance(vault.address)
         .then(balance => Math.floor(balance.toNumber()))
@@ -1126,11 +1121,6 @@ describe("Vault methods tests", async function () {
         payload: payload,
         signatures: MichelsonMap.fromLiteral({ [alice.pk]: signature.sig }),
       });
-
-      const aliceBalance = await Tezos.tz
-        .getBalance(alice.pkh)
-        .then(balance => Math.floor(balance.toNumber()))
-        .catch(error => console.log(JSON.stringify(error)));
       const asset = await vault.storage.assets.get("2");
       const vaultBalance = await Tezos.tz
         .getBalance(vault.address)
@@ -1159,7 +1149,6 @@ describe("Vault methods tests", async function () {
 
       strictEqual(asset.tvl.toNumber(), prevAsset.tvl.toNumber());
       strictEqual(vaultBalance, prevVaultBalance);
-      strictEqual(aliceBalance, prevAliceBalance);
       strictEqual(fishFee.toNumber(), prevFishFee.toNumber());
       strictEqual(managementFee.toNumber(), prevManagementFee.toNumber());
       strictEqual(newWithdrawal, undefined);
@@ -1263,7 +1252,7 @@ describe("Vault methods tests", async function () {
       const prevManagementFee = await prevFeeBalances.get(
         vault.storage.management,
       );
-
+      Tezos.setSignerProvider(signerEve);
       await vault.call("withdraw", {
         payload: payload,
         signatures: MichelsonMap.fromLiteral({ [alice.pk]: signature.sig }),
@@ -1304,8 +1293,8 @@ describe("Vault methods tests", async function () {
       notStrictEqual(newPendingWithdrawal.status["pending"], undefined);
       strictEqual(newPendingWithdrawal.bounty.toNumber(), 1000000);
     });
-    it("Should create pending withdrawal tez asset from Eve", async function () {
-      Tezos.setSignerProvider(signerEve);
+    it("Should create pending withdrawal tez asset", async function () {
+      Tezos.setSignerProvider(signerAlice);
       const withdrawalAmount = 125 * precision;
       payload_1.confAddr = 20102010;
       payload_1.confWid = 2;
@@ -1322,10 +1311,7 @@ describe("Vault methods tests", async function () {
       const signature = await signerAlice.sign(payload);
 
       const prevWithdrawalCount = vault.storage.withdrawal_count.toNumber();
-      const prevAliceBalance = await Tezos.tz
-        .getBalance(alice.pkh)
-        .then(balance => Math.floor(balance.toNumber()))
-        .catch(error => console.log(JSON.stringify(error)));
+
       const prevVaultBalance = await Tezos.tz
         .getBalance(vault.address)
         .then(balance => Math.floor(balance.toNumber()))
@@ -1341,10 +1327,7 @@ describe("Vault methods tests", async function () {
         payload: payload,
         signatures: MichelsonMap.fromLiteral({ [alice.pk]: signature.sig }),
       });
-      const aliceBalance = await Tezos.tz
-        .getBalance(alice.pkh)
-        .then(balance => Math.floor(balance.toNumber()))
-        .catch(error => console.log(JSON.stringify(error)));
+
       const asset = await vault.storage.assets.get("2");
       const vaultBalance = await Tezos.tz
         .getBalance(vault.address)
@@ -1374,7 +1357,6 @@ describe("Vault methods tests", async function () {
 
       strictEqual(asset.tvl.toNumber(), prevAsset.tvl.toNumber());
       strictEqual(vaultBalance, prevVaultBalance);
-      strictEqual(aliceBalance, prevAliceBalance);
       strictEqual(fishFee.toNumber(), prevFishFee.toNumber());
       strictEqual(managementFee.toNumber(), prevManagementFee.toNumber());
       strictEqual(newWithdrawal, undefined);

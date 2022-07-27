@@ -282,6 +282,10 @@ function withdraw(
             s.withdrawal_count := s.withdrawal_count + 1n;
           }
         else {
+          if params.bounty > 0n
+          then require(params.recipient = Tezos.get_sender(), Errors.not_recipient)
+          else skip;
+
           require(params.bounty <= withdrawal_amount, Errors.bounty_too_high);
 
           s.pending_withdrawals[s.pending_count] := record[
