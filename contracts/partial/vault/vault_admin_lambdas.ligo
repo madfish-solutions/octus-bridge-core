@@ -1,27 +1,27 @@
-function set_owner_l(
+function set_owner(
   const action          : action_t;
   var s                 : storage_t)
                         : return_t is
   case action of [
-  | Set_owner(new_owner) -> set_owner(new_owner, s)
+  | Set_owner(new_owner) -> common_set_owner(new_owner, s)
   | _ -> (no_operations, s)
   ]
 
-function confirm_owner_l(
+function confirm_owner(
   const action          : action_t;
   var s                 : storage_t)
                         : return_t is
   case action of [
-  | Confirm_owner(_) -> confirm_owner(s)
+  | Confirm_owner(_) -> common_confirm_owner(s)
   | _ -> (no_operations, s)
   ]
 
-function update_metadata_l(
+function update_metadata(
   const action          : action_t;
   var s                 : storage_t)
                         : return_t is
   case action of [
-  | Update_metadata(params) -> update_metadata(params, s)
+  | Update_metadata(params) -> common_update_metadata(params, s)
   | _  -> (no_operations, s)
   ]
 
@@ -317,6 +317,7 @@ function update_strategy(
   case action of [
   | Update_strategy(params) -> block {
       require(Tezos.get_sender() = s.strategist, Errors.not_strategist);
+      require(not(s.emergency_shutdown), Errors.emergency_shutdown_enabled);
       var strategy := unwrap(s.strategies[params.asset_id], Errors.strategy_undefined);
       strategy := strategy with record[
           target_reserves_rate_f = params.target_reserves_rate_f;
@@ -404,6 +405,8 @@ function maintain(
   case action of [
   | Maintain(asset_id) -> block {
       require(Tezos.get_sender() = s.strategist, Errors.not_strategist);
+      require(not(s.emergency_shutdown), Errors.emergency_shutdown_enabled);
+
       var asset := unwrap(s.assets[asset_id], Errors.asset_undefined);
       var strategy := unwrap(s.strategies[asset_id], Errors.strategy_undefined);
 
@@ -411,38 +414,32 @@ function maintain(
       const current_rate_f = strategy.tvl * Constants.precision / asset.tvl;
       var operations := no_operations;
 
-      if s.emergency_shutdown and strategy.tvl > 0n
+      if abs(current_rate_f - strategy.target_reserves_rate_f) > strategy.delta_f
+        or strategy.tvl = 0n
       then {
-          operations := get_divest_op(strategy.tvl, strategy.strategy_address) # operations;
-          asset.virtual_balance := asset.virtual_balance + strategy.tvl;
-          strategy.tvl := 0n;
-        }
-      else if abs(current_rate_f - strategy.target_reserves_rate_f) > strategy.delta_f
-          or strategy.tvl = 0n
+        const optimal_deposit = asset.tvl * strategy.target_reserves_rate_f / Constants.precision;
+        const disbalance_amount = abs(strategy.tvl - optimal_deposit);
+        if current_rate_f > strategy.target_reserves_rate_f
         then {
-            const optimal_deposit = asset.tvl * strategy.target_reserves_rate_f / Constants.precision;
-            const disbalance_amount = abs(strategy.tvl - optimal_deposit);
-            if current_rate_f > strategy.target_reserves_rate_f
-            then {
-                operations := get_divest_op(disbalance_amount, strategy.strategy_address) # operations;
-                asset.virtual_balance := asset.virtual_balance + disbalance_amount;
-                strategy.tvl := get_nat_or_fail(strategy.tvl - disbalance_amount, Errors.not_nat);
-              }
-            else if strategy.target_reserves_rate_f > current_rate_f
-              then {
-                  operations := list[
-                      wrap_transfer(
-                        Tezos.get_self_address(),
-                        strategy.strategy_address,
-                        disbalance_amount,
-                        asset.asset_type);
-                      get_invest_op(disbalance_amount, strategy.strategy_address)];
-
-                  asset.virtual_balance := get_nat_or_fail(asset.virtual_balance - disbalance_amount, Errors.not_nat);
-                  strategy.tvl := strategy.tvl + disbalance_amount;
-              } else failwith(Errors.no_rebalancing_needed);
+            operations := get_divest_op(disbalance_amount, strategy.strategy_address) # operations;
+            asset.virtual_balance := asset.virtual_balance + disbalance_amount;
+            strategy.tvl := get_nat_or_fail(strategy.tvl - disbalance_amount, Errors.not_nat);
           }
-        else failwith(Errors.no_rebalancing_needed);
+        else if strategy.target_reserves_rate_f > current_rate_f
+          then {
+              operations := list[
+                  wrap_transfer(
+                    Tezos.get_self_address(),
+                    strategy.strategy_address,
+                    disbalance_amount,
+                    asset.asset_type);
+                  get_invest_op(disbalance_amount, strategy.strategy_address)];
+
+              asset.virtual_balance := get_nat_or_fail(asset.virtual_balance - disbalance_amount, Errors.not_nat);
+              strategy.tvl := strategy.tvl + disbalance_amount;
+          } else failwith(Errors.no_rebalancing_needed);
+      }
+      else failwith(Errors.no_rebalancing_needed);
       s.assets[asset_id] := asset;
       s.strategies[asset_id] := strategy;
     } with (operations, s)

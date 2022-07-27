@@ -90,20 +90,20 @@ describe("Bridge-core Admin tests", async function () {
       strictEqual(bridge.storage.ttl.toNumber(), 1000);
     });
   });
-  describe("Testing entrypoint: Set_required_signatures", async function () {
-    it("Shouldn't set requires signatures if the user is not an owner", async function () {
+  describe("Testing entrypoint: Set_min_required_signatures", async function () {
+    it("Shouldn't set min required signatures if the user is not an owner", async function () {
       Tezos.setSignerProvider(signerAlice);
-      await rejects(bridge.call("set_required_signatures", 1000), err => {
+      await rejects(bridge.call("set_min_required_signatures", 1000), err => {
         strictEqual(err.message, "Bridge-core/not-owner");
         return true;
       });
     });
-    it("Should allow set required_signatures", async function () {
+    it("Should allow set min required_signatures", async function () {
       Tezos.setSignerProvider(signerBob);
 
-      await bridge.call("set_required_signatures", 10);
+      await bridge.call("set_min_required_signatures", 10);
 
-      strictEqual(bridge.storage.required_signatures.toNumber(), 10);
+      strictEqual(bridge.storage.min_required_signatures.toNumber(), 10);
     });
   });
   describe("Testing entrypoint: Set_configuration", async function () {
@@ -174,8 +174,18 @@ describe("Bridge-core Admin tests", async function () {
         return true;
       });
     });
-    it("Should force starting new round", async function () {
+    it("Shouldn't force new round if the set relays is empty", async function () {
       Tezos.setSignerProvider(signerBob);
+      const newRound = {
+        endTime: String(Date.now() + 1000),
+        relayKeys: [],
+      };
+      await rejects(bridge.call("force_round_relay", newRound), err => {
+        strictEqual(err.message, "Bridge-core/empty-relay-set");
+        return true;
+      });
+    });
+    it("Should force starting new round", async function () {
       const newRound = {
         endTime: String(Date.now() + 1000),
         relayKeys: [bob.pk],

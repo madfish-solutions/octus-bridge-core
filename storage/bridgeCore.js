@@ -12,7 +12,7 @@ module.exports = {
   last_round: 0,
   initial_round: 0,
   ttl: 10,
-  required_signatures: 1,
+  min_required_signatures: 1,
   banned_relays: MichelsonMap.fromLiteral({}),
   paused: false,
   cache: MichelsonMap.fromLiteral({}),

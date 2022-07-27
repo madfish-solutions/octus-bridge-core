@@ -1,4 +1,4 @@
-function set_owner(
+function common_set_owner(
   const new_address     : address;
   var s                 : storage_t)
                         : return_t is
@@ -6,7 +6,7 @@ function set_owner(
     require(Tezos.get_sender() = s.owner, Errors.not_owner)
   } with ((nil: list(operation)), s with record[pending_owner = Some(new_address)])
 
-function confirm_owner(
+function common_confirm_owner(
   var s                 : storage_t)
                         : return_t is
   block {
@@ -16,7 +16,7 @@ function confirm_owner(
     s.pending_owner := (None : option(address));
   } with ((nil: list(operation)), s)
 
-function update_metadata(
+function common_update_metadata(
   const params          : metadata_t;
   var s                 : storage_t)
                         : return_t is

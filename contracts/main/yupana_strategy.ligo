@@ -24,8 +24,8 @@ function main(
   const s                  : storage_t)
                            : return_t is
   case action of [
-  | Set_owner(params) -> set_owner(params, s)
-  | Confirm_owner(_)  -> confirm_owner(s)
+  | Set_owner(params) -> common_set_owner(params, s)
+  | Confirm_owner(_)  -> common_confirm_owner(s)
   | Invest(params)    -> invest(params, s)
   | Divest(params)    -> divest(params, s)
   | Harvest(params)   -> harvest(params, s)

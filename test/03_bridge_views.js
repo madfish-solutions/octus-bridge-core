@@ -108,6 +108,43 @@ describe("Bridge-core views test", async function () {
       await bridge.callView("decode_everscale_event", 0).catch(err => {});
     });
   });
+  describe("Testing view method: Encode_everscale_event", async function () {
+    const eventTimestamp = String(Date.now());
+    const payload_1 = {
+      eventTrxLt: 1,
+      eventTimestamp: eventTimestamp,
+      eventData: "0011",
+      confWid: 0,
+      confAddr: 1337,
+      eventContractWid: 0,
+      eventContractAddr: 1337,
+      proxy: bob.pkh,
+      round: 0,
+    };
+
+    it("Should return encoded everscale event", async function () {
+      const payloadBytes = toBytes(payload_1);
+      const payloadParams = {
+        event_transaction_lt: 1,
+        event_timestamp: eventTimestamp,
+        event_data: "0011",
+        configuration_wid: 0,
+        configuration_address: 1337,
+        event_contract_wid: 0,
+        event_contract_address: 1337,
+        proxy: bob.pkh,
+        round: 0,
+      };
+      const response = await bridge.callView(
+        "encode_everscale_event",
+        payloadParams,
+      );
+      strictEqual(response, payloadBytes);
+    });
+    it("Shouldn't decode everscale event if invalid payload", async function () {
+      await bridge.callView("decode_everscale_event", 0).catch(err => {});
+    });
+  });
   describe("Testing view method: Decode_round_relays_event_data", async function () {
     const payload_1 = {
       eventTrxLt: 1,
