@@ -1572,7 +1572,6 @@ describe("Vault methods tests", async function () {
       const newDeposit = await vault.storage.deposits.get(
         `${vault.storage.deposit_count.toNumber() - 1}`,
       );
-      const feeBalances = await vault.storage.fee_balances.get("2");
       const asset = await vault.storage.assets.get("2");
 
       strictEqual(asset.tvl.toNumber(), prevAsset.tvl.toNumber());
@@ -1750,10 +1749,6 @@ describe("Vault methods tests", async function () {
         .then(balance => Math.floor(balance.toNumber()))
         .catch(error => console.log(JSON.stringify(error)));
 
-      const depositFee = Math.floor(
-        (depositAmount * asset.deposit_fee_f.toNumber()) / precision,
-      );
-
       const feeBalances = await vault.storage.fee_balances.get("2");
       const fishFee = await feeBalances.get(vault.storage.fish);
       const managementFee = await feeBalances.get(vault.storage.management);
@@ -1766,6 +1761,12 @@ describe("Vault methods tests", async function () {
       );
       const pendingWithdrawal = await vault.storage.pending_withdrawals.get(
         "4",
+      );
+
+      const depositFee = Math.floor(
+        ((depositAmount + pendingWithdrawal.bounty.toNumber()) *
+          asset.deposit_fee_f.toNumber()) /
+          precision,
       );
 
       notStrictEqual(pendingWithdrawal.status["completed"], undefined);
@@ -1832,9 +1833,6 @@ describe("Vault methods tests", async function () {
       const asset = await vault.storage.assets.get("0");
       const aliceBalance = await fa12Token.getBalance(alice.pkh);
       const eveBalance = await fa12Token.getBalance(eve.pkh);
-      const depositFee = Math.floor(
-        (depositAmount * asset.deposit_fee_f.toNumber()) / precision,
-      );
 
       const feeBalances = await vault.storage.fee_balances.get("0");
       const fishFee = await feeBalances.get(vault.storage.fish);
@@ -1859,9 +1857,20 @@ describe("Vault methods tests", async function () {
       const totalWithdrawalFee =
         pendingWithdrawal_1.fee.toNumber() + pendingWithdrawal_1.fee.toNumber();
 
-      const totalWithdrawalAmount =
-        pendingWithdrawal_1.amount.toNumber() +
-        pendingWithdrawal_2.amount.toNumber();
+      const totalWithdrawalAmount = pendingWithdrawal_1.amount
+        .plus(pendingWithdrawal_2.amount)
+        .toNumber();
+
+      const totalBounty = pendingWithdrawal_1.bounty
+        .plus(pendingWithdrawal_2.bounty)
+        .toNumber();
+      const depositFee = Math.floor(
+        ((depositAmount + totalBounty) * asset.deposit_fee_f.toNumber()) /
+          precision,
+      );
+      console.log(fishFee.toNumber());
+      console.log(fishFee.toNumber() - prevFishFee.toNumber());
+      console.log(depositFee, totalWithdrawalFee);
       notStrictEqual(pendingWithdrawal_1.status["completed"], undefined);
       notStrictEqual(pendingWithdrawal_2.status["completed"], undefined);
       notStrictEqual(newWithdrawal_1, undefined);
@@ -1891,10 +1900,7 @@ describe("Vault methods tests", async function () {
       strictEqual(newDeposit.recipient, "001100");
       strictEqual(
         newDeposit.amount.toNumber(),
-        depositAmount -
-          depositFee +
-          pendingWithdrawal_1.bounty.toNumber() +
-          pendingWithdrawal_2.bounty.toNumber(),
+        depositAmount - depositFee + totalBounty,
       );
       notStrictEqual(newDeposit.asset["fa12"], undefined);
       strictEqual(
