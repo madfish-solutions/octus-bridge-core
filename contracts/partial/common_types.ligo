@@ -89,3 +89,8 @@ type harvest_response_t is [@layout:comb] record[
   asset                   : asset_standard_t;
   amount                  : nat;
 ]
+
+type strategy_invest_t  is [@layout:comb] record[
+  amount                  : nat;
+  data                    : bytes;
+]

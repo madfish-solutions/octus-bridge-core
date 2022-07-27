@@ -346,13 +346,7 @@ function revoke_strategy(
             asset.virtual_balance := asset.virtual_balance + divest_amount;
             s.assets[params.asset_id] := asset;
           } with (list[
-              Tezos.transaction(
-                divest_amount,
-                0mutez,
-                unwrap(
-                  (Tezos.get_entrypoint_opt("%divest", strategy.strategy_address) : option(contract(nat))),
-                  Errors.divest_etp_404
-                ));
+              get_divest_op(divest_amount, params.data, strategy.strategy_address);
               get_harvest_op(strategy.strategy_address)
             ], s)
         else block {
@@ -398,12 +392,12 @@ function maintain(
   var s                 : storage_t)
                         : return_t is
   case action of [
-  | Maintain(asset_id) -> block {
+  | Maintain(params) -> block {
       require(Tezos.get_sender() = s.strategist, Errors.not_strategist);
       require(not(s.emergency_shutdown), Errors.emergency_shutdown_enabled);
 
-      var asset := unwrap(s.assets[asset_id], Errors.asset_undefined);
-      var strategy := unwrap(s.strategies[asset_id], Errors.strategy_undefined);
+      var asset := unwrap(s.assets[params.asset_id], Errors.asset_undefined);
+      var strategy := unwrap(s.strategies[params.asset_id], Errors.strategy_undefined);
 
       require(asset.tvl > 0n, Errors.low_asset_liquidity);
       const current_rate_f = strategy.tvl * Constants.precision / asset.tvl;
@@ -416,7 +410,7 @@ function maintain(
         const disbalance_amount = abs(strategy.tvl - optimal_deposit);
         if current_rate_f > strategy.target_reserves_rate_f
         then {
-            operations := get_divest_op(disbalance_amount, strategy.strategy_address) # operations;
+            operations := get_divest_op(disbalance_amount, params.data, strategy.strategy_address) # operations;
             asset.virtual_balance := asset.virtual_balance + disbalance_amount;
             strategy.tvl := get_nat_or_fail(strategy.tvl - disbalance_amount, Errors.not_nat);
           }
@@ -428,15 +422,15 @@ function maintain(
                     strategy.strategy_address,
                     disbalance_amount,
                     asset.asset_type);
-                  get_invest_op(disbalance_amount, strategy.strategy_address)];
+                  get_invest_op(disbalance_amount, params.data, strategy.strategy_address)];
 
               asset.virtual_balance := get_nat_or_fail(asset.virtual_balance - disbalance_amount, Errors.not_nat);
               strategy.tvl := strategy.tvl + disbalance_amount;
           } else failwith(Errors.no_rebalancing_needed);
       }
       else failwith(Errors.no_rebalancing_needed);
-      s.assets[asset_id] := asset;
-      s.strategies[asset_id] := strategy;
+      s.assets[params.asset_id] := asset;
+      s.strategies[params.asset_id] := strategy;
     } with (operations, s)
   | _ -> (no_operations, s)
   ]

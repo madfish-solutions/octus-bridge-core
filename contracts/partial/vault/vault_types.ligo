@@ -166,6 +166,7 @@ type update_strategy_t  is [@layout:comb] record[
 type revoke_strategy_t  is [@layout:comb] record[
   asset_id                : asset_id_t;
   delete                  : bool;
+  data                    : bytes;
 ]
 
 type set_bounty_t       is [@layout:comb] record[
@@ -176,6 +177,11 @@ type set_bounty_t       is [@layout:comb] record[
 type cancel_pending_withdrawal_t is [@layout:comb] record[
   pending_id              : nat;
   recipient               : bytes;
+]
+
+type maintain_t         is [@layout:comb] record[
+  asset_id                : nat;
+  data                    : bytes;
 ]
 
 type action_t           is
@@ -202,7 +208,7 @@ type action_t           is
 | Update_strategy         of update_strategy_t
 | Revoke_strategy         of revoke_strategy_t
 | Handle_harvest          of harvest_response_t
-| Maintain                of asset_id_t
+| Maintain                of maintain_t
 | Harvest                 of asset_id_t
 
 | Deposit                 of deposit_t

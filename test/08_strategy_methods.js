@@ -73,7 +73,7 @@ describe("Yupana-strategy tests", async function () {
   describe("Testing entrypoint: Invest", async function () {
     it("Shouldn't invest if the user is not an vault", async function () {
       Tezos.setSignerProvider(signerBob);
-      await rejects(strategy.call("invest", [500 * precision]), err => {
+      await rejects(strategy.call("invest", [500 * precision, "00"]), err => {
         strictEqual(err.message, "Yup-strategy/not-vault");
         return true;
       });
@@ -82,7 +82,7 @@ describe("Yupana-strategy tests", async function () {
       Tezos.setSignerProvider(signerAlice);
       const prevAliceBalance = await fa12Token.getBalance(alice.pkh);
       await fa12Token.transfer(alice.pkh, strategy.address, 500 * precision);
-      await strategy.call("invest", [500 * precision]);
+      await strategy.call("invest", [500 * precision, "00"]);
 
       const aliceBalance = await fa12Token.getBalance(alice.pkh);
       strictEqual(strategy.storage.tvl.toNumber(), 500 * precision);
@@ -128,16 +128,16 @@ describe("Yupana-strategy tests", async function () {
   //   });
   // });
   describe("Testing entrypoint: Divest", async function () {
-    it("Shouldn't invest if the user is not an vault", async function () {
+    it("Shouldn't divest if the user is not an vault", async function () {
       Tezos.setSignerProvider(signerBob);
-      await rejects(strategy.call("divest", [500 * precision]), err => {
+      await rejects(strategy.call("divest", [500 * precision, "00"]), err => {
         strictEqual(err.message, "Yup-strategy/not-vault");
         return true;
       });
     });
-    it("Shouldn't invest if the amount > tvl", async function () {
+    it("Shouldn't divest if the amount > tvl", async function () {
       Tezos.setSignerProvider(signerAlice);
-      await rejects(strategy.call("divest", [1000 * precision]), err => {
+      await rejects(strategy.call("divest", [1000 * precision, "00"]), err => {
         strictEqual(err.message, "Yup-strategy/low-balance");
         return true;
       });
@@ -147,7 +147,7 @@ describe("Yupana-strategy tests", async function () {
       const prevYupanaBalance = await fa12Token.getBalance(yupana.address);
       const prevTvl = strategy.storage.tvl.toNumber();
       Tezos.setSignerProvider(signerAlice);
-      await strategy.call("divest", [500 * precision, 500 * precision]);
+      await strategy.call("divest", [500 * precision, "00"]);
       const yupanaBalance = await fa12Token.getBalance(yupana.address);
       const aliceBalance = await fa12Token.getBalance(alice.pkh);
       strictEqual(strategy.storage.tvl.toNumber(), prevTvl - 500 * precision);

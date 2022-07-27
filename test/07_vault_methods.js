@@ -1850,9 +1850,6 @@ describe("Vault methods tests", async function () {
         ((depositAmount + totalBounty) * asset.deposit_fee_f.toNumber()) /
           precision,
       );
-      console.log(fishFee.toNumber());
-      console.log(fishFee.toNumber() - prevFishFee.toNumber());
-      console.log(depositFee, totalWithdrawalFee);
       notStrictEqual(pendingWithdrawal_1.status["completed"], undefined);
       notStrictEqual(pendingWithdrawal_2.status["completed"], undefined);
       notStrictEqual(newWithdrawal_1, undefined);
