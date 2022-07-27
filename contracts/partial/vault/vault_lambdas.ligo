@@ -101,11 +101,6 @@ function deposit_with_bounty(
       require(params.amount > 0n, Errors.zero_transfer);
       require(asset.tvl + params.amount <= asset.deposit_limit or asset.deposit_limit = 0n, Errors.deposit_limit);
 
-      const fee_f = params.amount * asset.deposit_fee_f;
-
-      const deposited_amount = get_nat_or_fail(params.amount * Constants.precision - fee_f, Errors.not_nat) / Constants.precision;
-
-      const fee = get_nat_or_fail(params.amount - deposited_amount, Errors.not_nat);
 
       var total_bounty := 0n;
       var total_withdrawal := 0n;
@@ -142,8 +137,15 @@ function deposit_with_bounty(
         pending_withdrawal.status := Completed(unit);
         s.pending_withdrawals[withdrawal_id] := pending_withdrawal;
       };
-      require(deposited_amount >= total_withdrawal + total_withdrawal_fee + total_bounty, Errors.amount_less_pending_amount);
+      const deposit_with_bounty = params.amount + total_bounty;
+      const fee_f = deposit_with_bounty * asset.deposit_fee_f;
+
+      const deposited_amount = get_nat_or_fail(deposit_with_bounty * Constants.precision - fee_f, Errors.not_nat) / Constants.precision;
+
+      const fee = get_nat_or_fail(deposit_with_bounty - deposited_amount, Errors.not_nat);
+      require(params.amount >= total_withdrawal + total_withdrawal_fee + total_bounty, Errors.amount_less_pending_amount);
       require(params.expected_min_bounty <= total_bounty, Errors.bounty_lower_expected);
+
       if fee + total_withdrawal_fee > 0n
       then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee + total_withdrawal_fee, params.asset_id)
       else skip;
@@ -157,7 +159,7 @@ function deposit_with_bounty(
 
       s.deposits[s.deposit_count] := record[
           recipient = params.recipient;
-          amount    = deposited_amount + total_bounty;
+          amount    = deposited_amount;
           asset     = asset.asset_type;
       ];
       s.deposit_count := s.deposit_count + 1n;
