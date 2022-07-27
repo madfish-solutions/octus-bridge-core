@@ -101,17 +101,19 @@ function convert_amount(
   const to_shares   : bool;
   const precision   : bool)
                     : nat is
-  unwrap(
-    (Tezos.call_view(
-      "convert",
-      record[
-        toShares = to_shares;
-        tokenId = asset_id;
-        amount = amount_;
-        precision = precision],
-      protocol) : option(nat)),
-    Errors.protocol_view_404
-  )
+  block {
+    const response = unwrap(
+        (Tezos.call_view(
+          "convert",
+          record[
+            toShares = to_shares;
+            tokenId = asset_id;
+            amount = amount_;
+            precision = precision],
+          protocol) : option(convert_return_t)),
+        Errors.protocol_view_404
+      );
+  } with response.amount
 
 function get_shares_balance(
   const asset_id    : nat;

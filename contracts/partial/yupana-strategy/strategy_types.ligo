@@ -25,3 +25,8 @@ type balance_view_t     is [@layout:comb] record [
   precision               : bool;
 ]
 
+type convert_return_t   is [@layout:comb] record [
+  amount                  : nat;
+  interestUpdateTime      : timestamp;
+  priceUpdateTime         : timestamp;
+]
