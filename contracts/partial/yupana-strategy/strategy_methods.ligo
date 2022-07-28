@@ -6,8 +6,6 @@ function invest(
     require(Tezos.get_sender() = s.vault, Errors.not_vault);
     const min_received = unwrap_or((Bytes.unpack(params.data) : option(nat)), params.amount);
     var operations := list[
-        get_get_price_op(s.protocol_asset_id, s.price_feed);
-        get_update_interest_op(s.protocol_asset_id, s.protocol);
         Tezos.transaction(
           (record[
             tokenId     = s.protocol_asset_id;
@@ -48,8 +46,6 @@ function divest(
     const min_received = unwrap_or((Bytes.unpack(params.data) : option(nat)), params.amount);
   } with (
       list[
-        get_get_price_op(s.protocol_asset_id, s.price_feed);
-        get_update_interest_op(s.protocol_asset_id, s.protocol);
         get_reedem_op(params.amount, min_received, s.protocol_asset_id, s.protocol);
         wrap_transfer(
           Tezos.get_self_address(),
@@ -72,8 +68,6 @@ function harvest(
 
     const operations = if profit > 0n
       then list[
-          get_get_price_op(s.protocol_asset_id, s.price_feed);
-          get_update_interest_op(s.protocol_asset_id, s.protocol);
           get_reedem_op(profit, profit, s.protocol_asset_id, s.protocol);
           wrap_transfer(
             Tezos.get_self_address(),
