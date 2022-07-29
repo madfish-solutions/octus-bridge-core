@@ -29,15 +29,15 @@ function main(
   const s               : storage_t)
                         : return_t is
   case action of [
-  | Set_owner(params)             -> set_owner(params, s)
+  | Set_owner(params)             -> common_set_owner(params, s)
   | Set_vault(params)             -> set_vault(params, s)
   | Create_token(params)          -> create_token(params, s)
   | Update_token_metadata(params) -> update_token_metadata(params, s)
-  | Update_metadata(params)       -> update_metadata(params, s)
+  | Update_metadata(params)       -> common_update_metadata(params, s)
   | Mint(params)                  -> mint(params, s)
   | Burn(params)                  -> burn(params, s)
 
-  | Confirm_owner                 -> confirm_owner(s)
+  | Confirm_owner                 -> common_confirm_owner(s)
 
   | Transfer(params)              -> (Constants.no_operations, transfer(s, params))
   | Update_operators(params)      -> (Constants.no_operations, update_operators(s, params))

@@ -19,10 +19,10 @@ function mint (
         (* Mint new tokens *)
         s.ledger[destination_key] := destination_balance + param.amount;
 
-        const token_supply = unwrap_or(s.tokens_supply[param.token_id], 0n);
+        const token_supply = unwrap_or(s.tokens_supplies[param.token_id], 0n);
 
         (* Update token total supply *)
-        s.tokens_supply[param.token_id] := token_supply + param.amount;
+        s.tokens_supplies[param.token_id] := token_supply + param.amount;
       } with s
   } with (Constants.no_operations, List.fold(make_mint, params, s))
 
@@ -51,8 +51,8 @@ function burn(
     const ledger_key = (params.account, params.token_id);
     const account_balance = unwrap_or(s.ledger[ledger_key], 0n);
 
-    const token_supply = unwrap(s.tokens_supply[params.token_id], Errors.token_undefined);
-    s.tokens_supply[params.token_id] := get_nat_or_fail(token_supply - params.amount, Errors.not_nat);
+    const token_supply = unwrap(s.tokens_supplies[params.token_id], Errors.token_undefined);
+    s.tokens_supplies[params.token_id] := get_nat_or_fail(token_supply - params.amount, Errors.not_nat);
 
     s.ledger[ledger_key] := get_nat_or_fail(account_balance - params.amount, Errors.fa2_low_balance);
   } with (Constants.no_operations, s)

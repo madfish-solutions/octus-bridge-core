@@ -258,6 +258,7 @@ describe("Bridge-core methods test", async function () {
         },
       );
     });
+
     it("Should set round relay if 1/1 signatures validated", async function () {
       payload_1.round = 1;
       round_1.round = 5;
@@ -293,6 +294,7 @@ describe("Bridge-core methods test", async function () {
       const addedRound = await bridge.storage.rounds.get("6");
       notStrictEqual(addedRound, undefined);
     });
+
     it("Shouldn't set round relay if payload already seen", async function () {
       payload_1.round = 4;
       round_1.round = 6;
@@ -309,6 +311,26 @@ describe("Bridge-core methods test", async function () {
         }),
         err => {
           strictEqual(err.message, "Bridge-core/payload-already-seen");
+          return true;
+        },
+      );
+    });
+    it("Shouldn't set new round if a relay set is empty", async function () {
+      payload_1.round = 1;
+      round_1.round = 7;
+      round_1.relays = [];
+      payload_1.eventData = roundToBytes(round_1);
+      const payload = payloadToBytes(payload_1);
+      const signature = await signerAlice.sign(payload);
+      await rejects(
+        bridge.call("set_round_relays", {
+          payload: payload,
+          signatures: MichelsonMap.fromLiteral({
+            [alice.pk]: signature.sig,
+          }),
+        }),
+        err => {
+          strictEqual(err.message, "Bridge-core/empty-relay-set");
           return true;
         },
       );

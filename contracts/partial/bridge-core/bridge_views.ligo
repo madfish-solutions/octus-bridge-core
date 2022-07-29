@@ -1,5 +1,5 @@
 [@view] function validate_message(
-  const params          : validate_t;
+  const params          : message_t;
   const s               : storage_t)
                         : message_status_t is
   check_message(params, s.rounds, s.last_round, s.banned_relays, s.paused)
@@ -36,6 +36,12 @@
   | None -> failwith(Errors.invalid_payload)
   | Some(decoded_payload) -> decoded_payload
   ]
+
+[@view] function encode_everscale_event(
+  const payload         : payload_t;
+  const _s              : storage_t)
+                        : bytes is
+  Bytes.pack(payload)
 
 [@view] function decode_round_relays_event_data(
   const payload         : bytes;

@@ -16,4 +16,5 @@ module Errors is {
   const invalid_new_round         : string = "Bridge-core/invalid-new-round";
   const validate_message_404      : string = "Bridge-core/view-validate-methods-not-found";
   const round_undefined           : string = "Bridge-core/round-undefined";
+  const empty_relay_set           : string = "Bridge-core/empty-relay-set";
   }

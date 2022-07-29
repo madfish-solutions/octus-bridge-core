@@ -122,7 +122,7 @@ describe("Wrapped token methods test", async function () {
         [{ token_id: 0, recipient: bob.pkh, amount: 10000 }],
       ]);
 
-      const tokenSupply = await token.storage.tokens_supply.get("0");
+      const tokenSupply = await token.storage.tokens_supplies.get("0");
       const balance = await token.getWBalance(bob.pkh, 0);
       strictEqual(tokenSupply.toNumber(), 10000);
       strictEqual(balance, 10000);
@@ -141,7 +141,7 @@ describe("Wrapped token methods test", async function () {
 
       await token.call("burn", [0, bob.pkh, 10000]);
 
-      const tokenSupply = await token.storage.tokens_supply.get("0");
+      const tokenSupply = await token.storage.tokens_supplies.get("0");
       const balance = await token.getBalance(bob.pkh, 0);
       strictEqual(tokenSupply.toNumber(), 0);
       strictEqual(balance, 0);

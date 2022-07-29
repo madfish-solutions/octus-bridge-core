@@ -19,7 +19,8 @@ function set_round_relays(
         end_time = new_round.end_time;
         ttl      = new_round.end_time + int(s.ttl);
         relays   = new_round.relays;
-        required_signatures = s.required_signatures;
+        required_signatures = get_required_signatures(
+            new_round.relays, s.min_required_signatures);
     ];
     s.last_round := s.last_round + 1n;
     s.rounds[s.last_round] := new_round;
