@@ -74,8 +74,6 @@ type asset_t            is [@layout:comb] record[
   deposit_limit           : nat;
   tvl                     : nat;
   virtual_balance         : nat;
-  paused                  : bool;
-  banned                  : bool;
 ]
 
 type fee_balances_t     is map(address, nat)
@@ -90,4 +88,9 @@ type convert_amount_t   is [@layout:comb] record [
 type harvest_response_t is [@layout:comb] record[
   asset                   : asset_standard_t;
   amount                  : nat;
+]
+
+type strategy_invest_t  is [@layout:comb] record[
+  amount                  : nat;
+  data                    : bytes;
 ]

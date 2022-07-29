@@ -1,5 +1,5 @@
 function calculate_signatures(
-  const params         : validate_t;
+  const params         : message_t;
   const relays         : set(key);
   const banned_relays  : big_map(key, bool))
                        : nat is
@@ -15,7 +15,7 @@ function calculate_signatures(
   } with valid_signatures
 
 function check_message(
-  const params          : validate_t;
+  const params          : message_t;
   const rounds          : rounds_t;
   const last_round      : nat;
   const banned_relays   : banned_relays_t;

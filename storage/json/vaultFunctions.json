@@ -45,86 +45,82 @@
   },
   {
     "index": 11,
-    "name": "toggle_pause_asset"
-  },
-  {
-    "index": 12,
     "name": "toggle_ban_asset"
   },
   {
-    "index": 13,
+    "index": 12,
     "name": "toggle_emergency_shutdown"
   },
   {
-    "index": 14,
+    "index": 13,
     "name": "update_metadata"
   },
   {
-    "index": 15,
+    "index": 14,
     "name": "delegate_tez"
   },
   {
-    "index": 16,
+    "index": 15,
     "name": "claim_baker_rewards"
   },
   {
-    "index": 17,
+    "index": 16,
     "name": "claim_fee"
   },
   {
-    "index": 18,
+    "index": 17,
     "name": "claim_strategy_rewards"
   },
   {
-    "index": 19,
+    "index": 18,
     "name": "confirm_owner"
   },
   {
-    "index": 20,
+    "index": 19,
     "name": "add_strategy"
   },
   {
-    "index": 21,
+    "index": 20,
     "name": "update_strategy"
   },
   {
-    "index": 22,
+    "index": 21,
     "name": "revoke_strategy"
   },
   {
-    "index": 23,
+    "index": 22,
     "name": "handle_harvest"
   },
   {
-    "index": 24,
+    "index": 23,
     "name": "maintain"
   },
   {
-    "index": 25,
+    "index": 24,
     "name": "harvest"
   },
   {
-    "index": 26,
+    "index": 25,
     "name": "deposit"
   },
   {
-    "index": 27,
+    "index": 26,
     "name": "deposit_with_bounty"
   },
   {
-    "index": 28,
+    "index": 27,
     "name": "withdraw"
   },
   {
-    "index": 29,
+    "index": 28,
     "name": "set_bounty"
   },
   {
-    "index": 30,
+    "index": 29,
     "name": "cancel_withdrawal"
   },
   {
-    "index": 31,
+    "index": 30,
     "name": "default"
   }
 ]

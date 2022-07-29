@@ -61,30 +61,24 @@ describe("Vault Admin tests", async function () {
           deposit_fee_f: 0,
           withdrawal_fee_f: 0,
           deposit_limit: 0,
-          tvl: 0,
-          virtual_balance: 0,
-          paused: false,
-          banned: false,
+          tvl: 1000,
+          virtual_balance: 1000,
         },
         1: {
           asset_type: { fa2: { address: fa2Token.address, id: 0 } },
           deposit_fee_f: 0,
           withdrawal_fee_f: 0,
           deposit_limit: 0,
-          tvl: 0,
-          virtual_balance: 0,
-          paused: false,
-          banned: false,
+          tvl: 1000,
+          virtual_balance: 1000,
         },
         2: {
           asset_type: { tez: null },
           deposit_fee_f: 0,
           withdrawal_fee_f: 0,
           deposit_limit: 0,
-          tvl: 0,
-          virtual_balance: 0,
-          paused: false,
-          banned: false,
+          tvl: 1000,
+          virtual_balance: 1000,
         },
         3: {
           asset_type: {
@@ -93,11 +87,8 @@ describe("Vault Admin tests", async function () {
           deposit_fee_f: 0,
           withdrawal_fee_f: 0,
           deposit_limit: 0,
-          tvl: 0,
-          virtual_balance: 0,
-          pending_fee: 0,
-          paused: false,
-          banned: false,
+          tvl: 1000,
+          virtual_balance: 1000,
         },
       });
       vaultStorage.storage.asset_ids.set({ fa12: fa12Token.address }, 0);
@@ -441,18 +432,26 @@ describe("Vault Admin tests", async function () {
     it("Should allow claim fee fa2 token (fish and management)", async function () {
       const prevAliceBalance = await fa2Token.getBalance(alice.pkh);
       const prevBobBalance = await fa2Token.getBalance(bob.pkh);
-
+      const prevAsset = await vault.storage.assets.get("3");
       Tezos.setSignerProvider(signerAlice);
       await vault.call("claim_fee", [1, alice.pkh]);
       const aliceBalance = await fa2Token.getBalance(alice.pkh);
 
       Tezos.setSignerProvider(signerBob);
       await vault.call("claim_fee", [1, bob.pkh]);
+      const asset = await vault.storage.assets.get("3");
       const bobBalance = await fa2Token.getBalance(bob.pkh);
       const fees = await vault.storage.fee_balances.get("1");
       const fishFee = await fees.get(vault.storage.fish);
       const managementFee = await fees.get(vault.storage.management);
-
+      const totalFee = Math.floor(
+        fishFee.plus(managementFee).toNumber() / precision,
+      );
+      strictEqual(asset.tvl.toNumber(), prevAsset.tvl.toNumber() - totalFee);
+      strictEqual(
+        asset.virtual_balance.toNumber(),
+        prevAsset.virtual_balance.toNumber() - totalFee,
+      );
       strictEqual(fishFee.toNumber(), 0);
       strictEqual(managementFee.toNumber(), 0);
       strictEqual(aliceBalance, prevAliceBalance + 500);
@@ -484,18 +483,31 @@ describe("Vault Admin tests", async function () {
     it("Should allow claim fee wrapped token (fish and management)", async function () {
       const prevAliceBalance = await wrappedToken.getWBalance(alice.pkh);
       const prevBobBalance = await wrappedToken.getWBalance(bob.pkh);
+      const prevAsset = await vault.storage.assets.get("3");
 
+      const prevFees = await vault.storage.fee_balances.get("3");
+      const prevFishFee = await prevFees.get(vault.storage.fish);
+      const prevManagementFee = await prevFees.get(vault.storage.management);
+      const totalFee = Math.floor(
+        prevFishFee.plus(prevManagementFee).toNumber() / precision,
+      );
       Tezos.setSignerProvider(signerAlice);
       await vault.call("claim_fee", [3, alice.pkh]);
       const aliceBalance = await wrappedToken.getWBalance(alice.pkh);
 
       Tezos.setSignerProvider(signerBob);
       await vault.call("claim_fee", [3, bob.pkh]);
+      const asset = await vault.storage.assets.get("3");
       const bobBalance = await wrappedToken.getWBalance(bob.pkh);
       const fees = await vault.storage.fee_balances.get("3");
       const fishFee = await fees.get(vault.storage.fish);
       const managementFee = await fees.get(vault.storage.management);
 
+      strictEqual(asset.tvl.toNumber(), prevAsset.tvl.toNumber() + totalFee);
+      strictEqual(
+        asset.virtual_balance.toNumber(),
+        prevAsset.virtual_balance.toNumber() + totalFee,
+      );
       strictEqual(fishFee.toNumber(), 0);
       strictEqual(managementFee.toNumber(), 0);
       strictEqual(aliceBalance, prevAliceBalance + 500);
@@ -530,36 +542,6 @@ describe("Vault Admin tests", async function () {
       await vault.call("toggle_emergency_shutdown");
 
       strictEqual(vault.storage.emergency_shutdown, false);
-    });
-  });
-  describe("Testing entrypoint: Toggle_pause_asset", async function () {
-    it("Shouldn't pausing asset if the user is not an guardian or owner", async function () {
-      Tezos.setSignerProvider(signerAlice);
-      await rejects(vault.call("toggle_pause_asset", 0), err => {
-        strictEqual(err.message, "Vault/not-owner-or-guardian");
-        return true;
-      });
-    });
-    it("Should allow pause asset", async function () {
-      Tezos.setSignerProvider(signerBob);
-
-      await vault.call("toggle_pause_asset", 0);
-      const asset = await vault.storage.assets.get("0");
-      strictEqual(asset.paused, true);
-    });
-    it("Shouldn't unpause asset if the user is not an owner", async function () {
-      Tezos.setSignerProvider(signerEve);
-      await rejects(vault.call("toggle_pause_asset", 0), err => {
-        strictEqual(err.message, "Vault/not-owner");
-        return true;
-      });
-    });
-    it("Should allow unpause asset", async function () {
-      Tezos.setSignerProvider(signerBob);
-
-      await vault.call("toggle_pause_asset", 0);
-      const asset = await vault.storage.assets.get("0");
-      strictEqual(asset.paused, false);
     });
   });
   describe("Testing entrypoint: Toggle_ban_asset", async function () {
@@ -806,7 +788,7 @@ describe("Vault Admin tests", async function () {
   describe("Testing entrypoint: Maintain", async function () {
     it("Shouldn't maintain if the user is not an strategist", async function () {
       Tezos.setSignerProvider(signerEve);
-      await rejects(vault.call("maintain", [0]), err => {
+      await rejects(vault.call("maintain", [0, "00"]), err => {
         strictEqual(err.message, "Vault/not-strategist");
         return true;
       });
@@ -815,7 +797,7 @@ describe("Vault Admin tests", async function () {
       Tezos.setSignerProvider(signerBob);
       await vault.call("toggle_emergency_shutdown");
       Tezos.setSignerProvider(signerAlice);
-      await rejects(vault.call("maintain", [0]), err => {
+      await rejects(vault.call("maintain", [0, "00"]), err => {
         strictEqual(err.message, "Vault/emergency-shutdown-enabled");
         return true;
       });
@@ -824,7 +806,7 @@ describe("Vault Admin tests", async function () {
     });
     it("Shouldn't maintain if strategy undefined", async function () {
       Tezos.setSignerProvider(signerAlice);
-      await rejects(vault.call("maintain", [9]), err => {
+      await rejects(vault.call("maintain", [9, "00"]), err => {
         strictEqual(err.message, "Vault/asset-undefined");
         return true;
       });
@@ -842,14 +824,14 @@ describe("Vault Admin tests", async function () {
       ]);
       const st = await vault.storage.strategies.get("1");
 
-      await rejects(vault.call("maintain", [1]), err => {
+      await rejects(vault.call("maintain", [1, "00"]), err => {
         strictEqual(err.message, "FA2_NOT_OPERATOR");
         return true;
       });
     });
     it("Shouldn't maintain if asset tvl 0", async function () {
       Tezos.setSignerProvider(signerAlice);
-      await rejects(vault.call("maintain", [0]), err => {
+      await rejects(vault.call("maintain", [0, "00"]), err => {
         strictEqual(err.message, "Vault/low-asset-liquidity");
         return true;
       });
@@ -873,7 +855,15 @@ describe("Vault Admin tests", async function () {
           precision,
       );
       const prevVaultBalance = await fa12Token.getBalance(vault.address);
-      await vault.call("maintain", [0]);
+
+      const batch = Tezos.contract.batch();
+      batch.withContractCall(priceFeed.contract.methods.getPrice("0"));
+      batch.withContractCall(yupana.contract.methods.updateInterest("0"));
+      batch.withContractCall(vault.contract.methods.maintain(0, "00"));
+      let operation = await batch.send();
+      await confirmOperation(Tezos, operation.hash);
+      await vault.updateStorage();
+
       const asset = await vault.storage.assets.get("0");
       const vaultBalance = await fa12Token.getBalance(vault.address);
       const strategy = await vault.storage.strategies.get("0");
@@ -887,7 +877,7 @@ describe("Vault Admin tests", async function () {
     });
     it("Shouldn't maintain if rebalancing is not needed", async function () {
       Tezos.setSignerProvider(signerAlice);
-      await rejects(vault.call("maintain", [0]), err => {
+      await rejects(vault.call("maintain", [0, "00"]), err => {
         strictEqual(err.message, "Vault/no-rebalancing-needed");
         return true;
       });
@@ -906,7 +896,15 @@ describe("Vault Admin tests", async function () {
         fa12Strategy.tvl.toNumber() -
         Math.floor((prevAsset.tvl.toNumber() * targetReversesF) / precision);
       const prevVaultBalance = await fa12Token.getBalance(vault.address);
-      await vault.call("maintain", [0]);
+
+      const batch = Tezos.contract.batch();
+      batch.withContractCall(priceFeed.contract.methods.getPrice("0"));
+      batch.withContractCall(yupana.contract.methods.updateInterest("0"));
+      batch.withContractCall(vault.contract.methods.maintain(0, "00"));
+      let operation = await batch.send();
+      await confirmOperation(Tezos, operation.hash);
+      await vault.updateStorage();
+
       const asset = await vault.storage.assets.get("0");
       const vaultBalance = await fa12Token.getBalance(vault.address);
       const strategy = await vault.storage.strategies.get("0");
@@ -941,7 +939,15 @@ describe("Vault Admin tests", async function () {
           prevStrategy.tvl.toNumber(),
       );
       const prevVaultBalance = await fa12Token.getBalance(vault.address);
-      await vault.call("maintain", [0]);
+
+      const batch = Tezos.contract.batch();
+      batch.withContractCall(priceFeed.contract.methods.getPrice("0"));
+      batch.withContractCall(yupana.contract.methods.updateInterest("0"));
+      batch.withContractCall(vault.contract.methods.maintain(0, "00"));
+      let operation = await batch.send();
+      await confirmOperation(Tezos, operation.hash);
+      await vault.updateStorage();
+
       const asset = await vault.storage.assets.get("0");
       const vaultBalance = await fa12Token.getBalance(vault.address);
       const strategy = await vault.storage.strategies.get("0");
@@ -966,7 +972,15 @@ describe("Vault Admin tests", async function () {
           precision,
       );
       const prevVaultBalance = await fa2Token.getBalance(vault.address);
-      await vault.call("maintain", [1]);
+
+      const batch = Tezos.contract.batch();
+      batch.withContractCall(priceFeed.contract.methods.getPrice("1"));
+      batch.withContractCall(yupana.contract.methods.updateInterest("1"));
+      batch.withContractCall(vault.contract.methods.maintain(1, "00"));
+      let operation = await batch.send();
+      await confirmOperation(Tezos, operation.hash);
+      await vault.updateStorage();
+
       const asset = await vault.storage.assets.get("1");
       const vaultBalance = await fa2Token.getBalance(vault.address);
       const strategy = await vault.storage.strategies.get("1");
@@ -1012,7 +1026,15 @@ describe("Vault Admin tests", async function () {
 
       const prevFishReward = 0;
       const prevManagementReward = 0;
-      await vault.call("harvest", [0]);
+
+      const batch = Tezos.contract.batch();
+      batch.withContractCall(priceFeed.contract.methods.getPrice("0"));
+      batch.withContractCall(yupana.contract.methods.updateInterest("0"));
+      batch.withContractCall(vault.contract.methods.harvest("0"));
+      let operation = await batch.send();
+      await confirmOperation(Tezos, operation.hash);
+      await vault.updateStorage();
+
       await yupanaStrategyFa12.updateStorage();
       const strategyRewards = await vault.storage.strategy_rewards.get("0");
       const fishReward = await strategyRewards.get(vault.storage.fish);
@@ -1040,7 +1062,7 @@ describe("Vault Admin tests", async function () {
   describe("Testing entrypoint: Revoke_strategy", async function () {
     it("Shouldn't revoke stategy if the user is not an strategist", async function () {
       Tezos.setSignerProvider(signerEve);
-      await rejects(vault.call("revoke_strategy", [0, false]), err => {
+      await rejects(vault.call("revoke_strategy", [0, false, "00"]), err => {
         strictEqual(err.message, "Vault/not-strategist");
         return true;
       });
@@ -1049,7 +1071,16 @@ describe("Vault Admin tests", async function () {
       Tezos.setSignerProvider(signerAlice);
       const prevVaultBalance = await fa12Token.getBalance(vault.address);
       const prevStrategy = await vault.storage.strategies.get("0");
-      await vault.call("revoke_strategy", [0, false]);
+      const batch = Tezos.contract.batch();
+      batch.withContractCall(priceFeed.contract.methods.getPrice("0"));
+      batch.withContractCall(yupana.contract.methods.updateInterest("0"));
+      batch.withContractCall(
+        vault.contract.methods.revoke_strategy("0", false, "00"),
+      );
+
+      let operation = await batch.send();
+      await confirmOperation(Tezos, operation.hash);
+      await vault.updateStorage();
       await yupanaStrategyFa12.updateStorage();
       const vaultBalance = await fa12Token.getBalance(vault.address);
       const strategy = await vault.storage.strategies.get("0");
@@ -1065,8 +1096,24 @@ describe("Vault Admin tests", async function () {
     });
     it("Should allow revoke strategy with removing", async function () {
       const prevVaultBalance = await fa12Token.getBalance(vault.address);
+      const batch = Tezos.contract.batch();
+      batch.withContractCall(
+        priceFeed.contract.methods.getPrice(
+          yupanaStrategyStorage.protocol_asset_id,
+        ),
+      );
+      batch.withContractCall(
+        yupana.contract.methods.updateInterest(
+          yupanaStrategyStorage.protocol_asset_id,
+        ),
+      );
+      batch.withContractCall(
+        vault.contract.methods.revoke_strategy("0", true, "00"),
+      );
 
-      await vault.call("revoke_strategy", ["0", true]);
+      let operation = await batch.send();
+      await confirmOperation(Tezos, operation.hash);
+      await vault.updateStorage();
       const vaultBalance = await fa12Token.getBalance(vault.address);
       const strategy = await vault.storage.strategies.get("0");
       const asset = await vault.storage.assets.get("0");

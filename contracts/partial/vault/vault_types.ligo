@@ -28,6 +28,7 @@ type deposit_with_bounty_t is [@layout:comb] record[
   amount                     : nat;
   asset_id                   : asset_id_t;
   pending_withdrawal_ids     : set(nat);
+  expected_min_bounty        : nat;
 ]
 
 type deposits_t         is big_map(nat, deposit_t)
@@ -69,8 +70,9 @@ type fee_balances_map_t is big_map(asset_id_t, fee_balances_t)
 type pending_withdrawal_t is [@layout:comb] record[
   deposit_id              : bytes;
   asset                   : asset_standard_t;
-  amount                  : nat;
   recipient               : address;
+  amount                  : nat;
+  fee                     : nat;
   bounty                  : nat;
   message                 : message_t;
   status                  : withdrawal_status_t;
@@ -164,6 +166,7 @@ type update_strategy_t  is [@layout:comb] record[
 type revoke_strategy_t  is [@layout:comb] record[
   asset_id                : asset_id_t;
   delete                  : bool;
+  data                    : bytes;
 ]
 
 type set_bounty_t       is [@layout:comb] record[
@@ -174,6 +177,11 @@ type set_bounty_t       is [@layout:comb] record[
 type cancel_pending_withdrawal_t is [@layout:comb] record[
   pending_id              : nat;
   recipient               : bytes;
+]
+
+type maintain_t         is [@layout:comb] record[
+  asset_id                : nat;
+  data                    : bytes;
 ]
 
 type action_t           is
@@ -188,7 +196,6 @@ type action_t           is
 | Set_asset_withdraw_fee  of fee_per_asset_t
 | Set_native_config       of config_t
 | Set_alien_config        of config_t
-| Toggle_pause_asset      of asset_id_t
 | Toggle_ban_asset        of asset_standard_t
 | Toggle_emergency_shutdown of unit
 | Update_metadata         of metadata_t
@@ -201,7 +208,7 @@ type action_t           is
 | Update_strategy         of update_strategy_t
 | Revoke_strategy         of revoke_strategy_t
 | Handle_harvest          of harvest_response_t
-| Maintain                of asset_id_t
+| Maintain                of maintain_t
 | Harvest                 of asset_id_t
 
 | Deposit                 of deposit_t
@@ -235,6 +242,6 @@ type full_action_t      is
 | Use                     of action_t
 | Setup_func              of setup_func_t
 
-[@inline] const vault_methods_max_index : nat = 31n;
+[@inline] const vault_methods_max_index : nat = 30n;
 
 [@inline] const no_operations     : list(operation) = nil;

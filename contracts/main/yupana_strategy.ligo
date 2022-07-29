@@ -14,8 +14,8 @@
 type parameter_t        is
 | Set_owner               of address
 | Confirm_owner           of unit
-| Invest                  of nat
-| Divest                  of nat
+| Invest                  of strategy_invest_t
+| Divest                  of strategy_invest_t
 | Harvest                 of contract(harvest_response_t)
 | Update_operator         of bool
 
