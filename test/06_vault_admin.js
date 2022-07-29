@@ -432,18 +432,26 @@ describe("Vault Admin tests", async function () {
     it("Should allow claim fee fa2 token (fish and management)", async function () {
       const prevAliceBalance = await fa2Token.getBalance(alice.pkh);
       const prevBobBalance = await fa2Token.getBalance(bob.pkh);
-
+      const prevAsset = await vault.storage.assets.get("3");
       Tezos.setSignerProvider(signerAlice);
       await vault.call("claim_fee", [1, alice.pkh]);
       const aliceBalance = await fa2Token.getBalance(alice.pkh);
 
       Tezos.setSignerProvider(signerBob);
       await vault.call("claim_fee", [1, bob.pkh]);
+      const asset = await vault.storage.assets.get("3");
       const bobBalance = await fa2Token.getBalance(bob.pkh);
       const fees = await vault.storage.fee_balances.get("1");
       const fishFee = await fees.get(vault.storage.fish);
       const managementFee = await fees.get(vault.storage.management);
-
+      const totalFee = Math.floor(
+        fishFee.plus(managementFee).toNumber() / precision,
+      );
+      strictEqual(asset.tvl.toNumber(), prevAsset.tvl.toNumber() - totalFee);
+      strictEqual(
+        asset.virtual_balance.toNumber(),
+        prevAsset.virtual_balance.toNumber() - totalFee,
+      );
       strictEqual(fishFee.toNumber(), 0);
       strictEqual(managementFee.toNumber(), 0);
       strictEqual(aliceBalance, prevAliceBalance + 500);
@@ -475,18 +483,31 @@ describe("Vault Admin tests", async function () {
     it("Should allow claim fee wrapped token (fish and management)", async function () {
       const prevAliceBalance = await wrappedToken.getWBalance(alice.pkh);
       const prevBobBalance = await wrappedToken.getWBalance(bob.pkh);
+      const prevAsset = await vault.storage.assets.get("3");
 
+      const prevFees = await vault.storage.fee_balances.get("3");
+      const prevFishFee = await prevFees.get(vault.storage.fish);
+      const prevManagementFee = await prevFees.get(vault.storage.management);
+      const totalFee = Math.floor(
+        prevFishFee.plus(prevManagementFee).toNumber() / precision,
+      );
       Tezos.setSignerProvider(signerAlice);
       await vault.call("claim_fee", [3, alice.pkh]);
       const aliceBalance = await wrappedToken.getWBalance(alice.pkh);
 
       Tezos.setSignerProvider(signerBob);
       await vault.call("claim_fee", [3, bob.pkh]);
+      const asset = await vault.storage.assets.get("3");
       const bobBalance = await wrappedToken.getWBalance(bob.pkh);
       const fees = await vault.storage.fee_balances.get("3");
       const fishFee = await fees.get(vault.storage.fish);
       const managementFee = await fees.get(vault.storage.management);
 
+      strictEqual(asset.tvl.toNumber(), prevAsset.tvl.toNumber() + totalFee);
+      strictEqual(
+        asset.virtual_balance.toNumber(),
+        prevAsset.virtual_balance.toNumber() + totalFee,
+      );
       strictEqual(fishFee.toNumber(), 0);
       strictEqual(managementFee.toNumber(), 0);
       strictEqual(aliceBalance, prevAliceBalance + 500);

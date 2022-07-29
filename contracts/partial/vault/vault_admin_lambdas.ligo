@@ -225,21 +225,27 @@ function claim_fee(
       s.fee_balances[params.asset_id] := fee_balances;
       var operations := no_operations;
       case asset.asset_type of [
-      | Wrapped(token) -> operations := list[
-        Tezos.transaction(
-          list[
-            record[
-              token_id = token.id;
-              recipient = params.recipient;
-              amount = reward;
-            ];
-          ],
-          0mutez,
-          unwrap(
-            (Tezos.get_entrypoint_opt("%mint", token.address) : option(contract(mint_params_t))),
-            Errors.mint_etp_404
-          )
-        )]
+      | Wrapped(token) -> {
+          operations := list[
+              Tezos.transaction(
+                list[
+                  record[
+                    token_id = token.id;
+                    recipient = params.recipient;
+                    amount = reward;
+                  ];
+                ],
+                0mutez,
+                unwrap(
+                  (Tezos.get_entrypoint_opt("%mint", token.address) : option(contract(mint_params_t))),
+                  Errors.mint_etp_404
+                )
+              )];
+          asset := asset with record[
+              tvl += reward;
+              virtual_balance += reward
+          ];
+        }
       | _ -> {
           operations := list[
               wrap_transfer(
@@ -252,9 +258,9 @@ function claim_fee(
               tvl = get_nat_or_fail(asset.tvl - reward, Errors.not_nat);
               virtual_balance = get_nat_or_fail(asset.virtual_balance - reward, Errors.not_nat)
           ];
-          s.assets[params.asset_id] := asset;
-      }
+        }
       ];
+      s.assets[params.asset_id] := asset;
     } with (operations, s)
   | _ -> (no_operations, s)
   ]

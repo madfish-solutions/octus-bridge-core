@@ -369,8 +369,8 @@ describe("Vault methods tests", async function () {
       const newDeposit = await vault.storage.deposits.get("3");
 
       strictEqual(vault.storage.deposit_count.toNumber(), prevDepositCount + 1);
-      strictEqual(asset.tvl.toNumber(), fee);
-      strictEqual(asset.virtual_balance.toNumber(), fee);
+      strictEqual(asset.tvl.toNumber(), 0);
+      strictEqual(asset.virtual_balance.toNumber(), 0);
       strictEqual(aliceBalance, 0);
       strictEqual(fishFee.toNumber(), (fee * precision) / 2);
       strictEqual(managementFee.toNumber(), (fee * precision) / 2);
@@ -993,7 +993,11 @@ describe("Vault methods tests", async function () {
       );
       strictEqual(
         asset.tvl.toNumber(),
-        prevAsset.tvl.toNumber() + withdrawalAmount,
+        prevAsset.tvl.toNumber() + withdrawalAmount - fee,
+      );
+      strictEqual(
+        asset.virtual_balance.toNumber(),
+        prevAsset.virtual_balance.toNumber() + withdrawalAmount - fee,
       );
       strictEqual(aliceBalance, prevAliceBalance + withdrawalAmount - fee);
       strictEqual(
@@ -1516,8 +1520,8 @@ describe("Vault methods tests", async function () {
         vault.storage.withdrawal_count.toNumber(),
         prevWithdrawalCount + 1,
       );
-      strictEqual(asset.tvl.toNumber(), withdrawalAmount);
-      strictEqual(asset.virtual_balance.toNumber(), withdrawalAmount);
+      strictEqual(asset.tvl.toNumber(), withdrawalAmount - fee);
+      strictEqual(asset.virtual_balance.toNumber(), withdrawalAmount - fee);
       strictEqual(aliceBalance, prevAliceBalance + withdrawalAmount - fee);
       strictEqual(fishFee.toNumber(), (fee * precision) / 2);
       strictEqual(managementFee.toNumber(), (fee * precision) / 2);
@@ -1850,9 +1854,6 @@ describe("Vault methods tests", async function () {
         ((depositAmount + totalBounty) * asset.deposit_fee_f.toNumber()) /
           precision,
       );
-      console.log(fishFee.toNumber());
-      console.log(fishFee.toNumber() - prevFishFee.toNumber());
-      console.log(depositFee, totalWithdrawalFee);
       notStrictEqual(pendingWithdrawal_1.status["completed"], undefined);
       notStrictEqual(pendingWithdrawal_2.status["completed"], undefined);
       notStrictEqual(newWithdrawal_1, undefined);

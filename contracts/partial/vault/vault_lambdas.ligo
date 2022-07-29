@@ -48,8 +48,8 @@ function deposit(
               Errors.burn_etp_404)
           ) # operations;
         asset := asset with record[
-            tvl = get_nat_or_fail(asset.tvl - deposited_amount, Errors.not_nat);
-            virtual_balance = get_nat_or_fail(asset.virtual_balance - deposited_amount, Errors.not_nat)
+            tvl = get_nat_or_fail(asset.tvl - params.amount, Errors.not_nat);
+            virtual_balance = get_nat_or_fail(asset.virtual_balance - params.amount, Errors.not_nat)
           ]
       }
       | Tez -> {
@@ -247,8 +247,8 @@ function withdraw(
 
           operations := reverse_list(operations);
           asset := asset with record[
-              tvl = asset.tvl + params.amount;
-              virtual_balance = asset.virtual_balance + params.amount
+              tvl += withdrawal_amount;
+              virtual_balance += withdrawal_amount
             ];
 
           s.withdrawals[s.withdrawal_count] := new_withdrawal;
