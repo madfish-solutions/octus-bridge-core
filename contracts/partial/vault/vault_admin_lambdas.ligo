@@ -298,6 +298,12 @@ function add_strategy(
   | Add_strategy(params) -> {
       require(Tezos.get_sender() = s.strategist, Errors.not_strategist);
       const asset = unwrap(s.assets[params.asset_id], Errors.asset_undefined);
+
+      case asset.asset_type of [
+      | Wrapped(_) -> failwith(Errors.unsupported_asset)
+      | _ -> skip
+      ];
+
       require_none(s.strategies[params.asset_id], Errors.strategy_exists);
 
       s.strategies[params.asset_id] := record[
