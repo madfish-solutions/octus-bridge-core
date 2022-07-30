@@ -70,11 +70,10 @@ function cache(
   } with payload_cache
 
 function get_required_signatures(
-  const relays             : set(key);
+  const relays_count       : nat;
   const min_required_signs : nat)
                            : nat is
   block {
-    const relays_count = Set.size(relays);
     require(relays_count > 0n, Errors.empty_relay_set);
     const calculated_min_signs = relays_count * 2n / 3n + 1n;
   } with if calculated_min_signs < min_required_signs
