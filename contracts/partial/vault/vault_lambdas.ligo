@@ -96,6 +96,7 @@ function deposit_with_bounty(
 
       case asset.asset_type of [
       | Tez -> require(Tezos.get_amount() / 1mutez = params.amount, Errors.amounts_mismatch)
+      | Wrapped(_) -> failwith(Errors.unsupported_asset)
       | _ -> skip
       ];
       require(params.amount > 0n, Errors.zero_transfer);

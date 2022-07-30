@@ -1708,6 +1708,22 @@ describe("Vault methods tests", async function () {
         },
       );
     });
+    it("Shouldn't deposit if wrapped asset", async function () {
+      const depositAmount = 150 * precision;
+      await rejects(
+        vault.call("deposit_with_bounty", [
+          "001100",
+          depositAmount,
+          3,
+          [],
+          1000000000000000,
+        ]),
+        err => {
+          strictEqual(err.message, "Vault/unsupported-asset");
+          return true;
+        },
+      );
+    });
     it("Should deposit with bounty", async function () {
       Tezos.setSignerProvider(signerBob);
       const depositAmount = 150 * precision;
