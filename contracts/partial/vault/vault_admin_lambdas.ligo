@@ -219,7 +219,6 @@ function claim_fee(
       var balance_f := unwrap_or(fee_balances[Tezos.get_sender()], 0n);
       require(balance_f / Constants.precision > 0n, Errors.zero_fee_balance);
       const reward = balance_f / Constants.precision;
-      require(reward <= asset.virtual_balance, Errors.low_asset_liquidity);
 
       fee_balances[Tezos.get_sender()] := get_nat_or_fail(balance_f - reward * Constants.precision, Errors.not_nat);
       s.fee_balances[params.asset_id] := fee_balances;
@@ -255,8 +254,8 @@ function claim_fee(
                 asset.asset_type
             )];
           asset := asset with record[
-              tvl = get_nat_or_fail(asset.tvl - reward, Errors.not_nat);
-              virtual_balance = get_nat_or_fail(asset.virtual_balance - reward, Errors.not_nat)
+              tvl = get_nat_or_fail(asset.tvl - reward, Errors.low_asset_liquidity);
+              virtual_balance = get_nat_or_fail(asset.virtual_balance - reward, Errors.low_asset_liquidity)
           ];
         }
       ];
