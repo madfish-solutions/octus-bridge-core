@@ -691,8 +691,14 @@ describe("Vault Admin tests", async function () {
         return true;
       });
     });
-    it("Should allow add new strategy fa12", async function () {
+    it("Shouldn't add stategy if wrapped asset", async function () {
       Tezos.setSignerProvider(signerAlice);
+      await rejects(vault.call("add_strategy", [3, alice.pkh, 0, 0]), err => {
+        strictEqual(err.message, "Vault/unsupported-asset");
+        return true;
+      });
+    });
+    it("Should allow add new strategy fa12", async function () {
       const targetReversesF = 0.5 * 10 ** 6;
       const deltaF = 0.15 * 10 ** 6;
       await vault.call("add_strategy", [

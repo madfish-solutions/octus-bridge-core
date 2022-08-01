@@ -96,6 +96,7 @@ function deposit_with_bounty(
 
       case asset.asset_type of [
       | Tez -> require(Tezos.get_amount() / 1mutez = params.amount, Errors.amounts_mismatch)
+      | Wrapped(_) -> failwith(Errors.unsupported_asset)
       | _ -> skip
       ];
       require(params.amount > 0n, Errors.zero_transfer);
@@ -143,7 +144,7 @@ function deposit_with_bounty(
       const deposited_amount = get_nat_or_fail(deposit_with_bounty * Constants.precision - fee_f, Errors.not_nat) / Constants.precision;
 
       const fee = get_nat_or_fail(deposit_with_bounty - deposited_amount, Errors.not_nat);
-      require(params.amount >= total_withdrawal + total_withdrawal_fee + total_bounty, Errors.amount_less_pending_amount);
+      require(params.amount >= total_withdrawal + total_bounty, Errors.amount_less_pending_amount);
       require(params.expected_min_bounty <= total_bounty, Errors.bounty_lower_expected);
 
       if fee + total_withdrawal_fee > 0n
