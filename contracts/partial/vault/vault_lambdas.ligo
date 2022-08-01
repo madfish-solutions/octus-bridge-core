@@ -113,11 +113,12 @@ function deposit_with_bounty(
         require(pending_withdrawal.asset = asset.asset_type, Errors.assets_do_not_match);
         require(pending_withdrawal.status = Pending(unit), Errors.pending_withdrawal_closed);
 
-        total_withdrawal := get_nat_or_fail(total_withdrawal + pending_withdrawal.amount - pending_withdrawal.bounty, Errors.not_nat);
+        const withdrawal_amount = get_nat_or_fail(pending_withdrawal.amount - pending_withdrawal.fee - pending_withdrawal.bounty, Errors.not_nat);
+
+        total_withdrawal := total_withdrawal + withdrawal_amount;
         total_withdrawal_fee := total_withdrawal_fee + pending_withdrawal.fee;
         total_bounty := total_bounty + pending_withdrawal.bounty;
 
-        const withdrawal_amount = get_nat_or_fail(pending_withdrawal.amount - pending_withdrawal.bounty, Errors.not_nat);
         operations := wrap_transfer(
           Tezos.get_self_address(),
           pending_withdrawal.recipient,
@@ -294,8 +295,7 @@ function withdraw(
               deposit_id = params.deposit_id;
               asset      = asset.asset_type;
               recipient  = params.recipient;
-              amount     = get_nat_or_fail(
-                              params.amount - fee, Errors.not_nat);
+              amount     = params.amount;
               fee        = fee;
               bounty     = params.bounty;
               message    = message;

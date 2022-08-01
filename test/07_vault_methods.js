@@ -1772,14 +1772,14 @@ describe("Vault methods tests", async function () {
         prevAsset.tvl.toNumber() +
           pendingWithdrawal.bounty.toNumber() +
           depositAmount -
-          pendingWithdrawal.amount.toNumber(),
+          pendingWithdrawal.amount.minus(pendingWithdrawal.fee).toNumber(),
       );
       strictEqual(
         asset.virtual_balance.toNumber(),
         prevAsset.virtual_balance.toNumber() +
           pendingWithdrawal.bounty.toNumber() +
           depositAmount -
-          pendingWithdrawal.amount.toNumber(),
+          pendingWithdrawal.amount.minus(pendingWithdrawal.fee).toNumber(),
       );
 
       strictEqual(
@@ -1801,8 +1801,10 @@ describe("Vault methods tests", async function () {
       strictEqual(
         aliceBalance,
         prevAliceBalance +
-          pendingWithdrawal.amount.toNumber() -
-          pendingWithdrawal.bounty.toNumber(),
+          pendingWithdrawal.amount
+            .minus(pendingWithdrawal.fee)
+            .minus(pendingWithdrawal.bounty)
+            .toNumber(),
       );
     });
     it("Should deposit with 2 pending withdrawals", async function () {
@@ -1856,7 +1858,8 @@ describe("Vault methods tests", async function () {
         pendingWithdrawal_1.fee.toNumber() + pendingWithdrawal_1.fee.toNumber();
 
       const totalWithdrawalAmount = pendingWithdrawal_1.amount
-        .plus(pendingWithdrawal_2.amount)
+        .minus(pendingWithdrawal_1.fee)
+        .plus(pendingWithdrawal_2.amount.minus(pendingWithdrawal_2.fee))
         .toNumber();
 
       const totalBounty = pendingWithdrawal_1.bounty
@@ -1905,14 +1908,18 @@ describe("Vault methods tests", async function () {
       strictEqual(
         aliceBalance,
         prevAliceBalance +
-          pendingWithdrawal_1.amount.toNumber() -
-          pendingWithdrawal_1.bounty.toNumber(),
+          pendingWithdrawal_1.amount
+            .minus(pendingWithdrawal_1.fee)
+            .minus(pendingWithdrawal_1.bounty)
+            .toNumber(),
       );
       strictEqual(
         eveBalance,
         prevEveBalance +
-          pendingWithdrawal_2.amount.toNumber() -
-          pendingWithdrawal_2.bounty.toNumber(),
+          pendingWithdrawal_2.amount
+            .minus(pendingWithdrawal_2.fee)
+            .minus(pendingWithdrawal_2.bounty)
+            .toNumber(),
       );
     });
   });
