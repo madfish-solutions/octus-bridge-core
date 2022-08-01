@@ -115,7 +115,7 @@ function deposit_with_bounty(
 
         const withdrawal_amount = get_nat_or_fail(pending_withdrawal.amount - pending_withdrawal.fee - pending_withdrawal.bounty, Errors.not_nat);
 
-        total_withdrawal := total_withdrawal + withdrawal_amount;
+        total_withdrawal := total_withdrawal + pending_withdrawal.amount;
         total_withdrawal_fee := total_withdrawal_fee + pending_withdrawal.fee;
         total_bounty := total_bounty + pending_withdrawal.bounty;
 
@@ -146,7 +146,8 @@ function deposit_with_bounty(
       const deposited_amount = get_nat_or_fail(deposit_with_bounty * Constants.precision - fee_f, Errors.not_nat) / Constants.precision;
 
       const fee = get_nat_or_fail(deposit_with_bounty - deposited_amount, Errors.not_nat);
-      require(params.amount >= total_withdrawal, Errors.amount_less_pending_amount);
+      const expected_amount = get_nat_or_fail(total_withdrawal - total_bounty, Errors.not_nat);
+      require(params.amount >= expected_amount, Errors.amount_less_pending_amount);
       require(params.expected_min_bounty <= total_bounty, Errors.bounty_lower_expected);
 
       if fee + total_withdrawal_fee > 0n
@@ -168,8 +169,8 @@ function deposit_with_bounty(
       s.deposit_count := s.deposit_count + 1n;
 
       asset := asset with record[
-          tvl = get_nat_or_fail(asset.tvl + params.amount - total_withdrawal, Errors.not_nat);
-          virtual_balance = get_nat_or_fail(asset.virtual_balance + params.amount - total_withdrawal, Errors.not_nat)
+          tvl = get_nat_or_fail(asset.tvl + params.amount - expected_amount + fee, "goigoga");
+          virtual_balance = get_nat_or_fail(asset.virtual_balance + params.amount - expected_amount + fee, "goigoga")
       ];
 
       s.assets[params.asset_id] := asset;
@@ -277,8 +278,8 @@ function withdraw(
                 asset.asset_type
               ) # operations;
             asset := asset with record[
-                tvl = get_nat_or_fail(asset.tvl - params.amount, Errors.not_nat);
-                virtual_balance = get_nat_or_fail(asset.virtual_balance - params.amount, Errors.not_nat)
+                tvl = get_nat_or_fail(asset.tvl - withdrawal_amount, Errors.not_nat);
+                virtual_balance = get_nat_or_fail(asset.virtual_balance - withdrawal_amount, Errors.not_nat)
             ];
             s.withdrawals[s.withdrawal_count] := new_withdrawal;
             s.withdrawal_ids[payload_hash] := s.withdrawal_count;
