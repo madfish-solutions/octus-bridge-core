@@ -1547,11 +1547,6 @@ describe("Vault methods tests", async function () {
     });
     it("Should cancel pending withdrawal", async function () {
       Tezos.setSignerProvider(signerAlice);
-      const prevFeeBalances = await vault.storage.fee_balances.get("2");
-      const prevFishFee = await prevFeeBalances.get(vault.storage.fish);
-      const prevManagementFee = await prevFeeBalances.get(
-        vault.storage.management,
-      );
       const prevAsset = await vault.storage.assets.get("2");
       await vault.call("cancel_withdrawal", [1, "0000"]);
       const withdrawal = await vault.storage.pending_withdrawals.get("1");
@@ -1568,10 +1563,7 @@ describe("Vault methods tests", async function () {
       );
       notStrictEqual(withdrawal.status["canceled"], undefined);
       strictEqual(newDeposit.recipient, "0000");
-      strictEqual(
-        newDeposit.amount.toNumber(),
-        withdrawal.amount.toNumber() + withdrawal.bounty.toNumber(),
-      );
+      strictEqual(newDeposit.amount.toNumber(), withdrawal.amount.toNumber());
     });
 
     it("Shouldn't cancel pending withdrawal if pending withdrawal is closed", async function () {
@@ -1778,12 +1770,14 @@ describe("Vault methods tests", async function () {
       strictEqual(
         asset.tvl.toNumber(),
         prevAsset.tvl.toNumber() +
+          pendingWithdrawal.bounty.toNumber() +
           depositAmount -
           pendingWithdrawal.amount.toNumber(),
       );
       strictEqual(
         asset.virtual_balance.toNumber(),
         prevAsset.virtual_balance.toNumber() +
+          pendingWithdrawal.bounty.toNumber() +
           depositAmount -
           pendingWithdrawal.amount.toNumber(),
       );
@@ -1806,7 +1800,9 @@ describe("Vault methods tests", async function () {
       notStrictEqual(newDeposit.asset["tez"], undefined);
       strictEqual(
         aliceBalance,
-        prevAliceBalance + pendingWithdrawal.amount.toNumber(),
+        prevAliceBalance +
+          pendingWithdrawal.amount.toNumber() -
+          pendingWithdrawal.bounty.toNumber(),
       );
     });
     it("Should deposit with 2 pending withdrawals", async function () {
@@ -1878,12 +1874,16 @@ describe("Vault methods tests", async function () {
 
       strictEqual(
         asset.tvl.toNumber(),
-        prevAsset.tvl.toNumber() + depositAmount - totalWithdrawalAmount,
+        prevAsset.tvl.toNumber() +
+          depositAmount +
+          totalBounty -
+          totalWithdrawalAmount,
       );
       strictEqual(
         asset.virtual_balance.toNumber(),
         prevAsset.virtual_balance.toNumber() +
-          depositAmount -
+          depositAmount +
+          totalBounty -
           totalWithdrawalAmount,
       );
       strictEqual(
@@ -1904,11 +1904,15 @@ describe("Vault methods tests", async function () {
       notStrictEqual(newDeposit.asset["fa12"], undefined);
       strictEqual(
         aliceBalance,
-        prevAliceBalance + pendingWithdrawal_1.amount.toNumber(),
+        prevAliceBalance +
+          pendingWithdrawal_1.amount.toNumber() -
+          pendingWithdrawal_1.bounty.toNumber(),
       );
       strictEqual(
         eveBalance,
-        prevEveBalance + pendingWithdrawal_2.amount.toNumber(),
+        prevEveBalance +
+          pendingWithdrawal_2.amount.toNumber() -
+          pendingWithdrawal_2.bounty.toNumber(),
       );
     });
   });
