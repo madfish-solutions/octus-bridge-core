@@ -113,21 +113,22 @@ function deposit_with_bounty(
         require(pending_withdrawal.asset = asset.asset_type, Errors.assets_do_not_match);
         require(pending_withdrawal.status = Pending(unit), Errors.pending_withdrawal_closed);
 
-        total_withdrawal := total_withdrawal + pending_withdrawal.amount;
+        total_withdrawal := get_nat_or_fail(total_withdrawal + pending_withdrawal.amount - pending_withdrawal.bounty, Errors.not_nat);
         total_withdrawal_fee := total_withdrawal_fee + pending_withdrawal.fee;
         total_bounty := total_bounty + pending_withdrawal.bounty;
 
+        const withdrawal_amount = get_nat_or_fail(pending_withdrawal.amount - pending_withdrawal.bounty, Errors.not_nat);
         operations := wrap_transfer(
           Tezos.get_self_address(),
           pending_withdrawal.recipient,
-          pending_withdrawal.amount,
+          withdrawal_amount,
           pending_withdrawal.asset
         ) # operations;
 
         s.withdrawals[s.withdrawal_count] := record[
           deposit_id = pending_withdrawal.deposit_id;
           asset      = pending_withdrawal.asset;
-          amount     = pending_withdrawal.amount;
+          amount     = withdrawal_amount;
           recipient  = pending_withdrawal.recipient;
           signatures = pending_withdrawal.message.signatures;
         ];
@@ -144,7 +145,7 @@ function deposit_with_bounty(
       const deposited_amount = get_nat_or_fail(deposit_with_bounty * Constants.precision - fee_f, Errors.not_nat) / Constants.precision;
 
       const fee = get_nat_or_fail(deposit_with_bounty - deposited_amount, Errors.not_nat);
-      require(params.amount >= total_withdrawal + total_bounty, Errors.amount_less_pending_amount);
+      require(params.amount >= total_withdrawal, Errors.amount_less_pending_amount);
       require(params.expected_min_bounty <= total_bounty, Errors.bounty_lower_expected);
 
       if fee + total_withdrawal_fee > 0n
@@ -294,7 +295,7 @@ function withdraw(
               asset      = asset.asset_type;
               recipient  = params.recipient;
               amount     = get_nat_or_fail(
-                              params.amount - fee - params.bounty, Errors.not_nat);
+                              params.amount - fee, Errors.not_nat);
               fee        = fee;
               bounty     = params.bounty;
               message    = message;
@@ -363,15 +364,13 @@ function cancel_withdrawal(
 
       const asset_id = unwrap(s.asset_ids[pending_withdrawal.asset], Errors.asset_undefined);
 
-      const return_amount = pending_withdrawal.amount + pending_withdrawal.bounty;
-
       if pending_withdrawal.fee > 0n
       then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, pending_withdrawal.fee, asset_id)
       else skip;
 
       s.deposits[s.deposit_count] := record[
           recipient = params.recipient;
-          amount    = return_amount;
+          amount    = pending_withdrawal.amount;
           asset     = pending_withdrawal.asset
       ];
       s.deposit_count := s.deposit_count + 1n;
