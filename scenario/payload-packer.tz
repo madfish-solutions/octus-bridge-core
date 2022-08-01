@@ -1,14 +1,15 @@
 { parameter
-    (or (pair %event
-           (nat %event_transaction_lt)
-           (timestamp %event_timestamp)
-           (bytes %event_data)
-           (int %configuration_wid)
-           (nat %configuration_address)
-           (int %event_contract_wid)
-           (nat %event_contract_address)
-           (address %proxy)
-           (nat %round))
+    (or (or (pair %event
+               (nat %event_transaction_lt)
+               (timestamp %event_timestamp)
+               (bytes %event_data)
+               (int %configuration_wid)
+               (nat %configuration_address)
+               (int %event_contract_wid)
+               (nat %event_contract_address)
+               (address %proxy)
+               (nat %round))
+            (nat %nat))
         (pair %withdrawal
            (bytes %deposit_id)
            (bytes %chain_id)
@@ -23,5 +24,7 @@
   code { NIL operation ;
          SWAP ;
          CAR ;
-         IF_LEFT { PACK ; SWAP ; PAIR } { PACK ; SWAP ; PAIR } } }
+         IF_LEFT
+           { IF_LEFT { PACK ; SWAP ; PAIR } { PACK ; SWAP ; PAIR } }
+           { PACK ; SWAP ; PAIR } } }
 

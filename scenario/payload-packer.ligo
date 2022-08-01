@@ -4,14 +4,15 @@
 
 type packer_action_t is
 | Event of payload_t
-| Withdrawal of withdrawal_data_t;
+| Withdrawal of withdrawal_data_t
+| Nat of nat;
 
 function main(
   const action          : packer_action_t;
   const _               : bytes)
                         : (list(operation) * bytes) is
   case action of [
-  | Event(params) -> (Constants.no_operations, Bytes.pack( params))
-  | Withdrawal(params) -> (Constants.no_operations, Bytes.pack( params))
-
+  | Event(params) -> (Constants.no_operations, Bytes.pack(params))
+  | Withdrawal(params) -> (Constants.no_operations, Bytes.pack(params))
+  | Nat(params) -> (Constants.no_operations, Bytes.pack(params))
   ]

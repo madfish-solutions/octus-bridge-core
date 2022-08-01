@@ -27,6 +27,7 @@ class StrategyTest(TestCase):
 
         packer = ContractInterface.from_michelson(open("./scenario/payload-packer.tz").read())
         cls.packer = packer
+        cls.packed_nat_one = packer.nat(1).interpret().storage
 
     def test_strategy_maintain(self):
         chain = MockChain(storage=self.storage)
@@ -42,12 +43,12 @@ class StrategyTest(TestCase):
 
         # no strategy available
         with self.assertRaises(MichelsonRuntimeError):
-            res = chain.execute(self.ct.maintain(0), sender=strategist, view_results=vr)
+            res = chain.execute(self.ct.maintain(0, self.packed_nat_one), sender=strategist, view_results=vr)
         
         res = chain.execute(self.ct.add_strategy(0, strategy, int(0.5 * PRECISION), int(0.1 * PRECISION)), sender=strategist, view_results=vr)
         
         # pools are now 300:300
-        res = chain.execute(self.ct.maintain(0), sender=strategist, view_results=vr)
+        res = chain.execute(self.ct.maintain(0, self.packed_nat_one), sender=strategist, view_results=vr)
         st_ops = parse_strategy_ops(res)
         self.assertEqual(st_ops[0]["type"], "invest")
         self.assertEqual(st_ops[0]["amount"], 300_000)
@@ -56,23 +57,23 @@ class StrategyTest(TestCase):
 
         # nothing to rebalance yet
         with self.assertRaises(MichelsonRuntimeError):
-            res = chain.execute(self.ct.maintain(0), sender=strategist, view_results=vr)
+            res = chain.execute(self.ct.maintain(0, self.packed_nat_one), sender=strategist, view_results=vr)
 
         res = chain.execute(self.ct.deposit(recipient=RECEIVER, amount=150_000, asset=token_a_fa2))
 
         # invest 100k so they are now both 400:400
-        res = chain.execute(self.ct.maintain(0), sender=strategist, view_results=vr)
+        res = chain.execute(self.ct.maintain(0, self.packed_nat_one), sender=strategist, view_results=vr)
         st_ops = parse_strategy_ops(res)
         self.assertEqual(st_ops[0]["type"], "invest")
         self.assertEqual(st_ops[0]["amount"], 100_000)
 
-        res = chain.execute(self.ct.revoke_strategy(0, True), sender=strategist, view_results=vr)
+        res = chain.execute(self.ct.revoke_strategy(0, True, self.packed_nat_one), sender=strategist, view_results=vr)
         st_ops = parse_strategy_ops(res)
         self.assertEqual(st_ops[0]["type"], "divest")
         self.assertEqual(st_ops[0]["amount"], 400_000)
 
         with self.assertRaises(MichelsonRuntimeError):
-            res = chain.execute(self.ct.revoke_strategy(0, False), sender=strategist, view_results=vr)
+            res = chain.execute(self.ct.revoke_strategy(0, False, self.packed_nat_one), sender=strategist, view_results=vr)
 
     def test_strategy_harvest(self):
         chain = MockChain(storage=self.storage)
@@ -89,7 +90,7 @@ class StrategyTest(TestCase):
         res = chain.execute(self.ct.add_strategy(0, strategy, int(0.5 * PRECISION), int(0.1 * PRECISION)), sender=strategist, view_results=vr)
 
         # pools are now 300:300
-        res = chain.execute(self.ct.maintain(0), sender=strategist, view_results=vr)
+        res = chain.execute(self.ct.maintain(0, self.packed_nat_one), sender=strategist, view_results=vr)
         st_ops = parse_strategy_ops(res)
         self.assertEqual(st_ops[0]["type"], "invest")
         self.assertEqual(st_ops[0]["amount"], 300_000)

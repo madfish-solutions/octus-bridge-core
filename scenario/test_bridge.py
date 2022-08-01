@@ -1,4 +1,4 @@
-from unittest import TestCase
+from unittest import TestCase, skip
 from helpers import *
 from constants import *
 from initial_storage import vault_lambdas
@@ -121,6 +121,7 @@ class BridgeTest(TestCase):
         res = chain.view(self.ct.validate_message(**message))
         self.assertEqual(res, "not_enough_correct_signatures")
 
+    @skip("Cant test due to pytezos onchain_view not accepting Tezos.now")
     def test_round_ttl(self):
         chain = MockChain(storage=self.storage)
 

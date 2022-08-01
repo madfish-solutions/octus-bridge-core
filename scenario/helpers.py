@@ -129,15 +129,17 @@ def parse_strategy_ops(res):
     for op in res.operations:
         if op["kind"] == "transaction":
             ep = op["parameters"]["entrypoint"]
+            # print(op["parameters"]["value"])
+            # continue
             if ep == "invest":
                 invest = {
-                    "amount": int(op["parameters"]["value"]["int"]),
+                    "amount": int(op["parameters"]["value"]["args"][0]["int"]),
                     "type": "invest"
                 }
                 result.append(invest)
             elif ep == "divest":
                 divest = {
-                    "amount": int(op["parameters"]["value"]["int"]),
+                    "amount": int(op["parameters"]["value"]["args"][0]["int"]),
                     "type": "divest"
                 }
                 result.append(divest)
@@ -460,8 +462,8 @@ class MockChain():
             storage=self.storage,
             balance=self.balance,
             view_results=view_results,
-            now=self.now,
-            level=self.level
+            # now=self.now,
+            # level=self.level
         )
         return res
 
