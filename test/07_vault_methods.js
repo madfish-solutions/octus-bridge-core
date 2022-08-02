@@ -742,11 +742,11 @@ describe("Vault methods tests", async function () {
       );
       strictEqual(
         asset.tvl.toNumber(),
-        prevAsset.tvl.toNumber() - withdrawalAmount,
+        prevAsset.tvl.toNumber() - (withdrawalAmount - fee),
       );
       strictEqual(
         asset.virtual_balance.toNumber(),
-        prevAsset.virtual_balance.toNumber() - withdrawalAmount,
+        prevAsset.virtual_balance.toNumber() - (withdrawalAmount - fee),
       );
       strictEqual(vaultBalance, prevVaultBalance - (withdrawalAmount - fee));
       strictEqual(aliceBalance, prevAliceBalance + withdrawalAmount - fee);
@@ -820,11 +820,11 @@ describe("Vault methods tests", async function () {
       );
       strictEqual(
         asset.tvl.toNumber(),
-        prevAsset.tvl.toNumber() - withdrawalAmount,
+        prevAsset.tvl.toNumber() - (withdrawalAmount - fee),
       );
       strictEqual(
         asset.virtual_balance.toNumber(),
-        prevAsset.virtual_balance.toNumber() - withdrawalAmount,
+        prevAsset.virtual_balance.toNumber() - (withdrawalAmount - fee),
       );
       strictEqual(vaultBalance, prevVaultBalance - (withdrawalAmount - fee));
       strictEqual(aliceBalance, prevAliceBalance + (withdrawalAmount - fee));
@@ -910,11 +910,11 @@ describe("Vault methods tests", async function () {
       );
       strictEqual(
         asset.tvl.toNumber(),
-        prevAsset.tvl.toNumber() - withdrawalAmount,
+        prevAsset.tvl.toNumber() - (withdrawalAmount - fee),
       );
       strictEqual(
         asset.virtual_balance.toNumber(),
-        prevAsset.virtual_balance.toNumber() - withdrawalAmount,
+        prevAsset.virtual_balance.toNumber() - (withdrawalAmount - fee),
       );
       strictEqual(
         vaultBalance,
@@ -1758,28 +1758,23 @@ describe("Vault methods tests", async function () {
       );
 
       const depositFee = Math.floor(
-        ((depositAmount + pendingWithdrawal.bounty.toNumber()) *
-          asset.deposit_fee_f.toNumber()) /
-          precision,
+        (depositAmount * asset.deposit_fee_f.toNumber()) / precision,
       );
 
       notStrictEqual(pendingWithdrawal.status["completed"], undefined);
       notStrictEqual(newWithdrawal, undefined);
       strictEqual(vault.storage.deposit_count.toNumber(), prevDepositCount + 1);
-
+      const withdrawalAmount = pendingWithdrawal.amount
+        .minus(pendingWithdrawal.bounty)
+        .minus(pendingWithdrawal.fee)
+        .toNumber();
       strictEqual(
         asset.tvl.toNumber(),
-        prevAsset.tvl.toNumber() +
-          pendingWithdrawal.bounty.toNumber() +
-          depositAmount -
-          pendingWithdrawal.amount.minus(pendingWithdrawal.fee).toNumber(),
+        prevAsset.tvl.toNumber() + depositAmount - withdrawalAmount,
       );
       strictEqual(
         asset.virtual_balance.toNumber(),
-        prevAsset.virtual_balance.toNumber() +
-          pendingWithdrawal.bounty.toNumber() +
-          depositAmount -
-          pendingWithdrawal.amount.minus(pendingWithdrawal.fee).toNumber(),
+        prevAsset.virtual_balance.toNumber() + depositAmount - withdrawalAmount,
       );
 
       strictEqual(
@@ -1857,17 +1852,21 @@ describe("Vault methods tests", async function () {
       const totalWithdrawalFee =
         pendingWithdrawal_1.fee.toNumber() + pendingWithdrawal_1.fee.toNumber();
 
-      const totalWithdrawalAmount = pendingWithdrawal_1.amount
+      const withdrawalAmount_1 = pendingWithdrawal_1.amount
+        .minus(pendingWithdrawal_1.bounty)
         .minus(pendingWithdrawal_1.fee)
-        .plus(pendingWithdrawal_2.amount.minus(pendingWithdrawal_2.fee))
         .toNumber();
+      const withdrawalAmount_2 = pendingWithdrawal_2.amount
+        .minus(pendingWithdrawal_2.bounty)
+        .minus(pendingWithdrawal_2.fee)
+        .toNumber();
+      const totalWithdrawalAmount = withdrawalAmount_1 + withdrawalAmount_2;
 
       const totalBounty = pendingWithdrawal_1.bounty
         .plus(pendingWithdrawal_2.bounty)
         .toNumber();
       const depositFee = Math.floor(
-        ((depositAmount + totalBounty) * asset.deposit_fee_f.toNumber()) /
-          precision,
+        (depositAmount * asset.deposit_fee_f.toNumber()) / precision,
       );
       notStrictEqual(pendingWithdrawal_1.status["completed"], undefined);
       notStrictEqual(pendingWithdrawal_2.status["completed"], undefined);
@@ -1877,17 +1876,13 @@ describe("Vault methods tests", async function () {
 
       strictEqual(
         asset.tvl.toNumber(),
-        prevAsset.tvl.toNumber() +
-          depositAmount +
-          totalBounty -
-          totalWithdrawalAmount,
+        prevAsset.tvl.toNumber() + depositAmount - totalWithdrawalAmount,
       );
       strictEqual(
         asset.virtual_balance.toNumber(),
         prevAsset.virtual_balance.toNumber() +
           depositAmount +
-          totalBounty -
-          totalWithdrawalAmount,
+          -totalWithdrawalAmount,
       );
       strictEqual(
         fishFee.toNumber(),

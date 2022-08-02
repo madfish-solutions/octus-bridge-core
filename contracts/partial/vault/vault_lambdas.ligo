@@ -115,7 +115,12 @@ function deposit_with_bounty(
 
         const withdrawal_amount = get_nat_or_fail(pending_withdrawal.amount - pending_withdrawal.fee - pending_withdrawal.bounty, Errors.not_nat);
 
-        total_withdrawal := total_withdrawal + pending_withdrawal.amount;
+        total_withdrawal := get_nat_or_fail(
+            total_withdrawal
+            + pending_withdrawal.amount
+            - pending_withdrawal.fee
+            - pending_withdrawal.bounty,
+            Errors.not_nat);
         total_withdrawal_fee := total_withdrawal_fee + pending_withdrawal.fee;
         total_bounty := total_bounty + pending_withdrawal.bounty;
 
@@ -140,13 +145,12 @@ function deposit_with_bounty(
         pending_withdrawal.status := Completed(unit);
         s.pending_withdrawals[withdrawal_id] := pending_withdrawal;
       };
-      const deposit_with_bounty = params.amount + total_bounty;
-      const fee_f = deposit_with_bounty * asset.deposit_fee_f;
+      const fee_f = params.amount * asset.deposit_fee_f;
 
-      const deposited_amount = get_nat_or_fail(deposit_with_bounty * Constants.precision - fee_f, Errors.not_nat) / Constants.precision;
+      const deposited_amount = get_nat_or_fail(params.amount * Constants.precision - fee_f, Errors.not_nat) / Constants.precision;
 
-      const fee = get_nat_or_fail(deposit_with_bounty - deposited_amount, Errors.not_nat);
-      const expected_amount = get_nat_or_fail(total_withdrawal - total_bounty, Errors.not_nat);
+      const fee = get_nat_or_fail(params.amount - deposited_amount, Errors.not_nat);
+      const expected_amount = total_withdrawal + total_bounty;
       require(params.amount >= expected_amount, Errors.amount_less_pending_amount);
       require(params.expected_min_bounty <= total_bounty, Errors.bounty_lower_expected);
 
@@ -163,14 +167,14 @@ function deposit_with_bounty(
 
       s.deposits[s.deposit_count] := record[
           recipient = params.recipient;
-          amount    = deposited_amount;
+          amount    = deposited_amount + total_bounty;
           asset     = asset.asset_type;
       ];
       s.deposit_count := s.deposit_count + 1n;
 
       asset := asset with record[
-          tvl = get_nat_or_fail(asset.tvl + params.amount - expected_amount + fee, "goigoga");
-          virtual_balance = get_nat_or_fail(asset.virtual_balance + params.amount - expected_amount + fee, "goigoga")
+          tvl = get_nat_or_fail(asset.tvl + params.amount - total_withdrawal, Errors.not_nat);
+          virtual_balance = get_nat_or_fail(asset.virtual_balance + params.amount - total_withdrawal, Errors.not_nat)
       ];
 
       s.assets[params.asset_id] := asset;
