@@ -113,14 +113,10 @@ function deposit_with_bounty(
         require(pending_withdrawal.asset = asset.asset_type, Errors.assets_do_not_match);
         require(pending_withdrawal.status = Pending(unit), Errors.pending_withdrawal_closed);
 
-        const withdrawal_amount = get_nat_or_fail(pending_withdrawal.amount - pending_withdrawal.fee - pending_withdrawal.bounty, Errors.not_nat);
+        const withdrawal_amount = get_nat_or_fail(pending_withdrawal.amount - pending_withdrawal.bounty, Errors.not_nat);
 
-        total_withdrawal := get_nat_or_fail(
-            total_withdrawal
-            + pending_withdrawal.amount
-            - pending_withdrawal.fee
-            - pending_withdrawal.bounty,
-            Errors.not_nat);
+        total_withdrawal := total_withdrawal + withdrawal_amount;
+
         total_withdrawal_fee := total_withdrawal_fee + pending_withdrawal.fee;
         total_bounty := total_bounty + pending_withdrawal.bounty;
 
@@ -155,7 +151,7 @@ function deposit_with_bounty(
       require(params.expected_min_bounty <= total_bounty, Errors.bounty_lower_expected);
 
       if fee + total_withdrawal_fee > 0n
-      then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee + total_withdrawal_fee, params.asset_id)
+      then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, params.asset_id)
       else skip;
 
       operations := wrap_transfer(
@@ -215,6 +211,10 @@ function withdraw(
 
       const fee = get_nat_or_fail(params.amount - withdrawal_amount, Errors.not_nat);
 
+      if fee > 0n
+      then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset_id)
+      else skip;
+
       const new_withdrawal = record[
           deposit_id = params.deposit_id;
           asset      = asset.asset_type;
@@ -231,10 +231,6 @@ function withdraw(
             s.asset_config.native.configuration_wid = payload.configuration_wid,
             Errors.wrong_event_configuration
           );
-
-          if fee > 0n
-          then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset_id)
-          else skip;
 
           var mint_params : mint_params_t := list[
             record[
@@ -271,10 +267,6 @@ function withdraw(
         );
         if asset.virtual_balance >= params.amount
         then {
-            if fee > 0n
-            then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset_id)
-            else skip;
-
             operations := wrap_transfer(
                 Tezos.get_self_address(),
                 params.recipient,
@@ -300,7 +292,7 @@ function withdraw(
               deposit_id = params.deposit_id;
               asset      = asset.asset_type;
               recipient  = params.recipient;
-              amount     = params.amount;
+              amount     = withdrawal_amount;
               fee        = fee;
               bounty     = params.bounty;
               message    = message;
@@ -368,14 +360,21 @@ function cancel_withdrawal(
       s.pending_withdrawals[params.pending_id] := pending_withdrawal;
 
       const asset_id = unwrap(s.asset_ids[pending_withdrawal.asset], Errors.asset_undefined);
+      const asset = unwrap(s.assets[asset_id], Errors.asset_undefined);
+
+      const fee_f = pending_withdrawal.amount * asset.deposit_fee_f;
+
+      const deposited_amount = get_nat_or_fail(pending_withdrawal.amount * Constants.precision - fee_f, Errors.not_nat) / Constants.precision;
+
+      const fee = get_nat_or_fail(pending_withdrawal.amount - deposited_amount, Errors.not_nat);
 
       if pending_withdrawal.fee > 0n
-      then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, pending_withdrawal.fee, asset_id)
+      then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset_id)
       else skip;
 
       s.deposits[s.deposit_count] := record[
           recipient = params.recipient;
-          amount    = pending_withdrawal.amount;
+          amount    = deposited_amount;
           asset     = pending_withdrawal.asset
       ];
       s.deposit_count := s.deposit_count + 1n;
