@@ -217,8 +217,8 @@ function claim_fee(
       var asset := unwrap(s.assets[params.asset_id], Errors.asset_undefined);
       var fee_balances : fee_balances_t := unwrap(s.fee_balances[params.asset_id], Errors.asset_undefined);
       var balance_f := unwrap_or(fee_balances[Tezos.get_sender()], 0n);
-      require(balance_f / Constants.precision > 0n, Errors.zero_fee_balance);
       const reward = balance_f / Constants.precision;
+      require(reward > 0n, Errors.zero_fee_balance);
 
       fee_balances[Tezos.get_sender()] := get_nat_or_fail(balance_f - reward * Constants.precision, Errors.not_nat);
       s.fee_balances[params.asset_id] := fee_balances;

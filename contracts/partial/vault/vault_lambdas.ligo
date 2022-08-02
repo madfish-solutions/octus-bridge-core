@@ -22,11 +22,9 @@ function deposit(
 
       require(params.amount > 0n, Errors.zero_transfer);
 
-      const fee_f = params.amount * asset.deposit_fee_f;
+      const fee = ceil_div(params.amount  * asset.deposit_fee_f, Constants.precision);
 
-      const deposited_amount = get_nat_or_fail(params.amount * Constants.precision - fee_f, Errors.not_nat) / Constants.precision;
-
-      const fee = get_nat_or_fail(params.amount - deposited_amount, Errors.not_nat);
+      const deposited_amount = get_nat_or_fail(params.amount - fee, Errors.not_nat);
 
       if fee > 0n
       then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset_id)
@@ -102,10 +100,8 @@ function deposit_with_bounty(
       require(params.amount > 0n, Errors.zero_transfer);
       require(asset.tvl + params.amount <= asset.deposit_limit or asset.deposit_limit = 0n, Errors.deposit_limit);
 
-
       var total_bounty := 0n;
       var total_withdrawal := 0n;
-      var total_withdrawal_fee := 0n;
       var operations := no_operations;
       for withdrawal_id in set params.pending_withdrawal_ids {
         var pending_withdrawal := unwrap(s.pending_withdrawals[withdrawal_id], Errors.unknown_pending_withdrawal);
@@ -117,7 +113,6 @@ function deposit_with_bounty(
 
         total_withdrawal := total_withdrawal + withdrawal_amount;
 
-        total_withdrawal_fee := total_withdrawal_fee + pending_withdrawal.fee;
         total_bounty := total_bounty + pending_withdrawal.bounty;
 
         operations := wrap_transfer(
@@ -141,16 +136,15 @@ function deposit_with_bounty(
         pending_withdrawal.status := Completed(unit);
         s.pending_withdrawals[withdrawal_id] := pending_withdrawal;
       };
-      const fee_f = params.amount * asset.deposit_fee_f;
+      const fee = ceil_div(params.amount * asset.deposit_fee_f, Constants.precision);
 
-      const deposited_amount = get_nat_or_fail(params.amount * Constants.precision - fee_f, Errors.not_nat) / Constants.precision;
+      const deposited_amount = get_nat_or_fail(params.amount - fee, Errors.not_nat);
 
-      const fee = get_nat_or_fail(params.amount - deposited_amount, Errors.not_nat);
       const expected_amount = total_withdrawal + total_bounty;
       require(params.amount >= expected_amount, Errors.amount_less_pending_amount);
       require(params.expected_min_bounty <= total_bounty, Errors.bounty_lower_expected);
 
-      if fee + total_withdrawal_fee > 0n
+      if fee > 0n
       then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, params.asset_id)
       else skip;
 
@@ -202,14 +196,11 @@ function withdraw(
       s := result.storage;
 
       require(not(unwrap_or(s.banned_assets[params.asset], False)), Errors.asset_banned);
-
       require(params.amount > 0n, Errors.zero_transfer);
 
-      const fee_f = params.amount * asset.withdrawal_fee_f;
+      const fee = ceil_div(params.amount * asset.withdrawal_fee_f, Constants.precision);
 
-      const withdrawal_amount = get_nat_or_fail(params.amount * Constants.precision - fee_f, Errors.not_nat) / Constants.precision;
-
-      const fee = get_nat_or_fail(params.amount - withdrawal_amount, Errors.not_nat);
+      const withdrawal_amount = get_nat_or_fail(params.amount - fee, Errors.not_nat);
 
       if fee > 0n
       then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset_id)
@@ -293,7 +284,6 @@ function withdraw(
               asset      = asset.asset_type;
               recipient  = params.recipient;
               amount     = withdrawal_amount;
-              fee        = fee;
               bounty     = params.bounty;
               message    = message;
               status     = Pending(unit);
@@ -362,13 +352,11 @@ function cancel_withdrawal(
       const asset_id = unwrap(s.asset_ids[pending_withdrawal.asset], Errors.asset_undefined);
       const asset = unwrap(s.assets[asset_id], Errors.asset_undefined);
 
-      const fee_f = pending_withdrawal.amount * asset.deposit_fee_f;
+      const fee = ceil_div(pending_withdrawal.amount * asset.deposit_fee_f, Constants.precision);
 
-      const deposited_amount = get_nat_or_fail(pending_withdrawal.amount * Constants.precision - fee_f, Errors.not_nat) / Constants.precision;
+      const deposited_amount = get_nat_or_fail(pending_withdrawal.amount - fee, Errors.not_nat);
 
-      const fee = get_nat_or_fail(pending_withdrawal.amount - deposited_amount, Errors.not_nat);
-
-      if pending_withdrawal.fee > 0n
+      if fee > 0n
       then s.fee_balances := update_fee_balances(s.fee_balances, s.fish, s.management, fee, asset_id)
       else skip;
 

@@ -1092,7 +1092,6 @@ describe("Vault methods tests", async function () {
 
       notStrictEqual(newPendingWithdrawal.status["pending"], undefined);
       strictEqual(newPendingWithdrawal.bounty.toNumber(), 1000000);
-      strictEqual(newPendingWithdrawal.fee.toNumber(), fee);
       strictEqual(
         newPendingWithdrawal.amount.toNumber(),
         withdrawalAmount - fee,

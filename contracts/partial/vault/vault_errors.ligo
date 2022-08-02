@@ -57,4 +57,5 @@ module Errors is {
   const wrong_chain_id              : string = "Vault/wrong-chain-id";
   const bounty_lower_expected       : string = "Vault/bounty-lower-than-expected";
   const unsupported_asset           : string = "Vault/unsupported-asset";
+  const ceil_division               : string = "Valult/math-ceil-div-fail";
   }
