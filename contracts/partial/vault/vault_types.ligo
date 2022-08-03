@@ -72,7 +72,6 @@ type pending_withdrawal_t is [@layout:comb] record[
   asset                   : asset_standard_t;
   recipient               : address;
   amount                  : nat;
-  fee                     : nat;
   bounty                  : nat;
   message                 : message_t;
   status                  : withdrawal_status_t;
