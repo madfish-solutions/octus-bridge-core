@@ -376,6 +376,29 @@ class VaultTest(TestCase):
 
         res = chain.execute(self.ct.deposit(recipient=RECEIVER, amount=2_500, asset=wrapped_asset_a), sender=fish)
 
+    def test_vault_tvl_alien_token(self):
+        chain = MockChain(storage=self.storage)
+
+        fees = {
+            "deposit_f": int(0.01 * PRECISION),
+            "withdraw_f": int(0.10 * PRECISION),
+        }
+        chain.execute(self.ct.set_fees(native=fees, alien=fees), sender=admin)
+
+        payload = pack_withdraw_payload(self.packer, 300_000, alice, token_a_fa2, "01", 0)
+        res = chain.execute(self.ct.withdraw(payload=payload, signatures={}), sender=alice, view_results=vr)
+
+        payload = pack_withdraw_payload(self.packer, 50_000, bob, token_a_fa2, "02", 0)
+        res = chain.execute(self.ct.withdraw(payload=payload, signatures={}), sender=bob, view_results=vr)
+        
+        # we need a value so it is 350_000 after subtracting 1% so it covers first deposit fee, and then both withdrawal fees
+        res = chain.execute(self.ct.deposit_with_bounty(recipient=RECEIVER, amount=353_536, asset_id=0, pending_withdrawal_ids=[0, 1], expected_min_bounty=0), sender=bob)
+    
+        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient=fish), sender=fish)
+        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient=management), sender=management)
+
+        self.assertEqual(res.storage["storage"]["assets"][0]["tvl"], 0)
+
     def test_vault_tvl_wrapped_token(self):
         chain = MockChain(storage=self.storage)
 
