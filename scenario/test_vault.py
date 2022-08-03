@@ -205,9 +205,6 @@ class VaultTest(TestCase):
     def test_multiple_deposit_with_bounty(self):
         chain = MockChain(storage=self.storage)
 
-        # add some funds to work with
-        res = chain.execute(self.ct.deposit(recipient=RECEIVER, amount=1_000_000, asset=token_a_fa2))
-
         payload = pack_withdraw_payload(self.packer, 170_000, alice, token_a_fa2, "01", 600)
         res = chain.execute(self.ct.withdraw(payload=payload, signatures={}), sender=alice, view_results=vr)
 
@@ -258,32 +255,41 @@ class VaultTest(TestCase):
         payload = pack_withdraw_payload(self.packer, 50_000, bob, token_a_fa2, "02", 100)
         res = chain.execute(self.ct.withdraw(payload=payload, signatures={}), sender=bob, view_results=vr)
 
-        # fails due to not enough fees
         with self.assertRaises(MichelsonRuntimeError) as error:
-            res = chain.execute(self.ct.deposit_with_bounty(recipient=RECEIVER, amount=220_000, asset_id=0, pending_withdrawal_ids=[0, 1], expected_min_bounty=1), sender=carol)
+            res = chain.execute(self.ct.deposit_with_bounty(recipient=RECEIVER, amount=220_000 - 2201, asset_id=0, pending_withdrawal_ids=[0, 1], expected_min_bounty=1), sender=carol)
         
-        res = chain.execute(self.ct.deposit_with_bounty(recipient=RECEIVER, amount=232_000, asset_id=0, pending_withdrawal_ids=[0, 1], expected_min_bounty=1), sender=carol)
+        res = chain.execute(self.ct.deposit_with_bounty(recipient=RECEIVER, amount=220_000 - 2200, asset_id=0, pending_withdrawal_ids=[0, 1], expected_min_bounty=1), sender=carol)
         transfers = parse_transfers(res)
         self.assertEqual(len(transfers), 3) 
-        self.assertEqual(transfers[0]["amount"], 232_000)
+        self.assertEqual(transfers[0]["amount"], 220_000 - 2200)
         self.assertEqual(transfers[0]["destination"], contract_self_address)
         self.assertEqual(transfers[0]["source"], carol)
         self.assertEqual(transfers[0]["token_address"], token_a_address)
 
-        self.assertEqual(transfers[1]["amount"], 50_000 - 100)
+        self.assertEqual(transfers[1]["amount"], 50_000 - 100 - 500)
         self.assertEqual(transfers[1]["source"], contract_self_address)
         self.assertEqual(transfers[1]["destination"], bob)
         self.assertEqual(transfers[1]["token_address"], token_a_address)
     
-        self.assertEqual(transfers[2]["amount"], 170_000 - 500)
+        self.assertEqual(transfers[2]["amount"], 170_000 - 500 - 1700)
         self.assertEqual(transfers[2]["source"], contract_self_address)
         self.assertEqual(transfers[2]["destination"], alice)
         self.assertEqual(transfers[2]["token_address"], token_a_address)
 
-        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient=fish), sender=fish)
+        deposit_fee = 10890
+        withdraw_fees = 1700 + 500
+
+        with self.assertRaises(MichelsonRuntimeError) as error:
+            res = chain.execute(self.ct.claim_fee(asset_id=0, recipient=fish), sender=fish)
+
+        res = chain.execute(self.ct.deposit(recipient=RECEIVER, amount=100_000, asset=token_a_fa2), sender=alice)
+        helper_deposit_fee = 5000    
+
+        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient=fish), sender=fish)    
+
         transfers = parse_transfers(res)
         self.assertEqual(len(transfers), 1)
-        self.assertEqual(transfers[0]["amount"], 5_800)
+        self.assertEqual(transfers[0]["amount"], (deposit_fee + withdraw_fees + helper_deposit_fee) // 2)
         self.assertEqual(transfers[0]["destination"], fish)
         self.assertEqual(transfers[0]["source"], contract_self_address)
         self.assertEqual(transfers[0]["token_address"], token_a_address)
@@ -369,3 +375,34 @@ class VaultTest(TestCase):
         self.assertEqual(mints[0]["token_address"], wrapped_token_address)
 
         res = chain.execute(self.ct.deposit(recipient=RECEIVER, amount=2_500, asset=wrapped_asset_a), sender=fish)
+
+    def test_vault_tvl_wrapped_token(self):
+        chain = MockChain(storage=self.storage)
+
+        fees = {
+            "deposit_f": int(0.01 * PRECISION),
+            "withdraw_f": int(0.10 * PRECISION),
+        }
+        chain.execute(self.ct.set_fees(native=fees, alien=fees), sender=admin)
+
+        payload = pack_withdraw_payload(self.packer, 300_000, alice, wrapped_asset_a, "01")
+        res = chain.execute(self.ct.withdraw(payload=payload, signatures={}), sender=alice, view_results=vr)
+
+        payload = pack_withdraw_payload(self.packer, 50_000, bob, wrapped_asset_a, "02")
+        res = chain.execute(self.ct.withdraw(payload=payload, signatures={}), sender=alice, view_results=vr)
+        
+        res = chain.execute(self.ct.deposit(recipient=RECEIVER, amount=315_000, asset=wrapped_asset_a), sender=bob)
+    
+        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient=fish), sender=fish)
+        mints = parse_mints(res)
+        self.assertEqual(len(mints), 1) 
+        self.assertEqual(mints[0]["amount"], (35_000 + 3150) // 2)
+
+        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient=management), sender=management)
+        mints = parse_mints(res)
+        self.assertEqual(len(mints), 1) 
+        self.assertEqual(mints[0]["amount"], (35_000 + 3150) // 2)
+
+        self.assertEqual(res.storage["storage"]["assets"][0]["tvl"], 35_000 + 3150)
+
+
