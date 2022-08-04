@@ -33,23 +33,23 @@ function deposit(
       var operations := result.operations;
       case asset.asset_type of [
       | Wrapped(token_) -> {
-        const burn_params : burn_params_t = record[
-          token_id = token_.id;
-          account = Tezos.get_sender();
-          amount = params.amount
-        ];
-        operations := Tezos.transaction(
-            burn_params,
-            0mutez,
-            unwrap(
-              (Tezos.get_entrypoint_opt("%burn", token_.address) : option(contract(burn_params_t))),
-              Errors.burn_etp_404)
-          ) # operations;
-        asset := asset with record[
-            tvl = get_nat_or_fail(asset.tvl - params.amount, Errors.not_nat);
-            virtual_balance = get_nat_or_fail(asset.virtual_balance - params.amount, Errors.not_nat)
-          ]
-      }
+          const burn_params : burn_params_t = record[
+            token_id = token_.id;
+            account = Tezos.get_sender();
+            amount = params.amount
+          ];
+          operations := Tezos.transaction(
+              burn_params,
+              0mutez,
+              unwrap(
+                (Tezos.get_entrypoint_opt("%burn", token_.address) : option(contract(burn_params_t))),
+                Errors.burn_etp_404)
+            ) # operations;
+          asset := asset with record[
+              tvl = get_nat_or_fail(asset.tvl - params.amount, Errors.not_nat);
+              virtual_balance = get_nat_or_fail(asset.virtual_balance - params.amount, Errors.not_nat)
+            ]
+        }
       | Tez -> {
           asset := asset with record [
               tvl += params.amount;

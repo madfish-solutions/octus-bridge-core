@@ -223,42 +223,55 @@ function claim_fee(
       fee_balances[Tezos.get_sender()] := get_nat_or_fail(balance_f - reward * Constants.precision, Errors.not_nat);
       s.fee_balances[params.asset_id] := fee_balances;
       var operations := no_operations;
-      case asset.asset_type of [
-      | Wrapped(token) -> {
-          operations := list[
-              Tezos.transaction(
-                list[
-                  record[
-                    token_id = token.id;
-                    recipient = params.recipient;
-                    amount = reward;
-                  ];
-                ],
-                0mutez,
-                unwrap(
-                  (Tezos.get_entrypoint_opt("%mint", token.address) : option(contract(mint_params_t))),
-                  Errors.mint_etp_404
-                )
+      if params.to_everscale
+      then {
+          s.deposits[s.deposit_count] := record[
+              recipient = params.recipient;
+              amount    = reward;
+              asset     = asset.asset_type;
+          ];
+          s.deposit_count := s.deposit_count + 1n;
+        }
+      else {
+        const recipient = unwrap_or((Bytes.unpack(params.recipient) : option(address)), Tezos.get_sender());
+        case asset.asset_type of [
+        | Wrapped(token) -> {
+            operations := list[
+                Tezos.transaction(
+                  list[
+                    record[
+                      token_id = token.id;
+                      recipient = recipient;
+                      amount = reward;
+                    ];
+                  ],
+                  0mutez,
+                  unwrap(
+                    (Tezos.get_entrypoint_opt("%mint", token.address) : option(contract(mint_params_t))),
+                    Errors.mint_etp_404
+                  )
+                )];
+            asset := asset with record[
+                tvl += reward;
+                virtual_balance += reward
+            ];
+          }
+        | _ -> {
+            operations := list[
+                wrap_transfer(
+                  Tezos.get_self_address(),
+                  recipient,
+                  reward,
+                  asset.asset_type
               )];
-          asset := asset with record[
-              tvl += reward;
-              virtual_balance += reward
-          ];
-        }
-      | _ -> {
-          operations := list[
-              wrap_transfer(
-                Tezos.get_self_address(),
-                params.recipient,
-                reward,
-                asset.asset_type
-            )];
-          asset := asset with record[
-              tvl = get_nat_or_fail(asset.tvl - reward, Errors.low_asset_liquidity);
-              virtual_balance = get_nat_or_fail(asset.virtual_balance - reward, Errors.low_asset_liquidity)
-          ];
-        }
-      ];
+            asset := asset with record[
+                tvl = get_nat_or_fail(asset.tvl - reward, Errors.low_asset_liquidity);
+                virtual_balance = get_nat_or_fail(asset.virtual_balance - reward, Errors.low_asset_liquidity)
+            ];
+          }
+        ];
+      };
+
       s.assets[params.asset_id] := asset;
     } with (operations, s)
   | _ -> (no_operations, s)
