@@ -181,3 +181,14 @@ function reverse_list<t>(
     lst,
     (nil : list(t))
   )
+
+[@inline] function ceil_div(
+  const numerator       : nat;
+  const denominator     : nat)
+                        : nat is
+  case ediv(numerator, denominator) of [
+    Some(result) -> if result.1 > 0n
+      then result.0 + 1n
+      else result.0
+  | None -> failwith(Errors.ceil_division)
+  ]

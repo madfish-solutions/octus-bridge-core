@@ -217,9 +217,8 @@ function claim_fee(
       var asset := unwrap(s.assets[params.asset_id], Errors.asset_undefined);
       var fee_balances : fee_balances_t := unwrap(s.fee_balances[params.asset_id], Errors.asset_undefined);
       var balance_f := unwrap_or(fee_balances[Tezos.get_sender()], 0n);
-      require(balance_f / Constants.precision > 0n, Errors.zero_fee_balance);
       const reward = balance_f / Constants.precision;
-      require(reward <= asset.virtual_balance, Errors.low_asset_liquidity);
+      require(reward > 0n, Errors.zero_fee_balance);
 
       fee_balances[Tezos.get_sender()] := get_nat_or_fail(balance_f - reward * Constants.precision, Errors.not_nat);
       s.fee_balances[params.asset_id] := fee_balances;
@@ -255,8 +254,8 @@ function claim_fee(
                 asset.asset_type
             )];
           asset := asset with record[
-              tvl = get_nat_or_fail(asset.tvl - reward, Errors.not_nat);
-              virtual_balance = get_nat_or_fail(asset.virtual_balance - reward, Errors.not_nat)
+              tvl = get_nat_or_fail(asset.tvl - reward, Errors.low_asset_liquidity);
+              virtual_balance = get_nat_or_fail(asset.virtual_balance - reward, Errors.low_asset_liquidity)
           ];
         }
       ];
@@ -298,6 +297,12 @@ function add_strategy(
   | Add_strategy(params) -> {
       require(Tezos.get_sender() = s.strategist, Errors.not_strategist);
       const asset = unwrap(s.assets[params.asset_id], Errors.asset_undefined);
+
+      case asset.asset_type of [
+      | Wrapped(_) -> failwith(Errors.unsupported_asset)
+      | _ -> skip
+      ];
+
       require_none(s.strategies[params.asset_id], Errors.strategy_exists);
 
       s.strategies[params.asset_id] := record[
