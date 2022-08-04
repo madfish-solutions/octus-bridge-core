@@ -145,6 +145,12 @@ type withdrawal_data_t  is [@layout:comb] record[
 
 type claim_fee_t        is [@layout:comb] record[
   asset_id                : asset_id_t;
+  recipient               : bytes;
+  to_everscale            : bool;
+]
+
+type claim_strategy_fee_t is [@layout:comb] record[
+  asset_id                : asset_id_t;
   recipient               : address;
 ]
 
@@ -201,7 +207,7 @@ type action_t           is
 | Delegate_tez            of option(key_hash)
 | Claim_baker_rewards     of address
 | Claim_fee               of claim_fee_t
-| Claim_strategy_rewards  of claim_fee_t
+| Claim_strategy_rewards  of claim_strategy_fee_t
 | Confirm_owner           of unit
 | Add_strategy            of add_strategy_t
 | Update_strategy         of update_strategy_t
@@ -232,6 +238,10 @@ type full_storage_t     is [@layout:comb] record [
 
 type full_return_t      is (list(operation) * full_storage_t)
 
+type deposit_return_t   is [@layout:comb] record [
+  operations              : list(operation);
+  asset                   : asset_t;
+]
 type setup_func_t       is [@layout:comb] record [
   index                   : nat;
   func                    : bytes;
