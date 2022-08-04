@@ -98,7 +98,6 @@ function deposit_with_bounty(
       | _ -> skip
       ];
       require(params.amount > 0n, Errors.zero_transfer);
-      require(asset.tvl + params.amount <= asset.deposit_limit or asset.deposit_limit = 0n, Errors.deposit_limit);
 
       var total_bounty := 0n;
       var total_withdrawal := 0n;
@@ -169,6 +168,7 @@ function deposit_with_bounty(
 
       s.assets[params.asset_id] := asset;
 
+      require(asset.tvl <= asset.deposit_limit or asset.deposit_limit = 0n, Errors.deposit_limit);
     } with (operations, s)
   | _ -> (no_operations, s)
   ]

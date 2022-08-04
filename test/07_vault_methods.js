@@ -98,7 +98,7 @@ describe("Vault methods tests", async function () {
           asset_type: { fa2: { address: fa2Token.address, id: 0 } },
           deposit_fee_f: 100000,
           withdrawal_fee_f: 100000,
-          deposit_limit: 0,
+          deposit_limit: 100000 * precision,
           tvl: 50 * precision,
           virtual_balance: 0,
         },
@@ -1708,11 +1708,13 @@ describe("Vault methods tests", async function () {
     });
     it("Shouldn't deposit if amount + tvl > deposit limit", async function () {
       await rejects(
-        vault.call(
-          "deposit_with_bounty",
-          ["001100", 250 * precision, 2, [1], 10],
-          (250 * precision) / 1e6,
-        ),
+        vault.call("deposit_with_bounty", [
+          "001100",
+          250000 * precision,
+          1,
+          [0],
+          10,
+        ]),
         err => {
           strictEqual(err.message, "Vault/respect-deposit-limit");
           return true;
