@@ -29,6 +29,9 @@ const yupanaStrategy = require("./storage/yupanaStrategy");
 
 const precision = 10 ** 6;
 
+const aliceBytes = "050a0000001600006b82198cb179e8306c1bedd08f12dc863f328886";
+const bobBytes = "050a000000160000a26828841890d3f3a2a1d4083839c7a882fe0501";
+const eveBytes = "050a0000001600001797a2cd215e3c7280784e090d17051fdc4a9bf3";
 describe("Vault Admin tests", async function () {
   let vault;
   let fa12Token;
@@ -398,14 +401,14 @@ describe("Vault Admin tests", async function () {
   describe("Testing entrypoint: Claim_fee", async function () {
     it("Shouldn't claim fee if the asset is undefined", async function () {
       Tezos.setSignerProvider(signerEve);
-      await rejects(vault.call("claim_fee", [9, eve.pkh]), err => {
+      await rejects(vault.call("claim_fee", [9, "0000", false]), err => {
         strictEqual(err.message, "Vault/asset-undefined");
         return true;
       });
     });
     it("Shouldn't claim fee if fee balance is zero", async function () {
       Tezos.setSignerProvider(signerEve);
-      await rejects(vault.call("claim_fee", [0, eve.pkh]), err => {
+      await rejects(vault.call("claim_fee", [0, "0000", false]), err => {
         strictEqual(err.message, "Vault/zero-fee-balance");
         return true;
       });
@@ -415,11 +418,11 @@ describe("Vault Admin tests", async function () {
       const prevBobBalance = await fa12Token.getBalance(bob.pkh);
 
       Tezos.setSignerProvider(signerAlice);
-      await vault.call("claim_fee", [0, alice.pkh]);
+      await vault.call("claim_fee", [0, aliceBytes, false]);
       const aliceBalance = await fa12Token.getBalance(alice.pkh);
 
       Tezos.setSignerProvider(signerBob);
-      await vault.call("claim_fee", [0, bob.pkh]);
+      await vault.call("claim_fee", [0, bobBytes, false]);
       const bobBalance = await fa12Token.getBalance(bob.pkh);
       const fees = await vault.storage.fee_balances.get("0");
       const fishFee = await fees.get(vault.storage.fish);
@@ -434,11 +437,11 @@ describe("Vault Admin tests", async function () {
       const prevBobBalance = await fa2Token.getBalance(bob.pkh);
       const prevAsset = await vault.storage.assets.get("3");
       Tezos.setSignerProvider(signerAlice);
-      await vault.call("claim_fee", [1, alice.pkh]);
+      await vault.call("claim_fee", [1, aliceBytes, false]);
       const aliceBalance = await fa2Token.getBalance(alice.pkh);
 
       Tezos.setSignerProvider(signerBob);
-      await vault.call("claim_fee", [1, bob.pkh]);
+      await vault.call("claim_fee", [1, bobBytes, false]);
       const asset = await vault.storage.assets.get("3");
       const bobBalance = await fa2Token.getBalance(bob.pkh);
       const fees = await vault.storage.fee_balances.get("1");
@@ -464,10 +467,10 @@ describe("Vault Admin tests", async function () {
         .catch(error => console.log(JSON.stringify(error)));
 
       Tezos.setSignerProvider(signerAlice);
-      await vault.call("claim_fee", [2, eve.pkh]);
+      await vault.call("claim_fee", [2, eveBytes, false]);
 
       Tezos.setSignerProvider(signerBob);
-      await vault.call("claim_fee", [2, eve.pkh]);
+      await vault.call("claim_fee", [2, eveBytes, false]);
       const eveBalance = await Tezos.tz
         .getBalance(eve.pkh)
         .then(balance => Math.floor(balance.toNumber()))
@@ -492,11 +495,11 @@ describe("Vault Admin tests", async function () {
         prevFishFee.plus(prevManagementFee).toNumber() / precision,
       );
       Tezos.setSignerProvider(signerAlice);
-      await vault.call("claim_fee", [3, alice.pkh]);
+      await vault.call("claim_fee", [3, aliceBytes, false]);
       const aliceBalance = await wrappedToken.getWBalance(alice.pkh);
 
       Tezos.setSignerProvider(signerBob);
-      await vault.call("claim_fee", [3, bob.pkh]);
+      await vault.call("claim_fee", [3, bobBytes, false]);
       const asset = await vault.storage.assets.get("3");
       const bobBalance = await wrappedToken.getWBalance(bob.pkh);
       const fees = await vault.storage.fee_balances.get("3");

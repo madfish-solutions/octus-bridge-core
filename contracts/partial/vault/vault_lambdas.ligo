@@ -33,23 +33,23 @@ function deposit(
       var operations := result.operations;
       case asset.asset_type of [
       | Wrapped(token_) -> {
-        const burn_params : burn_params_t = record[
-          token_id = token_.id;
-          account = Tezos.get_sender();
-          amount = params.amount
-        ];
-        operations := Tezos.transaction(
-            burn_params,
-            0mutez,
-            unwrap(
-              (Tezos.get_entrypoint_opt("%burn", token_.address) : option(contract(burn_params_t))),
-              Errors.burn_etp_404)
-          ) # operations;
-        asset := asset with record[
-            tvl = get_nat_or_fail(asset.tvl - params.amount, Errors.not_nat);
-            virtual_balance = get_nat_or_fail(asset.virtual_balance - params.amount, Errors.not_nat)
-          ]
-      }
+          const burn_params : burn_params_t = record[
+            token_id = token_.id;
+            account = Tezos.get_sender();
+            amount = params.amount
+          ];
+          operations := Tezos.transaction(
+              burn_params,
+              0mutez,
+              unwrap(
+                (Tezos.get_entrypoint_opt("%burn", token_.address) : option(contract(burn_params_t))),
+                Errors.burn_etp_404)
+            ) # operations;
+          asset := asset with record[
+              tvl = get_nat_or_fail(asset.tvl - params.amount, Errors.not_nat);
+              virtual_balance = get_nat_or_fail(asset.virtual_balance - params.amount, Errors.not_nat)
+            ]
+        }
       | Tez -> {
           asset := asset with record [
               tvl += params.amount;
@@ -98,7 +98,6 @@ function deposit_with_bounty(
       | _ -> skip
       ];
       require(params.amount > 0n, Errors.zero_transfer);
-      require(asset.tvl + params.amount <= asset.deposit_limit or asset.deposit_limit = 0n, Errors.deposit_limit);
 
       var total_bounty := 0n;
       var total_withdrawal := 0n;
@@ -169,6 +168,7 @@ function deposit_with_bounty(
 
       s.assets[params.asset_id] := asset;
 
+      require(asset.tvl <= asset.deposit_limit or asset.deposit_limit = 0n, Errors.deposit_limit);
     } with (operations, s)
   | _ -> (no_operations, s)
   ]
