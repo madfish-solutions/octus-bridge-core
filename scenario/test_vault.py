@@ -75,7 +75,7 @@ class VaultTest(TestCase):
         self.assertEqual(transfers[0]["token_address"], token_a_address)
 
         # claim deposit fees
-        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient=fish), sender=fish)
+        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient="", to_everscale=False), sender=fish)
         transfers = parse_transfers(res)
         self.assertEqual(len(transfers), 1)
         self.assertEqual(transfers[0]["amount"], 19_441_650)
@@ -83,7 +83,7 @@ class VaultTest(TestCase):
         self.assertEqual(transfers[0]["source"], contract_self_address)
         self.assertEqual(transfers[0]["token_address"], token_a_address)
 
-        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient=management), sender=management)
+        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient="", to_everscale=False), sender=management)
         transfers = parse_transfers(res)
         self.assertEqual(len(transfers), 1)
         self.assertEqual(transfers[0]["amount"], 19_441_650)
@@ -92,7 +92,7 @@ class VaultTest(TestCase):
         self.assertEqual(transfers[0]["token_address"], token_a_address)
 
         with self.assertRaises(MichelsonRuntimeError) as error:
-            res = chain.execute(self.ct.claim_fee(asset_id=0, recipient=fish), sender=fish)
+            res = chain.execute(self.ct.claim_fee(asset_id=0, recipient="", to_everscale=False), sender=fish)
 
         payload = pack_withdraw_payload(self.packer, 334_000, alice, token_a_fa2, "01")
         res = chain.execute(self.ct.withdraw(payload=payload, signatures={}), view_results=vr)
@@ -105,7 +105,7 @@ class VaultTest(TestCase):
         self.assertEqual(transfers[0]["token_address"], token_a_address)
 
         # claim withdraw fees
-        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient=fish), sender=fish)
+        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient="", to_everscale=False), sender=fish)
         transfers = parse_transfers(res)
         self.assertEqual(len(transfers), 1)
         self.assertEqual(transfers[0]["amount"], 8_350)
@@ -113,7 +113,7 @@ class VaultTest(TestCase):
         self.assertEqual(transfers[0]["source"], contract_self_address)
         self.assertEqual(transfers[0]["token_address"], token_a_address)
 
-        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient=management), sender=management)
+        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient="", to_everscale=False), sender=management)
         transfers = parse_transfers(res)
         self.assertEqual(len(transfers), 1)
         self.assertEqual(transfers[0]["amount"], 8_350)
@@ -280,12 +280,12 @@ class VaultTest(TestCase):
         withdraw_fees = 1700 + 500
 
         with self.assertRaises(MichelsonRuntimeError) as error:
-            res = chain.execute(self.ct.claim_fee(asset_id=0, recipient=fish), sender=fish)
+            res = chain.execute(self.ct.claim_fee(asset_id=0, recipient="", to_everscale=False), sender=fish)
 
         res = chain.execute(self.ct.deposit(recipient=RECEIVER, amount=100_000, asset=token_a_fa2), sender=alice)
         helper_deposit_fee = 5000    
 
-        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient=fish), sender=fish)    
+        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient="", to_everscale=False), sender=fish)    
 
         transfers = parse_transfers(res)
         self.assertEqual(len(transfers), 1)
@@ -367,7 +367,7 @@ class VaultTest(TestCase):
         self.assertEqual(mints[0]["type"], "burn")
         self.assertEqual(mints[0]["token_address"], wrapped_token_address)
 
-        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient=fish), sender=fish)
+        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient="", to_everscale=False), sender=fish)
         mints = parse_mints(res)
         self.assertEqual(len(mints), 1)
         self.assertEqual(mints[0]["amount"], 2_500)
@@ -394,8 +394,8 @@ class VaultTest(TestCase):
         # we need a value so it is 350_000 after subtracting 1% so it covers first deposit fee, and then both withdrawal fees
         res = chain.execute(self.ct.deposit_with_bounty(recipient=RECEIVER, amount=353_536, asset_id=0, pending_withdrawal_ids=[0, 1], expected_min_bounty=0), sender=bob)
     
-        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient=fish), sender=fish)
-        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient=management), sender=management)
+        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient="", to_everscale=False), sender=fish)
+        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient="", to_everscale=False), sender=management)
 
         self.assertEqual(res.storage["storage"]["assets"][0]["tvl"], 0)
 
@@ -416,12 +416,12 @@ class VaultTest(TestCase):
         
         res = chain.execute(self.ct.deposit(recipient=RECEIVER, amount=315_000, asset=wrapped_asset_a), sender=bob)
     
-        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient=fish), sender=fish)
+        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient="", to_everscale=False), sender=fish)
         mints = parse_mints(res)
         self.assertEqual(len(mints), 1) 
         self.assertEqual(mints[0]["amount"], (35_000 + 3150) // 2)
 
-        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient=management), sender=management)
+        res = chain.execute(self.ct.claim_fee(asset_id=0, recipient="", to_everscale=False), sender=management)
         mints = parse_mints(res)
         self.assertEqual(len(mints), 1) 
         self.assertEqual(mints[0]["amount"], (35_000 + 3150) // 2)
